@@ -3,6 +3,8 @@
 > 《鸣潮》角色「达妮娅」同人二创作品 curation 站点
 >
 > 微博风格卡片信息流，精选搬运优质二创，标注原作者与出处
+>
+> 🔗 [daniya-fansite.netlify.app](https://daniya-fansite.netlify.app)
 
 ---
 
@@ -14,10 +16,10 @@
 | 语言 | TypeScript |
 | 样式 | Tailwind CSS v4 + 鸣潮暗色主题 |
 | 内容 | MDX 本地文件（`content/posts/`） |
-| 数据库 | Prisma + SQLite（`prisma/dev.db`） |
-| 认证 | Auth.js v5（GitHub OAuth） |
+| 数据库 | Prisma + Neon PostgreSQL (serverless) |
+| 认证 | Auth.js v5（GitHub / QQ OAuth / 邮箱 Magic Link / 手机验证码） |
 | 评论 | Giscus（GitHub Discussions） |
-| 部署 | Vercel |
+| 部署 | Netlify |
 
 ---
 
@@ -52,13 +54,33 @@ npm start
 # Auth.js 密钥（生成命令: openssl rand -base64 32）
 AUTH_SECRET="your-random-secret"
 
+# 站点 URL（生产环境必须配置）
+NEXTAUTH_URL="https://daniya-fansite.netlify.app"
+
+# Neon PostgreSQL（serverless）
+DATABASE_URL="postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
 # GitHub OAuth（https://github.com/settings/developers 创建 OAuth App）
-# 回调 URL: http://localhost:3000/api/auth/callback/github
+# 回调 URL: https://域名/api/auth/callback/github
 AUTH_GITHUB_ID=your-github-client-id
 AUTH_GITHUB_SECRET=your-github-client-secret
 
-# SQLite 数据库
-DATABASE_URL="file:./prisma/dev.db"
+# QQ OAuth（https://connect.qq.com 注册应用）
+# 回调 URL: https://域名/api/auth/callback/qq
+AUTH_QQ_ID=your-qq-app-id
+AUTH_QQ_SECRET=your-qq-app-secret
+
+# SendCloud 邮件发送（https://sendcloud.net）
+SENDCLOUD_API_USER=your-sendcloud-user
+SENDCLOUD_API_KEY=your-sendcloud-key
+EMAIL_FROM="noreply@your-domain.com"
+
+# 腾讯云短信
+TENCENT_SMS_SECRET_ID=your-secret-id
+TENCENT_SMS_SECRET_KEY=your-secret-key
+TENCENT_SMS_SDK_APP_ID=your-sdk-app-id
+TENCENT_SMS_TEMPLATE_ID=your-template-id
 
 # Giscus 评论（https://giscus.app 配置）
 NEXT_PUBLIC_GISCUS_REPO=your-github-username/your-repo
@@ -122,9 +144,8 @@ draft: false               # true = 草稿，生产环境不显示
 daniya-fansite/
 ├── content/posts/          # === 二创内容库（手动编辑）===
 ├── prisma/
-│   ├── schema.prisma       # 数据库模型定义
-│   └── dev.db              # SQLite 数据库文件
-├── public/images/          # 公共静态资源
+│   └── schema.prisma       # 数据库模型定义
+├── public/                 # 公共静态资源
 ├── src/
 │   ├── app/                # Next.js App Router 页面
 │   │   ├── page.tsx              # 首页信息流
@@ -147,13 +168,17 @@ daniya-fansite/
 │   │   ├── shared/         # ThemeProvider/ThemeToggle
 │   │   └── ui/             # 基础 UI 组件
 │   ├── lib/
+│   │   ├── auth/
+│   │   │   └── qq-provider.ts   # 自定义 QQ OAuth Provider
 │   │   ├── posts.ts        # MDX 读取工具
 │   │   ├── search.ts       # 搜索索引
 │   │   ├── prisma.ts       # Prisma 客户端
+│   │   ├── email.ts        # SendCloud 邮件发送
+│   │   ├── sms.ts          # 腾讯云短信
+│   │   ├── rate-limit.ts   # 内存限流
 │   │   └── validators/     # Zod 校验
-│   ├── types/
-│   │   └── post.ts         # 类型定义
-│   └── hooks/              # 自定义 React Hooks
+│   └── types/
+│       └── post.ts         # 类型定义
 ├── auth.ts (src/auth.ts)   # Auth.js 配置
 ├── proxy.ts                # 路由保护中间件
 └── mdx-components.tsx      # MDX 全局组件映射
@@ -195,21 +220,21 @@ daniya-fansite/
 ## 待办清单
 
 ### 必须完成
-- [ ] **配置 GitHub OAuth**：在 GitHub Settings > Developer Settings 创建 OAuth App，将 Client ID/Secret 填入 `.env`
-- [ ] **配置 Giscus**：在 https://giscus.app 配置评论系统，填写 `.env` 中的 `NEXT_PUBLIC_GISCUS_*` 变量
-- [ ] **填充角色介绍**：编辑 `src/app/character/page.tsx`，填写达妮娅的背景故事
+- [x] **配置 GitHub OAuth**：在 GitHub Settings > Developer Settings 创建 OAuth App
+- [ ] **配置 QQ OAuth**：在 https://connect.qq.com 注册应用
+- [ ] **配置邮箱登录**：在 https://sendcloud.net 获取 API 密钥
+- [ ] **配置手机验证码**：在腾讯云短信服务获取 SecretId/Key/模板ID
+- [ ] **配置 Giscus**：在 https://giscus.app 配置评论系统
 
 ### 建议完成
-- [ ] **确定站点名称**：搜索替换"达妮娅的瞌睡小屋"为你想要的站名
 - [ ] **替换图片素材**：搜索 `[图片占位]`，按标注尺寸替换所有图片
 - [ ] **站长信息**：在 `/about` 页添加联系方式和站长介绍
 - [ ] **Hero Banner 文案**：编辑首页 `src/app/page.tsx` 的 h1 和 p 标签
 
 ### 可选增强
-- [ ] 添加更多 OAuth 提供商（Google 等）在 `src/auth.ts` 的 `providers` 数组中
+- [ ] 添加更多 OAuth 提供商（Google 等）
 - [ ] 自定义 404 页面设计
 - [ ] 添加图片轮播组件替换详情页的静态图片展示
-- [ ] 接入实际 MDX 编译渲染（替换目前的 HTML 字符串转换）
 
 ---
 
