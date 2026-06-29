@@ -1,0 +1,19 @@
+# 依赖
+node_modules/
+# Next.js 构建输出
+.next/
+# 环境变量（含密钥）
+.env
+.env.local
+.env*.local
+# Prisma 数据库文件（已改为 Neon PostgreSQL，不再使用本地 SQLite）
+# 操作系统
+.DS_Store
+Thumbs.db
+# IDE
+.vscode/
+.idea/
+# Claude Code
+.claude/
+# 调试
+npm-debug.log*

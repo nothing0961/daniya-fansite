@@ -1,0 +1,191 @@
+/**
+ * 鸣潮主题 — 全局样式
+ * 基于鸣潮 UI 风格：深色背景、蓝紫调、科技感
+ * 使用 Tailwind CSS v4 的 CSS-first 配置方式
+ */
+
+@import "tailwindcss";
+
+/**
+ * 鸣潮主题色彩系统
+ * 使用 OKLCH 颜色空间定义 CSS 变量
+ * 支持亮色/暗色双主题（通过 .light / .dark 类切换）
+ */
+
+/* ===== 暗色主题（默认） — 鸣潮深色风 ===== */
+:root {
+  /* 背景色 — 深蓝黑色 */
+  --background: oklch(0.15 0.02 250);
+  /* 前景色 — 浅灰白文字 */
+  --foreground: oklch(0.90 0.01 250);
+
+  /* 卡片背景 — 比底色稍亮 */
+  --card: oklch(0.18 0.02 250);
+  --card-foreground: oklch(0.90 0.01 250);
+
+  /* 弹出层背景 */
+  --popover: oklch(0.20 0.02 250);
+  --popover-foreground: oklch(0.90 0.01 250);
+
+  /* 主色调 — 鸣潮蓝 */
+  --primary: oklch(0.55 0.18 260);
+  --primary-foreground: oklch(1.00 0 0);
+
+  /* 次要色 */
+  --secondary: oklch(0.25 0.02 260);
+  --secondary-foreground: oklch(0.85 0.01 260);
+
+  /* 静音色 — 边框/分隔线/占位图 */
+  --muted: oklch(0.22 0.02 250);
+  --muted-foreground: oklch(0.55 0.02 250);
+
+  /* 强调色 — 紫色，用于出处标注等 */
+  --accent: oklch(0.55 0.18 290);
+  --accent-foreground: oklch(1.00 0 0);
+
+  /* 破坏色 — 红色，用于取消收藏等危险操作 */
+  --destructive: oklch(0.52 0.20 22);
+  --destructive-foreground: oklch(1.00 0 0);
+
+  /* 边框色 */
+  --border: oklch(0.25 0.02 250);
+  /* 输入框背景 */
+  --input: oklch(0.20 0.02 250);
+  /* 聚焦环 */
+  --ring: oklch(0.55 0.18 260);
+
+  /* 圆角半径 */
+  --radius: 0.5rem;
+
+  /* 鸣潮特色色 — 出处标注用暖金色 */
+  --credit: oklch(0.65 0.15 70);
+  --credit-foreground: oklch(0.15 0.02 250);
+}
+
+/* ===== 亮色主题 ===== */
+.light {
+  --background: oklch(0.97 0.01 250);
+  --foreground: oklch(0.15 0.02 250);
+
+  --card: oklch(1.00 0 0);
+  --card-foreground: oklch(0.15 0.02 250);
+
+  --popover: oklch(1.00 0 0);
+  --popover-foreground: oklch(0.15 0.02 250);
+
+  --primary: oklch(0.48 0.18 260);
+  --primary-foreground: oklch(1.00 0 0);
+
+  --secondary: oklch(0.93 0.02 260);
+  --secondary-foreground: oklch(0.20 0.02 260);
+
+  --muted: oklch(0.93 0.01 250);
+  --muted-foreground: oklch(0.45 0.02 250);
+
+  --accent: oklch(0.50 0.18 290);
+  --accent-foreground: oklch(1.00 0 0);
+
+  --destructive: oklch(0.50 0.20 22);
+  --destructive-foreground: oklch(1.00 0 0);
+
+  --border: oklch(0.85 0.02 250);
+  --input: oklch(0.85 0.02 250);
+  --ring: oklch(0.48 0.18 260);
+
+  --credit: oklch(0.55 0.15 65);
+  --credit-foreground: oklch(0.10 0.02 250);
+}
+
+/* ===== 全局基础样式 ===== */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family:
+    /* 中文字体栈 — 系统默认优先 */
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    "Noto Sans SC",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== MDX 文章内容排版样式 ===== */
+/* 在博文详情页中为 MDX 渲染内容提供可读的排版 */
+.prose {
+  max-width: 65ch;
+  line-height: 1.8;
+  color: var(--foreground);
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: var(--foreground);
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+.prose p {
+  margin-bottom: 1.2em;
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: var(--accent);
+}
+
+.prose img {
+  border-radius: var(--radius);
+  max-width: 100%;
+  height: auto;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1em;
+  margin-left: 0;
+  color: var(--muted-foreground);
+}
+
+.prose code {
+  background: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.prose pre {
+  background: var(--muted);
+  padding: 1em;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+/* ===== 滚动条美化（Webkit 浏览器） ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 3px;
+}

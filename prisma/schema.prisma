@@ -1,0 +1,104 @@
+/**
+ * Prisma 数据库 Schema
+ * PostgreSQL (Neon Serverless) — 存储用户和交互数据
+ * 作品内容由 MDX 文件管理，不使用数据库
+ *
+ * 修改方式：修改模型字段后运行 npx prisma db push
+ */
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// Auth.js v5 必需的认证模型 (@auth/prisma-adapter)
+// ============================================================
+
+/** OAuth 账号关联 — 一个用户可以绑定多个 OAuth 提供商 */
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+/** 用户 — 支持多种登录方式（GitHub、QQ、邮箱、手机） */
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?   @unique
+  phoneVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+
+  // 自定义关联
+  bookmarks     Bookmark[]
+  postLikes     PostLike[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+// ============================================================
+// 自定义业务模型
+// ============================================================
+
+/** 收藏 — 一个用户对一篇作品的收藏 */
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  /** 作品 slug — 对应 MDX 文件名中的 slug */
+  postSlug  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postSlug])
+  @@index([userId])
+  @@index([postSlug])
+}
+
+/** 点赞 — 一个用户对一篇作品的点赞 */
+model PostLike {
+  id        String   @id @default(cuid())
+  userId    String
+  /** 作品 slug — 对应 MDX 文件名中的 slug */
+  postSlug  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postSlug])
+  @@index([postSlug])
+}
+
+/** 验证令牌 — Auth.js 邮箱 Magic Link + 短信验证码复用 */
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
