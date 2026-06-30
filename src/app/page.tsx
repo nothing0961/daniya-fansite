@@ -49,16 +49,42 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="hero-wrapper relative w-full border-b border-[var(--border)]">
         {/* --- 桌面端左右侧装饰图（建议尺寸 600×900px） --- */}
         <img
-          className="hero-side hero-side--left"
+          className="hero-side-left"
           src="/hero-side-left.jpg"
           alt=""
           aria-hidden="true"
+          style={{
+            position: 'fixed',
+            left: 0,
+            top: '3.5rem',
+            width: '50vw',
+            height: 'calc(100vh - 3.5rem)',
+            objectFit: 'cover',
+            objectPosition: 'left center',
+            pointerEvents: 'none',
+            zIndex: 0,
+            opacity: 0.85,
+            userSelect: 'none',
+          }}
         />
         <img
-          className="hero-side hero-side--right"
+          className="hero-side-right"
           src="/hero-side-right.jpg"
           alt=""
           aria-hidden="true"
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: '3.5rem',
+            width: '50vw',
+            height: 'calc(100vh - 3.5rem)',
+            objectFit: 'cover',
+            objectPosition: 'right center',
+            pointerEvents: 'none',
+            zIndex: 0,
+            opacity: 0.85,
+            userSelect: 'none',
+          }}
         />
 
         <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24 flex flex-col items-center text-center">

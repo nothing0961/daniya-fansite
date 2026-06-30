@@ -383,43 +383,80 @@ main {
 /* Hero 装饰图片 — 桌面/手机分离            */
 /* ======================================== */
 
+/* ===== Header — 淡粉泡泡 ===== */
+.header-bubble {
+  background: oklch(0.72 0.12 340 / 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 泡泡装饰 */
+.header-bubble::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: 5%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+      oklch(1 0 0 / 0.3) 0%,
+      oklch(0.80 0.10 340 / 0.08) 40%,
+      transparent 70%);
+  pointer-events: none;
+  animation: headerBubble 6s ease-in-out infinite;
+}
+
+.header-bubble::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  right: 15%;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 25% 25%,
+      oklch(1 0 0 / 0.25) 0%,
+      oklch(0.75 0.10 330 / 0.06) 50%,
+      transparent 70%);
+  pointer-events: none;
+  animation: headerBubble 8s ease-in-out 1s infinite;
+}
+
+@keyframes headerBubble {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-6px) scale(1.1);
+    opacity: 1;
+  }
+}
+
 /* Hero 区域容器 — 给侧边图片提供定位参考 */
 .hero-wrapper {
   position: relative;
   overflow: hidden;
 }
 
-/* ===== 桌面端：左右侧装饰图 ===== */
-.hero-side {
-  position: fixed;
-  top: 3.5rem;                    /* header 下缘 (h-14) */
-  height: calc(100vh - 3.5rem);
-  object-fit: cover;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.85;
-  user-select: none;
-}
-
-.hero-side--left {
-  left: 0;
-  width: 50vw;
-  object-position: left center;
-  mask-image: linear-gradient(to left, transparent 0%, black 65px);
-  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
-}
-
-.hero-side--right {
-  right: 0;
-  width: 50vw;
-  object-position: right center;
+/* ===== 桌面端：左右侧装饰图（inline style 定位，此处仅 mask + 响应式隐藏）===== */
+.hero-side-left {
   mask-image: linear-gradient(to right, transparent 0%, black 65px);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
 }
 
+.hero-side-right {
+  mask-image: linear-gradient(to left, transparent 0%, black 65px);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
+}
+
 /* 手机端完全隐藏侧边图 */
 @media (max-width: 767px) {
-  .hero-side {
+  .hero-side-left,
+  .hero-side-right {
     display: none;
   }
 }
