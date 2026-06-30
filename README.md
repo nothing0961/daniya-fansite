@@ -16,6 +16,7 @@
 | 语言 | TypeScript |
 | 样式 | Tailwind CSS v4 + 鸣潮暗色主题 |
 | 内容 | MDX 本地文件（`content/posts/`） |
+| 媒体 | SM.MS 图床（图片） + B站 iframe（视频） |
 | 数据库 | Prisma + Neon PostgreSQL (serverless) |
 | 认证 | Auth.js v5（GitHub / QQ OAuth / 邮箱 Magic Link / 手机验证码） |
 | 评论 | Giscus（GitHub Discussions） |
@@ -95,12 +96,11 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=your-category-id
 
 在 `content/posts/` 下创建 MDX 文件。支持两种方式：
 
-### 方式一：目录形式（推荐，可附带图片）
+### 方式一：目录形式（推荐）
 
 ```
 content/posts/2026-06-30-my-new-post/
-├── index.mdx       # 必须
-└── artwork-01.jpg  # 配图（可选）
+└── index.mdx       # 必须
 ```
 
 ### 方式二：单文件形式
@@ -109,6 +109,8 @@ content/posts/2026-06-30-my-new-post/
 content/posts/2026-06-30-my-new-post.mdx
 ```
 
+> 配图不再存放于仓库中，改为上传 SM.MS 图床后将外链 URL 写入 frontmatter 的 `images` 字段。
+
 ### Frontmatter 模板
 
 ```yaml
@@ -116,6 +118,10 @@ content/posts/2026-06-30-my-new-post.mdx
 title: "作品标题"
 description: "一句话描述，用于卡片预览和 SEO（1-300字）"
 type: "illustration"       # illustration | comic | video | article | cosplay | other
+images:                    # SM.MS 图床外链（可选，支持多张）
+  - "https://s2.loli.net/2026/06/30/xxxxx.jpg"
+  - "https://s2.loli.net/2026/06/30/yyyyy.png"
+videoId: "BV1xx411c7XZ"    # B站 BV 号，仅 type: video（可选）
 originalCreator: "原作者昵称"
 sourceUrl: "https://weibo.com/xxx/xxx"
 sourcePlatform: "weibo"    # weibo | pixiv | twitter | lofter | bilibili | xiaohongshu
@@ -134,6 +140,8 @@ draft: false               # true = 草稿，生产环境不显示
 - 文件名格式必须为 `YYYY-MM-DD-slug`，否则不会被识别
 - `draft: true` 的作品在 `npm run build` 时不会出现，开发模式下可见
 - `sourceUrl` 必须为完整 URL（含 https://）
+- `images` 使用 SM.MS 图床上传后获得的外链 URL，详情页自动展示图片网格
+- `videoId` 填入 B站 BV 号，详情页自动嵌入 iframe 播放器
 - 标签最多 8 个
 
 ---
@@ -159,6 +167,7 @@ daniya-fansite/
 │   │   ├── (dashboard)/          # 个人中心
 │   │   └── api/                  # API 路由
 │   ├── components/
+│   │   ├── media/          # 图片/视频渲染（PostGallery、BilibiliEmbed）
 │   │   ├── feed/           # 信息流卡片组件
 │   │   ├── post/           # 出处标注、类型徽章
 │   │   ├── interaction/    # 点赞、收藏按钮
@@ -208,12 +217,13 @@ daniya-fansite/
 | 详情页横屏大图 | 1920×1080 | 16:9 |
 | 详情页竖屏大图 | 1080×1350 | 4:5 |
 | 详情页方图 | 1080×1080 | 1:1 |
-| 角色页 Hero Banner | 1200×600 | 2:1 |
+| Hero 桌面装饰图 | 600×900 | 2:3 |
+| Hero 手机背景图 | 750×1000 | 3:4 |
 | 角色头像 | 200×200 | 1:1 |
 | 站点 Logo | 200×60 | — |
 | OG 社交分享图 | 1200×630 | 1.91:1 |
 
-> 图片位置已使用灰色占位块 + 尺寸标注。搜索 `[图片占位]` 可快速定位所有需要替换的位置。
+> Hero 三张图片已就位（`public/hero-side-left.jpg`、`hero-side-right.jpg`、`hero-mobile.jpg`）。其他图片使用灰色占位块 + 尺寸标注，搜索 `[图片占位]` 可快速定位。
 
 ---
 
@@ -227,7 +237,8 @@ daniya-fansite/
 - [ ] **配置 Giscus**：在 https://giscus.app 配置评论系统
 
 ### 建议完成
-- [ ] **替换图片素材**：搜索 `[图片占位]`，按标注尺寸替换所有图片
+- [x] **Hero 图片素材**：三张 Hero 响应式图片已替换为实际作品
+- [ ] **替换其余图片素材**：搜索 `[图片占位]`，按标注尺寸替换剩余图片
 - [ ] **站长信息**：在 `/about` 页添加联系方式和站长介绍
 - [ ] **Hero Banner 文案**：编辑首页 `src/app/page.tsx` 的 h1 和 p 标签
 
@@ -255,5 +266,6 @@ npx prisma db push   # 同步数据库 schema
 - **微博风格信息流**：窄内容区（max-w-2xl），卡片式布局，图片在上文字在下
 - **出处标注优先**：每篇作品必须标注原作者名、来源平台和原帖链接
 - **暗色优先**：默认暗色主题呼应鸣潮 UI 风格，亮色模式作为备选
-- **图片尺寸留空**：所有图片先使用灰色占位块 + 尺寸标注，后续替换实际图片
+- **图片外链化**：作品配图使用 SM.MS 图床外链，视频使用 B站 iframe 嵌入，仓库不存储媒体文件
+- **Hero 响应式**：桌面端 fixed 左右装饰图，手机端绝对定位背景图，窗口缩放自适应
 - **版权尊重**：About 页面明确声明所有权利归原作者，提供下架联系渠道
