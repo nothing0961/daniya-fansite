@@ -409,7 +409,7 @@ main {
 }
 
 .hero-side--right {
-  right: 100%;
+  right: 1000%;
   left: 0;
   mask-image: linear-gradient(to right, transparent 0%, black 65px);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
