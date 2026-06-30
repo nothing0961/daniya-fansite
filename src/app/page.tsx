@@ -48,36 +48,27 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* ===== Hero Banner ===== */}
       <section className="hero-wrapper relative w-full border-b border-[var(--border)]">
         {/* --- 桌面端左右侧装饰图（建议尺寸 600×900px） --- */}
-        <picture>
-          <source srcSet="/hero-side-left.webp" type="image/webp" />
-          <img
-            className="hero-side hero-side--left"
-            src="/hero-side-left.png"
-            alt=""
-            aria-hidden="true"
-          />
-        </picture>
-        <picture>
-          <source srcSet="/hero-side-right.webp" type="image/webp" />
-          <img
-            className="hero-side hero-side--right"
-            src="/hero-side-right.png"
-            alt=""
-            aria-hidden="true"
-          />
-        </picture>
+        <img
+          className="hero-side hero-side--left"
+          src="/hero-side-left.jpg"
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="hero-side hero-side--right"
+          src="/hero-side-right.jpg"
+          alt=""
+          aria-hidden="true"
+        />
 
         <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24 flex flex-col items-center text-center">
           {/* --- 手机端居中背景图（建议尺寸 750×1000px）--- */}
-          <picture>
-            <source srcSet="/hero-mobile.webp" type="image/webp" />
-            <img
-              className="hero-bg"
-              src="/hero-mobile.png"
-              alt=""
-              aria-hidden="true"
-            />
-          </picture>
+          <img
+            className="hero-bg"
+            src="/hero-mobile.jpg"
+            alt=""
+            aria-hidden="true"
+          />
 
           <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-3">
             达妮娅的瞌睡小屋
