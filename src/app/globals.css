@@ -403,14 +403,14 @@ main {
 
 .hero-side--left {
   left: 0;
-  right: calc(50% + 336px);       /* 信息流内容区左边界 (672px / 2) */
+  right: 50%;
   mask-image: linear-gradient(to left, transparent 0%, black 65px);
   -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
 }
 
 .hero-side--right {
   right: 0;
-  left: calc(50% + 336px);        /* 信息流内容区右边界 (672px / 2) */
+  left: 50%;
   mask-image: linear-gradient(to right, transparent 0%, black 65px);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
 }
