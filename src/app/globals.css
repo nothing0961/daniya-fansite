@@ -448,15 +448,9 @@ main {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
 }
 
-.hero-side-right {
-  mask-image: linear-gradient(to left, transparent 0%, black 65px);
-  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
-}
-
 /* 手机端完全隐藏侧边图 */
 @media (max-width: 767px) {
-  .hero-side-left,
-  .hero-side-right {
+  .hero-side-left {
     display: none;
   }
 }

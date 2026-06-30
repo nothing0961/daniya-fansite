@@ -67,25 +67,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             userSelect: 'none',
           }}
         />
-        <img
-          className="hero-side-right"
-          src="/hero-side-right.jpg"
-          alt=""
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: '3.5rem',
-            width: '50vw',
-            height: 'calc(100vh - 3.5rem)',
-            objectFit: 'cover',
-            objectPosition: 'right center',
-            pointerEvents: 'none',
-            zIndex: 0,
-            opacity: 0.85,
-            userSelect: 'none',
-          }}
-        />
 
         <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24 flex flex-col items-center text-center">
           {/* --- 手机端居中背景图（建议尺寸 750×1000px）--- */}
