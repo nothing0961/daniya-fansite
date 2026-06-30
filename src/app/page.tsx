@@ -46,14 +46,38 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div>
       {/* ===== Hero Banner ===== */}
-      <section className="relative w-full border-b border-[var(--border)]">
+      <section className="hero-wrapper relative w-full border-b border-[var(--border)]">
+        {/* --- 桌面端左右侧装饰图（建议尺寸 600×900px） --- */}
+        <picture>
+          <source srcSet="/hero-side-left.webp" type="image/webp" />
+          <img
+            className="hero-side hero-side--left"
+            src="/hero-side-left.png"
+            alt=""
+            aria-hidden="true"
+          />
+        </picture>
+        <picture>
+          <source srcSet="/hero-side-right.webp" type="image/webp" />
+          <img
+            className="hero-side hero-side--right"
+            src="/hero-side-right.png"
+            alt=""
+            aria-hidden="true"
+          />
+        </picture>
+
         <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24 flex flex-col items-center text-center">
-          {/* [图片占位] 达妮娅主视觉 — 1200×600, 2:1 比例 */}
-          <div className="w-full max-w-2xl aspect-[2/1] rounded-lg bg-[var(--muted)] flex items-center justify-center mb-8">
-            <span className="text-[var(--muted-foreground)] text-sm">
-              1200 × 600 — 达妮娅 Hero Banner (2:1)
-            </span>
-          </div>
+          {/* --- 手机端居中背景图（建议尺寸 750×1000px）--- */}
+          <picture>
+            <source srcSet="/hero-mobile.webp" type="image/webp" />
+            <img
+              className="hero-bg"
+              src="/hero-mobile.png"
+              alt=""
+              aria-hidden="true"
+            />
+          </picture>
 
           <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-3">
             达妮娅的瞌睡小屋

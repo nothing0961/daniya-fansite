@@ -65,6 +65,9 @@
   --bubble-glow: oklch(0.75 0.10 340 / 0.15);
   --bubble-glow-strong: oklch(0.80 0.12 330 / 0.25);
   --stardust: oklch(0.90 0.02 280 / 0.08);
+
+  /* ---------- Hero 背景图透明度 — 手机端用 ---------- */
+  --hero-opacity: 0.25;
 }
 
 /* ===== 亮色主题 ===== */
@@ -104,6 +107,8 @@
   --bubble-glow: oklch(0.70 0.08 340 / 0.10);
   --bubble-glow-strong: oklch(0.75 0.10 330 / 0.15);
   --stardust: oklch(0.80 0.03 280 / 0.06);
+
+  --hero-opacity: 0.20;
 }
 
 /* ======================================== */
@@ -372,4 +377,76 @@ main {
 ::-moz-selection {
   background: oklch(0.65 0.12 340 / 0.35);
   color: oklch(0.98 0.01 250);
+}
+
+/* ======================================== */
+/* Hero 装饰图片 — 桌面/手机分离            */
+/* ======================================== */
+
+/* Hero 区域容器 — 给侧边图片提供定位参考 */
+.hero-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== 桌面端：左右侧装饰图 ===== */
+.hero-side {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: auto;
+  max-width: 300px;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+  user-select: none;
+}
+
+.hero-side--left {
+  left: 0;
+  /* 图片右侧边缘对齐左空白区内侧 */
+  object-position: right bottom;
+}
+
+.hero-side--right {
+  right: 0;
+  object-position: left bottom;
+}
+
+/* 窗口太窄时隐藏侧边图 */
+@media (max-width: 1279px) {
+  .hero-side {
+    opacity: 0.35;
+    max-width: 180px;
+  }
+}
+
+/* 手机端完全隐藏侧边图 */
+@media (max-width: 767px) {
+  .hero-side {
+    display: none;
+  }
+}
+
+/* ===== 手机端：Hero 区域内的居中背景图 ===== */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: var(--hero-opacity);
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+}
+
+/* 桌面端隐藏手机背景图（侧边图替代） */
+@media (min-width: 768px) {
+  .hero-bg {
+    display: none;
+  }
 }
