@@ -7,7 +7,9 @@
       "Bash(curl -s http://localhost:3000)",
       "Bash(where chrome *)",
       "Bash(where msedge *)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(curl -s \"http://localhost:3000/_next/static/chunks/src_app_globals_162hn9o.css\")",
+      "Read(//tmp/**)"
     ]
   }
 }
