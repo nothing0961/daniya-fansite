@@ -392,12 +392,9 @@ main {
 /* ===== 桌面端：左右侧装饰图 ===== */
 .hero-side {
   position: fixed;
-  top: 0;
-  height: 100vh;
-  width: auto;
-  max-width: 300px;
-  object-fit: contain;
-  object-position: center bottom;
+  top: 3.5rem;                    /* header 下缘 (h-14) */
+  height: calc(100vh - 3.5rem);
+  object-fit: cover;
   pointer-events: none;
   z-index: 0;
   opacity: 0.85;
@@ -406,21 +403,16 @@ main {
 
 .hero-side--left {
   left: 0;
-  /* 图片右侧边缘对齐左空白区内侧 */
-  object-position: right bottom;
+  right: calc(50% + 336px);       /* 信息流内容区左边界 (672px / 2) */
+  mask-image: linear-gradient(to left, transparent 0%, black 65px);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
 }
 
 .hero-side--right {
   right: 0;
-  object-position: left bottom;
-}
-
-/* 窗口太窄时隐藏侧边图 */
-@media (max-width: 1279px) {
-  .hero-side {
-    opacity: 0.35;
-    max-width: 180px;
-  }
+  left: calc(50% + 336px);        /* 信息流内容区右边界 (672px / 2) */
+  mask-image: linear-gradient(to right, transparent 0%, black 65px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
 }
 
 /* 手机端完全隐藏侧边图 */
