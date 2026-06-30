@@ -1,107 +1,140 @@
 /**
- * 鸣潮主题 — 全局样式
- * 基于鸣潮 UI 风格：深色背景、蓝紫调、科技感
+ * 鸣潮 · 达妮娅主题 — 星空泡泡版
+ * 基于鸣潮 UI 风格 + 达妮娅「泡影视阈」技能视觉元素
  * 使用 Tailwind CSS v4 的 CSS-first 配置方式
  */
 
 @import "tailwindcss";
 
 /**
- * 鸣潮主题色彩系统
- * 使用 OKLCH 颜色空间定义 CSS 变量
- * 支持亮色/暗色双主题（通过 .light / .dark 类切换）
+ * 色彩系统 — 达妮娅·星空泡泡主题
+ * 提取自角色技能特效：粉白渐变 + 梦幻泡泡 + 星空法阵
+ * 支持亮色/暗色双主题
  */
 
-/* ===== 暗色主题（默认） — 鸣潮深色风 ===== */
+/* ===== 暗色主题（默认） — 星空泡泡 ===== */
 :root {
-  /* 背景色 — 深蓝黑色 */
-  --background: oklch(0.15 0.02 250);
-  /* 前景色 — 浅灰白文字 */
-  --foreground: oklch(0.90 0.01 250);
+  /* ---------- 核心背景 — 星空深色底 ---------- */
+  --background: oklch(0.12 0.015 260);
+  /* 深蓝黑，作为星空底色 */
+  --foreground: oklch(0.92 0.01 250);
 
-  /* 卡片背景 — 比底色稍亮 */
-  --card: oklch(0.18 0.02 250);
-  --card-foreground: oklch(0.90 0.01 250);
+  /* ---------- 卡片 — 半透明毛玻璃 ---------- */
+  --card: oklch(0.18 0.025 260 / 0.6);
+  --card-foreground: oklch(0.92 0.01 250);
 
-  /* 弹出层背景 */
-  --popover: oklch(0.20 0.02 250);
-  --popover-foreground: oklch(0.90 0.01 250);
+  /* ---------- 弹出层 ---------- */
+  --popover: oklch(0.20 0.025 260 / 0.85);
+  --popover-foreground: oklch(0.92 0.01 250);
 
-  /* 主色调 — 鸣潮蓝 */
-  --primary: oklch(0.55 0.18 260);
-  --primary-foreground: oklch(1.00 0 0);
+  /* ---------- 主色 — 达妮娅粉白渐变核心 ---------- */
+  --primary: oklch(0.72 0.12 340);
+  /* 柔粉，提取自发色渐变 */
+  --primary-foreground: oklch(0.15 0.02 250);
 
-  /* 次要色 */
-  --secondary: oklch(0.25 0.02 260);
-  --secondary-foreground: oklch(0.85 0.01 260);
+  /* ---------- 次要色 — 星空蓝紫 ---------- */
+  --secondary: oklch(0.35 0.08 270);
+  --secondary-foreground: oklch(0.90 0.01 250);
 
-  /* 静音色 — 边框/分隔线/占位图 */
-  --muted: oklch(0.22 0.02 250);
-  --muted-foreground: oklch(0.55 0.02 250);
+  /* ---------- 静音色 — 边框/分隔线 ---------- */
+  --muted: oklch(0.22 0.03 265);
+  --muted-foreground: oklch(0.50 0.04 270);
 
-  /* 强调色 — 紫色，用于出处标注等 */
-  --accent: oklch(0.55 0.18 290);
+  /* ---------- 强调色 — 梦幻紫（泡泡光晕） ---------- */
+  --accent: oklch(0.60 0.16 290);
   --accent-foreground: oklch(1.00 0 0);
 
-  /* 破坏色 — 红色，用于取消收藏等危险操作 */
+  /* ---------- 破坏色 ---------- */
   --destructive: oklch(0.52 0.20 22);
   --destructive-foreground: oklch(1.00 0 0);
 
-  /* 边框色 */
-  --border: oklch(0.25 0.02 250);
-  /* 输入框背景 */
-  --input: oklch(0.20 0.02 250);
-  /* 聚焦环 */
-  --ring: oklch(0.55 0.18 260);
+  /* ---------- 边框 — 柔光粉紫 ---------- */
+  --border: oklch(0.30 0.06 300 / 0.3);
+  --input: oklch(0.20 0.04 280 / 0.4);
+  --ring: oklch(0.65 0.12 340);
 
-  /* 圆角半径 */
-  --radius: 0.5rem;
+  /* ---------- 圆角 ---------- */
+  --radius: 0.75rem;
 
-  /* 鸣潮特色色 — 出处标注用暖金色 */
-  --credit: oklch(0.65 0.15 70);
+  /* ---------- 达妮娅专属色 ---------- */
+  --credit: oklch(0.70 0.12 60);
+  /* 暖金，用于出处标注，呼应"泡影"中的暖光 */
   --credit-foreground: oklch(0.15 0.02 250);
+
+  /* ---------- 泡泡光晕色（新增） ---------- */
+  --bubble-glow: oklch(0.75 0.10 340 / 0.15);
+  --bubble-glow-strong: oklch(0.80 0.12 330 / 0.25);
+  --stardust: oklch(0.90 0.02 280 / 0.08);
 }
 
 /* ===== 亮色主题 ===== */
 .light {
-  --background: oklch(0.97 0.01 250);
-  --foreground: oklch(0.15 0.02 250);
+  --background: oklch(0.95 0.015 280);
+  /* 淡紫白底，模拟"白日星空" */
+  --foreground: oklch(0.18 0.02 260);
 
-  --card: oklch(1.00 0 0);
-  --card-foreground: oklch(0.15 0.02 250);
+  --card: oklch(1.00 0 0 / 0.7);
+  --card-foreground: oklch(0.18 0.02 260);
 
-  --popover: oklch(1.00 0 0);
-  --popover-foreground: oklch(0.15 0.02 250);
+  --popover: oklch(1.00 0 0 / 0.85);
+  --popover-foreground: oklch(0.18 0.02 260);
 
-  --primary: oklch(0.48 0.18 260);
+  --primary: oklch(0.62 0.12 340);
   --primary-foreground: oklch(1.00 0 0);
 
-  --secondary: oklch(0.93 0.02 260);
+  --secondary: oklch(0.85 0.04 270);
   --secondary-foreground: oklch(0.20 0.02 260);
 
-  --muted: oklch(0.93 0.01 250);
-  --muted-foreground: oklch(0.45 0.02 250);
+  --muted: oklch(0.90 0.02 280);
+  --muted-foreground: oklch(0.45 0.04 270);
 
-  --accent: oklch(0.50 0.18 290);
+  --accent: oklch(0.55 0.16 290);
   --accent-foreground: oklch(1.00 0 0);
 
   --destructive: oklch(0.50 0.20 22);
   --destructive-foreground: oklch(1.00 0 0);
 
-  --border: oklch(0.85 0.02 250);
-  --input: oklch(0.85 0.02 250);
-  --ring: oklch(0.48 0.18 260);
+  --border: oklch(0.80 0.04 300 / 0.3);
+  --input: oklch(0.85 0.03 290 / 0.4);
+  --ring: oklch(0.55 0.12 340);
 
-  --credit: oklch(0.55 0.15 65);
+  --credit: oklch(0.55 0.12 60);
   --credit-foreground: oklch(0.10 0.02 250);
+
+  --bubble-glow: oklch(0.70 0.08 340 / 0.10);
+  --bubble-glow-strong: oklch(0.75 0.10 330 / 0.15);
+  --stardust: oklch(0.80 0.03 280 / 0.06);
 }
 
-/* ===== 全局基础样式 ===== */
+/* ======================================== */
+/* 星空泡泡 — 背景叠加层（纯 CSS 实现）     */
+/* 无需任何外部图片资源                      */
+/* ======================================== */
+
+/* 在 body 上叠一层星空渐变 + 泡泡光晕 */
 body {
   background-color: var(--background);
+  background-image:
+    /* 第一层：主星云（粉紫，左上） */
+    radial-gradient(ellipse 80% 60% at 10% 10%,
+      oklch(0.60 0.12 330 / 0.12) 0%,
+      transparent 70%),
+    /* 第二层：星云蓝紫（右下） */
+    radial-gradient(ellipse 70% 50% at 90% 85%,
+      oklch(0.50 0.14 280 / 0.10) 0%,
+      transparent 65%),
+    /* 第三层：中心暖光（呼应达妮娅的粉色） */
+    radial-gradient(ellipse 50% 40% at 50% 50%,
+      oklch(0.70 0.10 340 / 0.06) 0%,
+      transparent 80%),
+    /* 第四层：星尘微粒（通过径向渐变模拟） */
+    radial-gradient(circle 2px at 15% 25%, oklch(0.90 0.02 280 / 0.2), transparent 100%),
+    radial-gradient(circle 1.5px at 75% 15%, oklch(0.85 0.02 300 / 0.15), transparent 100%),
+    radial-gradient(circle 2px at 60% 80%, oklch(0.90 0.02 260 / 0.2), transparent 100%),
+    radial-gradient(circle 1px at 30% 70%, oklch(0.95 0.01 250 / 0.15), transparent 100%),
+    radial-gradient(circle 1.5px at 90% 40%, oklch(0.85 0.02 320 / 0.12), transparent 100%);
   color: var(--foreground);
   font-family:
-    /* 中文字体栈 — 系统默认优先 */
     "PingFang SC",
     "Hiragino Sans GB",
     "Microsoft YaHei",
@@ -109,10 +142,136 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background-attachment: fixed;
 }
 
-/* ===== MDX 文章内容排版样式 ===== */
-/* 在博文详情页中为 MDX 渲染内容提供可读的排版 */
+/* ======================================== */
+/* 毛玻璃卡片 — 泡泡感                     */
+/* ======================================== */
+
+/* 给所有卡片类加一层"泡泡光晕"边框 */
+.card,
+.rounded-xl,
+.rounded-lg {
+  border: 1px solid var(--border);
+  background: var(--card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 40px var(--bubble-glow),
+    inset 0 0 60px var(--stardust);
+  transition: box-shadow 0.4s ease, transform 0.3s ease;
+}
+
+.card:hover,
+.rounded-xl:hover,
+.rounded-lg:hover {
+  box-shadow:
+    0 0 60px var(--bubble-glow-strong),
+    0 8px 32px oklch(0 0 0 / 0.2);
+  transform: translateY(-2px);
+}
+
+/* ======================================== */
+/* 泡泡装饰 — 浮动光晕（纯 CSS）           */
+/* ======================================== */
+
+/* 在页面根元素上叠一层"泡泡"装饰光晕 */
+#__next,
+main {
+  position: relative;
+}
+
+/* 伪元素实现一个大泡泡光晕（放在页面右上角） */
+#__next::before {
+  content: '';
+  position: fixed;
+  top: -10%;
+  right: -5%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+      oklch(0.75 0.12 340 / 0.08) 0%,
+      transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatBubble 20s ease-in-out infinite alternate;
+}
+
+/* 左下角另一个泡泡 */
+#__next::after {
+  content: '';
+  position: fixed;
+  bottom: -5%;
+  left: -5%;
+  width: 30vw;
+  height: 30vw;
+  max-width: 350px;
+  max-height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+      oklch(0.55 0.14 290 / 0.06) 0%,
+      transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatBubble 25s ease-in-out infinite alternate-reverse;
+}
+
+/* 泡泡浮动动画 */
+@keyframes floatBubble {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-15px, 30px) scale(0.95);
+  }
+  100% {
+    transform: translate(20px, -10px) scale(1.02);
+  }
+}
+
+/* ======================================== */
+/* 星星闪烁动画                             */
+/* ======================================== */
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 为特定元素添加星星闪烁类（在组件中使用） */
+.star-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.star-twinkle-delay-1 {
+  animation-delay: 0.5s;
+}
+.star-twinkle-delay-2 {
+  animation-delay: 1.2s;
+}
+.star-twinkle-delay-3 {
+  animation-delay: 2.0s;
+}
+
+/* ======================================== */
+/* MDX 文章排版样式                        */
+/* ======================================== */
+
 .prose {
   max-width: 65ch;
   line-height: 1.8;
@@ -175,10 +334,13 @@ body {
   padding: 0;
 }
 
-/* ===== 滚动条美化（Webkit 浏览器） ===== */
+/* ======================================== */
+/* 滚动条美化（星空渐变风格）              */
+/* ======================================== */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -186,6 +348,28 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 3px;
+  background: linear-gradient(180deg,
+      oklch(0.65 0.12 340),
+      oklch(0.50 0.14 280));
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      oklch(0.75 0.12 340),
+      oklch(0.60 0.14 280));
+}
+
+/* ======================================== */
+/* 选中文字颜色（达妮娅粉）               */
+/* ======================================== */
+
+::selection {
+  background: oklch(0.65 0.12 340 / 0.35);
+  color: oklch(0.98 0.01 250);
+}
+
+::-moz-selection {
+  background: oklch(0.65 0.12 340 / 0.35);
+  color: oklch(0.98 0.01 250);
 }
