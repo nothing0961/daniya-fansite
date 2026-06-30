@@ -10,6 +10,7 @@
 "use client";
 
 import Link from "next/link";
+import { Play } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PostTypeBadge } from "@/components/post/post-type-badge";
 import { PostCredit } from "@/components/post/post-credit";
@@ -32,12 +33,29 @@ export function FeedCard({ post }: FeedCardProps) {
   return (
     <Link href={`/post/${post.slug}`} className="block group">
       <Card className="overflow-hidden hover:border-[var(--primary)]/40 transition-all duration-200 hover:shadow-lg hover:shadow-[var(--primary)]/5">
-        {/* [图片占位] 信息流缩略图 — 800×450, 16:9 */}
-        <div className="w-full aspect-video bg-[var(--muted)] flex items-center justify-center group-hover:opacity-90 transition-opacity">
-          <span className="text-[var(--muted-foreground)] text-sm">
-            800 × 450 — 16:9 缩略图
-          </span>
-        </div>
+        {/* 缩略图区 */}
+        {post.images.length > 0 ? (
+          <div className="w-full aspect-video overflow-hidden">
+            <img
+              src={post.images[0]}
+              alt={post.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+        ) : post.videoId ? (
+          <div className="w-full aspect-video bg-black flex items-center justify-center relative">
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:bg-[var(--primary)]/80 transition-colors">
+              <Play className="h-6 w-6 text-white fill-white ml-0.5" />
+            </div>
+          </div>
+        ) : (
+          <div className="w-full aspect-video bg-[var(--muted)] flex items-center justify-center">
+            <span className="text-[var(--muted-foreground)] text-sm">
+              暂无预览图
+            </span>
+          </div>
+        )}
 
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2 mb-1.5">

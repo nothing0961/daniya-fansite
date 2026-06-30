@@ -66,8 +66,11 @@ export const postMetaSchema = z.object({
   /** 是否为草稿 — 草稿在生产环境不显示 */
   draft: z.boolean().optional().default(false),
 
-  /** 配图路径列表 — 相对于 post 目录 */
-  images: z.array(z.string()).optional().default([]),
+  /** 配图列表 — SM.MS 图床完整 URL */
+  images: z.array(z.string().url()).optional().default([]),
+
+  /** B站视频 BV 号 — 仅 video 类型 */
+  videoId: z.string().min(1).optional(),
 });
 
 /** 从 Frontmatter 解析出的元数据类型 */

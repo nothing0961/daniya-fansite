@@ -7,10 +7,12 @@ const nextConfig = {
   // 鸣潮图片资源来源域名（后续如果引用外部图片需要添加）
   images: {
     remotePatterns: [
-      // 微博图床
-      // { protocol: "https", hostname: "**.sinaimg.cn" },
-      // Pixiv 代理
-      // { protocol: "https", hostname: "**.pximg.net" },
+      // SM.MS 图床
+      { protocol: "https", hostname: "s2.loli.net" },
+      { protocol: "https", hostname: "s1.loli.net" },
+      { protocol: "https", hostname: "i.loli.net" },
+      // B站封面图
+      { protocol: "https", hostname: "api.bilibili.com" },
     ],
   },
 };

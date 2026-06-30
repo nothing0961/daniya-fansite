@@ -66,8 +66,10 @@ export interface PostMeta {
   publishedAt: string;
   updatedAt?: string;
   draft: boolean;
-  /** 作品配图列表（本地路径相对于 post 目录） */
+  /** 作品配图列表（SM.MS 图床完整 URL） */
   images: string[];
+  /** B站视频 BV 号（仅 video 类型，如 BV1xx411c7X） */
+  videoId?: string;
 }
 
 /** 完整作品数据 — 元数据 + MDX 编译后的源码 */

@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { LikeButton } from "@/components/interaction/like-button";
 import { BookmarkButton } from "@/components/interaction/bookmark-button";
 import { GiscusComments } from "@/components/comments/giscus";
+import { BilibiliEmbed } from "@/components/media/bilibili-embed";
+import { PostGallery } from "@/components/media/post-gallery";
 
 // ===== 类型定义 =====
 interface PostPageProps {
@@ -99,25 +101,19 @@ export default async function PostPage({ params }: PostPageProps) {
         />
       </div>
 
-      {/* ===== 图片展示区 ===== */}
-      {meta.images.length > 0 ? (
-        <div className="mb-8 space-y-4">
-          {meta.images.map((img, index) => (
-            <div key={index} className="w-full rounded-lg overflow-hidden border border-[var(--border)]">
-              {/* [图片占位] — 详情页大图 */}
-              <div className="w-full aspect-video bg-[var(--muted)] flex items-center justify-center">
-                <span className="text-[var(--muted-foreground)] text-sm">
-                  {img} — 1920×1080 (16:9) 或 1080×1350 (4:5) 或 1080×1080 (1:1)
-                </span>
-              </div>
-            </div>
-          ))}
+      {/* ===== 媒体展示区 ===== */}
+      {meta.type === "video" && meta.videoId ? (
+        <div className="mb-8">
+          <BilibiliEmbed bvId={meta.videoId} />
+        </div>
+      ) : meta.images.length > 0 ? (
+        <div className="mb-8">
+          <PostGallery images={meta.images} />
         </div>
       ) : (
-        /* 无配图时显示占位 */
         <div className="mb-8 w-full aspect-video rounded-lg bg-[var(--muted)] flex items-center justify-center border border-[var(--border)]">
           <span className="text-[var(--muted-foreground)] text-sm">
-            作品配图 — 800×450 (16:9)
+            暂无配图
           </span>
         </div>
       )}

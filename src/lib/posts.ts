@@ -33,6 +33,7 @@ export interface PostMeta {
   updatedAt?: string;
   draft: boolean;
   images: string[];
+  videoId?: string;
 }
 
 /**
