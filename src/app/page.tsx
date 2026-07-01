@@ -11,6 +11,8 @@ import Link from "next/link";
 import { getAllPosts, getAllTypes } from "@/lib/posts";
 import { FeedList } from "@/components/feed/feed-list";
 import { FeedPagination } from "@/components/feed/feed-pagination";
+import { HeroBanner } from "./hero-banner";
+import { SideImage } from "./side-image";
 
 /** 每页显示作品数 */
 const PAGE_SIZE = 6;
@@ -46,92 +48,117 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div>
       {/* ===== Hero Banner ===== */}
-      <section className="hero-wrapper relative w-full border-b border-[var(--border)]">
-        {/* --- 桌面端左右侧装饰图（建议尺寸 600×900px） --- */}
-        <img
-          className="hero-side-left"
-          src="/hero-side-left.jpg"
-          alt=""
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            left: 0,
-            top: '3.5rem',
-            width: '50vw',
-            height: 'calc(100vh - 3.5rem)',
-            objectFit: 'cover',
-            objectPosition: 'left center',
-            pointerEvents: 'none',
-            zIndex: 0,
-            opacity: 0.85,
-            userSelect: 'none',
-          }}
-        />
+      <section className="relative w-full flex items-center justify-center border-b border-[var(--border)] overflow-hidden" style={{ height: '50vh' }}>
+        {/* 背景图片 — 暗色/亮色自动切换 */}
+        <HeroBanner />
+        {/* 暗色叠加层 */}
+        <div className="absolute inset-0 bg-[var(--background)]/25" />
 
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24 flex flex-col items-center text-center">
-          {/* --- 手机端居中背景图（建议尺寸 750×1000px）--- */}
-          <img
-            className="hero-bg"
-            src="/hero-mobile.jpg"
-            alt=""
-            aria-hidden="true"
-          />
-
-          <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-3">
-            达妮娅的瞌睡小屋
-          </h1>
-          <p className="text-[var(--muted-foreground)] max-w-md text-base leading-relaxed">
-            《鸣潮》角色达妮娅的同人二创作品 curation 站点
-            <br />
-            精选搬运优质二创内容，标注原作者与出处
-          </p>
-
-          {/* 统计数字 — 动态计算 */}
-          <div className="flex gap-8 mt-6 text-sm text-[var(--muted-foreground)]">
-            <div className="text-center">
-              <div className="text-xl font-bold text-[var(--foreground)]">
-                {allPosts.length}
-              </div>
-              <div>作品</div>
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 flex items-center gap-8">
+          {/* 左侧：角色立绘大胶囊 */}
+          <div className="hidden md:flex flex-shrink-0 rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md w-[650px] h-72 items-center overflow-hidden">
+            {/* 简介 */}
+            <div className="flex-1 flex flex-col justify-center px-10 py-6">
+              <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">达妮娅</h3>
+              <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+                角色简介文案待填写
+              </p>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-[var(--foreground)]">
-                {types.length}
+            {/* 立绘 */}
+            <div className="flex-shrink-0 w-64 h-full flex items-center justify-center">
+              <img
+                src="/324E6938CA1A90C930208816149E5FE9.jpg"
+                alt="达妮娅立绘"
+className="w-64 h-64 object-cover rounded-full"
+              />
+            </div>
+          </div>
+
+          {/* 右侧：现有内容 */}
+          <div className="flex-1 flex flex-col items-center text-center min-w-0">
+            <div className="rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-10 py-5">
+              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2">
+                达妮娅的瞌睡小屋
+              </h1>
+              <p className="text-[var(--muted-foreground)] text-base leading-relaxed">
+                《鸣潮》角色达妮娅的同人二创作品 curation 站点
+                <br />
+                精选搬运优质二创内容，标注原作者与出处
+              </p>
+            </div>
+
+            {/* 统计数字 */}
+            <div className="flex gap-8 mt-6 text-sm text-[var(--muted-foreground)]">
+              <div className="text-center">
+                <div className="text-xl font-bold text-[var(--foreground)]">
+                  {allPosts.length}
+                </div>
+                <div>作品</div>
               </div>
-              <div>类型</div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-[var(--foreground)]">
+                  {types.length}
+                </div>
+                <div>类型</div>
+              </div>
+            </div>
+
+            {/* 类型筛选标签 */}
+            <div className="mt-7 rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-6 py-3 flex items-center gap-3 flex-wrap justify-center">
+              <span className="text-sm text-[var(--muted-foreground)]">筛选</span>
+              {Object.entries(TYPE_LABELS).map(([key, label]) => (
+                <Link
+                  key={key}
+                  href={`/type/${key}`}
+                  className="rounded-full border border-[var(--border)] bg-[var(--muted)]/40 px-4 py-1 text-sm text-[var(--foreground)] hover:bg-[var(--primary)]/30 hover:border-[var(--primary)] transition-colors"
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== 作品信息流 ===== */}
-      <section className="mx-auto max-w-2xl px-4 py-8">
-        {/* 标题栏 + 类型筛选 */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+      {/* ===== 内容区：左图 + 信息流 + 右图 ===== */}
+      <div className="flex justify-center">
+        {/* 左侧装饰图 */}
+        <aside
+          className="hero-side-left hidden md:block flex-shrink-0"
+          style={{ width: 'calc(50vw - 336px)' }}
+        >
+          <SideImage
+            darkSrc="/hero-side-left.jpg"
+            lightSrc="/47e2e589fd58cdf0a12c5f110b0a7c46527235831.jpg"
+            side="left"
+          />
+        </aside>
+
+        {/* 信息流 */}
+        <section className="w-full max-w-2xl px-4 py-8 surface-pink rounded-xl">
+          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-6">
             最新作品
           </h2>
-          <div className="flex gap-2 text-sm flex-wrap">
-            <span className="text-[var(--muted-foreground)]">筛选：</span>
-            {Object.entries(TYPE_LABELS).map(([key, label]) => (
-              <Link
-                key={key}
-                href={`/type/${key}`}
-                className="text-[var(--primary)] hover:underline"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-        </div>
 
-        {/* 卡片信息流 — 从 MDX 加载真实数据 */}
-        <FeedList posts={pagedPosts} />
-        <FeedPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-        />
-      </section>
+          <FeedList posts={pagedPosts} />
+          <FeedPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+          />
+        </section>
+
+        {/* 右侧装饰图 */}
+        <aside
+          className="hero-side-right hidden md:block flex-shrink-0"
+          style={{ width: 'calc(50vw - 336px)' }}
+        >
+          <SideImage
+            darkSrc="/hero-side-right.jpg"
+            lightSrc="/5c4fbffa74c8781ad7c9ad7ba53aa548513549031.jpg"
+            side="right"
+          />
+        </aside>
+      </div>
     </div>
   );
 }

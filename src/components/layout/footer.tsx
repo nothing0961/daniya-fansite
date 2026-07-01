@@ -15,7 +15,7 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border)] bg-[var(--background)]">
+    <footer className="relative z-10 border-t border-[var(--border)] bg-[var(--background)] backdrop-blur-md surface-pink">
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* 版权信息 */}

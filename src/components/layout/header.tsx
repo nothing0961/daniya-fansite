@@ -26,7 +26,7 @@ export async function Header() {
   const user = session?.user;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] header-bubble">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md surface-pink">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
         {/* 左侧：Logo */}
         <div className="flex items-center gap-4">

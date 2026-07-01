@@ -383,8 +383,8 @@ main {
 /* Hero 装饰图片 — 桌面/手机分离            */
 /* ======================================== */
 
-/* ===== Header — 淡粉泡泡 ===== */
-.header-bubble {
+/* ===== 淡粉泡泡表面 — Header / Hero / Footer 共用 ===== */
+.bubble-surface {
   background: oklch(0.72 0.12 340 / 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -393,7 +393,7 @@ main {
 }
 
 /* 泡泡装饰 */
-.header-bubble::before {
+.bubble-surface::before {
   content: '';
   position: absolute;
   top: -30%;
@@ -409,7 +409,7 @@ main {
   animation: headerBubble 6s ease-in-out infinite;
 }
 
-.header-bubble::after {
+.bubble-surface::after {
   content: '';
   position: absolute;
   top: 20%;
@@ -436,42 +436,30 @@ main {
   }
 }
 
-/* Hero 区域容器 — 给侧边图片提供定位参考 */
-.hero-wrapper {
-  position: relative;
-  overflow: hidden;
+
+/* 亮色主题 — 粉色毛玻璃表面 */
+.light .surface-pink {
+  background: oklch(0.72 0.12 340 / 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-/* ===== 桌面端：左右侧装饰图（inline style 定位，此处仅 mask + 响应式隐藏）===== */
+/* ===== 桌面端：左右侧装饰图（mask 虚化 + 响应式隐藏）===== */
 .hero-side-left {
   mask-image: linear-gradient(to right, transparent 0%, black 65px);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 65px);
 }
 
+.hero-side-right {
+  mask-image: linear-gradient(to left, transparent 0%, black 65px);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 65px);
+}
+
 /* 手机端完全隐藏侧边图 */
 @media (max-width: 767px) {
-  .hero-side-left {
+  .hero-side-left,
+  .hero-side-right {
     display: none;
   }
 }
 
-/* ===== 手机端：Hero 区域内的居中背景图 ===== */
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  opacity: var(--hero-opacity);
-  pointer-events: none;
-  z-index: 0;
-  user-select: none;
-}
-
-/* 桌面端隐藏手机背景图（侧边图替代） */
-@media (min-width: 768px) {
-  .hero-bg {
-    display: none;
-  }
-}
