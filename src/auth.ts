@@ -4,13 +4,10 @@
  */
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-
   providers: [
     Credentials({
       name: "credentials",
@@ -25,7 +22,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!username || !password) return null;
 
         const user = await prisma.user.findUnique({ where: { username } });
-        if (!user || !user.passwordHash) return null;
+        if (!user || !user.passwordHash) {
+          // 用户不存在 → 抛特定错误码（前端弹窗"该用户未注册"用）
+          // 密码为 null（未来 OAuth 合并账号）时也按"未注册"语义处理更安全
+          throw new Error("USER_NOT_REGISTERED");
+        }
 
         const valid = await verifyPassword(password, user.passwordHash);
         if (!valid) return null;

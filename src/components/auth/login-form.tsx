@@ -2,7 +2,16 @@
 
 import { useState, useRef } from "react";
 import { signIn } from "next-auth/react";
+import { X } from "lucide-react";
 import { Captcha, type CaptchaHandle } from "./captcha";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
   const captchaRef = useRef<CaptchaHandle>(null);
@@ -12,6 +21,7 @@ export function LoginForm() {
   const [captchaInput, setCaptchaInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showNotRegistered, setShowNotRegistered] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,9 +48,16 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError(result.error === "CredentialsSignin" ? "用户名或密码错误" : result.error);
-        captchaRef.current?.refresh();
-        setCaptchaInput("");
+        if (result.error === "USER_NOT_REGISTERED") {
+          // 未注册用户 → 弹 Dialog，只能点"确认"或右上角X 关闭，不跳转不显示红色错误条
+          setShowNotRegistered(true);
+          captchaRef.current?.refresh();
+          setCaptchaInput("");
+        } else {
+          setError(result.error === "CredentialsSignin" ? "用户名或密码错误" : result.error);
+          captchaRef.current?.refresh();
+          setCaptchaInput("");
+        }
       } else {
         window.location.href = "/";
       }
@@ -52,6 +69,7 @@ export function LoginForm() {
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-3">
       <input
         type="text"
@@ -98,5 +116,41 @@ export function LoginForm() {
         {loading ? "登录中..." : "登录"}
       </button>
     </form>
+
+    {/* 未注册用户登录 → 专属 Dialog，只能点『确认』或右上角 X 关闭 */}
+    <Dialog
+      open={showNotRegistered}
+      onOpenChange={(next) => {
+        if (next) setShowNotRegistered(true);
+        // next === false 方向直接丢弃：点遮罩 / 按 Esc 均无法关闭
+      }}
+    >
+      <DialogContent>
+        {/* 右上角关闭叉（仅点击触发，不依赖 Dialog 默认 close）*/}
+        <button
+          type="button"
+          onClick={() => setShowNotRegistered(false)}
+          aria-label="关闭"
+          className="absolute top-4 right-4 p-1 rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <DialogTitle className="pr-8">温馨提示</DialogTitle>
+        <DialogDescription className="pt-3">
+          该用户未注册
+        </DialogDescription>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            onClick={() => setShowNotRegistered(false)}
+          >
+            确认
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -76,22 +76,55 @@ function pad(n: number): string {
 }
 
 export function BirthdayCountdown() {
-  // 初始值用 Date()，首屏（SSR 或 hydration 前）先展示服务端时间兜底；水合后每秒跑 interval
-  const [now, setNow] = useState<Date>(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    setNow(new Date());
     const timer = setInterval(() => {
       setNow(new Date());
     }, 1000);
-    // cleanup：组件卸载时清掉 timer 防内存泄漏
     return () => {
       clearInterval(timer);
     };
   }, []);
 
-  const { days, hours, minutes, seconds, isBirthdayToday, targetYear } =
-    useMemo(() => diffToParts(now), [now]);
-  const tagline = pickTagline(isBirthdayToday ? 0 : days);
+  const parts = useMemo(() => (now ? diffToParts(now) : null), [now]);
+  const tagline = parts ? pickTagline(parts.isBirthdayToday ? 0 : parts.days) : "";
+
+  // SSR / hydration 阶段：展示占位骨架，与客户端首次渲染完全一致，避免水合不匹配
+  if (!parts) {
+    return (
+      <div className="flex flex-col items-center text-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 text-[11px] tracking-widest font-medium text-[var(--primary)]">
+          <span>🌸</span>
+          <span>达妮娅 · 生日倒计时</span>
+        </div>
+        <div className="flex items-baseline justify-center gap-2 flex-wrap">
+          <span
+            className="text-5xl sm:text-6xl font-black leading-none"
+            style={{
+              color: "var(--daniya-accent)",
+              textShadow: "0 2px 10px color-mix(in oklab, var(--daniya-accent) 35%, transparent)",
+            }}
+          >
+            --
+          </span>
+          <span className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">天</span>
+        </div>
+        <div className="flex items-center justify-center gap-1.5 text-[var(--foreground)] mt-1">
+          <span className="font-mono text-sm sm:text-base rounded bg-[var(--muted)]/40 border border-[var(--border)] px-2 py-0.5 tabular-nums">--</span>
+          <span className="text-[var(--muted-foreground)] text-xs">时</span>
+          <span className="font-mono text-sm sm:text-base rounded bg-[var(--muted)]/40 border border-[var(--border)] px-2 py-0.5 tabular-nums">--</span>
+          <span className="text-[var(--muted-foreground)] text-xs">分</span>
+          <span className="font-mono text-sm sm:text-base rounded bg-[var(--muted)]/40 border border-[var(--border)] px-2 py-0.5 tabular-nums">--</span>
+          <span className="text-[var(--muted-foreground)] text-xs">秒</span>
+        </div>
+        <p className="text-[11px] sm:text-xs text-[var(--muted-foreground)] dark:text-white mt-1.5">&nbsp;</p>
+      </div>
+    );
+  }
+
+  const { days, hours, minutes, seconds, isBirthdayToday, targetYear } = parts;
 
   // ===== 今天是生日：庆祝态 =====
   if (isBirthdayToday) {
