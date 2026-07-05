@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-const CONTENT_DIR = path.join(process.cwd(), "content", "posts");
+const CONTENT_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "content", "posts");
 
 export async function GET(
   _request: Request,

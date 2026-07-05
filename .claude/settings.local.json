@@ -4,7 +4,8 @@
       "Bash(npx tsc *)",
       "Bash(npx vitest *)",
       "Bash(sed 's/DATABASE_URL=//')",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npm run *)"
     ]
   }
 }

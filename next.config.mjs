@@ -17,6 +17,10 @@ const nextConfig = {
       { protocol: "https", hostname: "api.bilibili.com" },
     ],
   },
+  // 禁止 Turbopack NFT 追踪器把 next.config.mjs 打入 serverless 函数包
+  outputFileTracingExcludes: {
+    "*": ["./next.config.mjs"],
+  },
 };
 
 const withMDX = createMDX({

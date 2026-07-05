@@ -9,7 +9,7 @@ import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { PostMetaInput } from "@/lib/validators/post-schema";
 
-const CONTENT_DIR = path.join(process.cwd(), "content", "posts");
+const CONTENT_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "content", "posts");
 
 interface CreatePostResult {
   slug: string;

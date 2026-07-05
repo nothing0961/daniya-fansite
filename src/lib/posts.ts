@@ -17,7 +17,7 @@ import matter from "gray-matter";
 import { postMetaSchema, type PostMetaInput } from "@/lib/validators/post-schema";
 
 /** 内容目录路径 — 相对于项目根目录 */
-const CONTENT_DIR = path.join(process.cwd(), "content", "posts");
+const CONTENT_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "content", "posts");
 
 /** 导出的作品元数据类型 */
 export interface PostMeta {
