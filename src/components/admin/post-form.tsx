@@ -212,14 +212,21 @@ export function PostForm({
           onSubmitSuccess(json);
         } else if (mode === "submit" && !isEdit) {
           // 用户点击「提交审核」的新建投稿成功：弹「提交成功，等待审核」→ 必须手动关
-          // 关了之后跳「我的投稿」页，查看审核进度
+          // 关了之后跳「用户投稿预览页」/dashboard/submissions/<slug>，右上状态胶囊可见（方案 A）
+          const slug = (json as Record<string, unknown>)?.slug as
+            | string
+            | undefined;
           showSuccess("提交成功，等待审核", {
             autoClose: false,
             message:
               "您的作品已提交站长人工审核，通过后将出现在首页 ✨。" +
-              "可在「个人中心 → 我的投稿」中随时查看审核进度。",
+              "关闭提示后可查看作品预览，随时关注审核进度。",
             onDismiss: () => {
-              router.push("/dashboard/submissions");
+              router.push(
+                slug
+                  ? `/dashboard/submissions/${slug}`
+                  : "/dashboard/submissions",
+              );
             },
           });
         } else {
@@ -364,7 +371,6 @@ export function PostForm({
             <label className={labelClass}>关联角色</label>
             <select
               value={character}
-              defaultValue="DANIYA"
               onChange={(e) => setCharacter(e.target.value as Character)}
               className={selectClass}
               aria-label="关联角色"

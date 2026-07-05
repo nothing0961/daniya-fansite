@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { MusicPlayer } from "@/components/shared/music-player";
 import { UserMenu } from "@/components/auth/user-menu";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { MobileNav } from "./mobile-nav";
@@ -17,7 +18,7 @@ import { MobileNav } from "./mobile-nav";
 const navLinks = [
   { href: "/", label: "首页" },
   { href: "/character", label: "达妮娅" },
-  { href: "/about", label: "关于" },
+  { href: "/about", label: "关于本站" },
 ];
 
 export async function Header() {
@@ -70,6 +71,8 @@ export async function Header() {
               className="flex-1 bg-transparent outline-none text-xs text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] min-w-0"
             />
           </form>
+
+          <MusicPlayer />
 
           <ThemeToggle />
 

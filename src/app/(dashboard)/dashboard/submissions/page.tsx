@@ -220,6 +220,16 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
 
                     {/* 状态专属信息条 + 按钮 */}
                     <div className="mt-auto pt-2 space-y-2">
+                      {/* 查看详情（所有状态通用，始终显示）*/}
+                      <div className="flex justify-end">
+                        <Link
+                          href={`/dashboard/submissions/${item.slug}`}
+                          className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] transition-colors"
+                        >
+                          查看详情 →
+                        </Link>
+                      </div>
+
                       {/* PENDING：站长审核中 + 取消投稿 */}
                       {item.status === "PENDING" && (
                         <>

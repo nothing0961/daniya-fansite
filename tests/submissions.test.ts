@@ -127,11 +127,15 @@ describe("P0 · 我的投稿 驳回重提 + 成功弹窗跳转打通", () => {
     expect(submitPage).toMatch(/<PostForm[\s\S]*?prefill\s*=/);
   });
 
-  it("11) post-form.tsx 新增 prefill Prop + 提交成功 onDismiss 跳 /dashboard/submissions（原 TODO 取消注释，不保留 void router）", () => {
+  it("11) post-form.tsx 新增 prefill Prop + 提交成功 onDismiss 优先跳预览页 /dashboard/submissions/<slug>，fallback 列表页", () => {
     // prefill 可选 prop 声明
     expect(postForm).toMatch(/interface\s+PostFormProps[\s\S]{0,500}prefill\s*\?/);
-    // 跳转激活：必须出现 router.push 的真实调用，并指向 /dashboard/submissions（旧 my-submissions 被替换）
-    expect(postForm).toMatch(/router\.push\s*\(\s*["']\/dashboard\/submissions["']\s*\)/);
+    // 跳转必须指向 /dashboard/submissions 基础路径（无论预览页还是 fallback）
+    expect(postForm).toMatch(/router\.push[\s\S]{0,200}?\/dashboard\/submissions/);
+    // 新行为：必须包含带动态 slug 的预览页跳转（方案 A）
+    expect(postForm).toMatch(
+      /\/dashboard\/submissions\/\$\{(?:(?:json|data|res)\.slug|slug)\}/,
+    );
     // 不应再包含旧的 TODO 注释路径 /dashboard/my-submissions
     expect(postForm).not.toMatch(/my-submissions/);
     // 不应再包含 "void router" 占位（会抑制 ESLint 的 hack 现在应该去掉）
