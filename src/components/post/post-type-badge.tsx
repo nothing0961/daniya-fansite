@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 /** 类型配置 — 每种类型的颜色、显示名 */
 const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "credit" | "outline" }> = {
   illustration: { label: "插画", variant: "default" },
+  screenshot: { label: "截屏", variant: "secondary" },
   comic: { label: "漫画", variant: "secondary" },
   video: { label: "视频", variant: "default" },
   article: { label: "文章", variant: "outline" },

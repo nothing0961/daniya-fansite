@@ -9,6 +9,8 @@
  */
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/shared/theme-provider";
+import { SessionProvider } from "@/components/auth/session-provider";
+import { StatusModalProvider } from "@/components/ui/status-modal";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
@@ -40,12 +42,16 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col">
-        <ThemeProvider>
-          <Header />
-          {/* flex-1 让 main 撑满剩余空间，把 footer 推到底部 */}
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            <StatusModalProvider>
+              <Header />
+              {/* flex-1 让 main 撑满剩余空间，把 footer 推到底部 */}
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </StatusModalProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

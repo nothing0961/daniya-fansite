@@ -52,14 +52,11 @@ export function UserMenu({ user }: UserMenuProps) {
 
       {/* 下拉菜单 */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-lg z-50">
+        <div className="absolute right-0 top-full mt-2 w-48 rounded-lg border border-[var(--border)] bg-white dark:bg-black shadow-lg z-50">
           {/* 用户信息 */}
           <div className="px-4 py-3 border-b border-[var(--border)]">
             <p className="text-sm font-medium text-[var(--foreground)] truncate">
               {user.name || "用户"}
-            </p>
-            <p className="text-xs text-[var(--muted-foreground)] truncate">
-              {user.email || ""}
             </p>
           </div>
 

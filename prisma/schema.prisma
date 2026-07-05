@@ -19,7 +19,7 @@ datasource db {
 // Auth.js v5 必需的认证模型 (@auth/prisma-adapter)
 // ============================================================
 
-/** OAuth 账号关联 — 一个用户可以绑定多个 OAuth 提供商 */
+/** OAuth 账号关联 — 保留用于未来扩展 */
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -39,26 +39,26 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-/** 用户 — 支持多种登录方式（GitHub、QQ、邮箱、手机） */
+/** 用户 — 用户名 + 密码登录 */
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  phone         String?   @unique
-  phoneVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  username     String    @unique
+  name         String?
+  passwordHash String?
+  email        String?
+  image        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  accounts      Account[]
+  accounts     Account[]
 
   // 自定义关联
-  bookmarks     Bookmark[]
-  postLikes     PostLike[]
+  bookmarks    Bookmark[]
+  postLikes    PostLike[]
+  pendingPosts PendingPost[]
+  comments     Comment[]
 
   @@index([email])
-  @@index([phone])
 }
 
 // ============================================================
@@ -94,11 +94,97 @@ model PostLike {
   @@index([postSlug])
 }
 
-/** 验证令牌 — Auth.js 邮箱 Magic Link + 短信验证码复用 */
+/**
+ * PendingPost — 用户投稿审核队列
+ *
+ * 任何登录用户可从 /submit 提交作品，但不会立即生成 MDX 进入前台。
+ * 先进入 PendingPost 表，status = PENDING。
+ * 只有 ADMIN_USER_ID 登录 /dashboard/moderation 审核：
+ *  - 通过：把数据转成 MDX 文件写入 content/posts/，同时 status = APPROVED
+ *  - 驳回：status = REJECTED，可填 rejectReason；不生成 MDX
+ */
+enum PendingPostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/**
+ * 角色枚举 — 用于把作品和特定角色关联（方案 A：可空无默认值）
+ * 目前只有达妮娅，未来扩角色直接在这里加枚举值即可。
+ */
+enum Character {
+  DANIYA
+}
+
+model PendingPost {
+  id             String            @id @default(cuid())
+  userId         String
+  /** 文章 slug（可选，未填时服务端根据 title 自动生成）；唯一防止撞名 */
+  slug           String            @unique
+  title          String
+  description    String            @db.VarChar(2000)
+  type           String // "illustration" | "screenshot" | "video"
+  /** 关联角色（方案 A：可空，无默认值；前端 PostForm 默认选 DANIYA） */
+  character      Character?
+  /** 关联图片 URL 数组（ImgURL CDN 外链）*/
+  images         String[]
+  /** BV 号，video 类型必填 */
+  videoId        String?
+  tags           String[]
+  originalCreator String?
+  sourcePlatform  String?
+  sourceUrl       String?
+  /** MDX 正文内容 */
+  content        String            @db.Text
+  /** 审核状态 */
+  status         PendingPostStatus @default(PENDING)
+  /** 驳回原因（仅 REJECTED 时有值）*/
+  rejectReason   String?
+  /** 审核人 userId（管理员）*/
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  /** 审核通过后，对应实际生成的作品 slug（便于前台跳转预览）*/
+  publishedSlug  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([character])
+  @@index([createdAt])
+}
+
+/** 验证令牌 — Auth.js 认证复用 */
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime
 
   @@id([identifier, token])
+}
+
+/**
+ * 评论 — 自建评论系统（打通站内用户名+密码体系）
+ *
+ * 任何登录用户可从作品详情页发表评论，内容关联作品 slug（MDX 文件）。
+ * - 作者本人 或 站长 ADMIN_USER_ID 可删除
+ * - 未登录用户可读列表，但不可发表/删除
+ */
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  /** 作品 slug — 对应 MDX 文件的 slug（作品内容在文件系统，不做外键）*/
+  postSlug  String
+  /** 评论正文 — 建议 1-1000 字（Zod 层校验）*/
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postSlug, createdAt])
+  @@index([userId])
 }

@@ -16,7 +16,16 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    userId?: string;
+    image?: string | null;
     phone?: string | null;
     phoneVerified?: Date | null;
+  }
+}
+
+declare module "@auth/core/jwt" {
+  interface JWT {
+    userId?: string;
+    image?: string | null;
   }
 }

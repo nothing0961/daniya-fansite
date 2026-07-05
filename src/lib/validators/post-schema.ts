@@ -11,6 +11,7 @@ import { z } from "zod";
 /** 作品类型枚举 */
 const postTypeEnum = z.enum([
   "illustration",
+  "screenshot",
   "comic",
   "video",
   "article",
@@ -29,6 +30,9 @@ const sourcePlatformEnum = z.enum([
   "other",
 ]);
 
+/** 关联角色枚举（MDX frontmatter / PendingPost.character 共用） */
+const characterEnum = z.enum(["DANIYA"]);
+
 /** MDX Frontmatter 校验规则 */
 export const postMetaSchema = z.object({
   /** 作品标题 — 必填，1-120 字 */
@@ -42,6 +46,9 @@ export const postMetaSchema = z.object({
 
   /** 作品类型 */
   type: postTypeEnum,
+
+  /** 关联角色（方案 A：可选；投稿默认 DANIYA），MDX frontmatter 中也允许填 character: DANIYA */
+  character: characterEnum.optional(),
 
   /** 原作者昵称 — 必填，搬运作品必须标注原作者 */
   originalCreator: z.string().min(1, "必须标注原作者"),

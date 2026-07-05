@@ -28,7 +28,7 @@ const buttonSizes: Record<string, string> = {
   icon: "h-10 w-10 rounded-md",
 };
 
-export interface ButtonProps
+interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: keyof typeof buttonVariants;
   size?: keyof typeof buttonSizes;

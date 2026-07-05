@@ -1,21 +1,23 @@
 /**
  * 作品详情页
  * 动态路由 /post/[slug] — 根据 slug 加载对应 MDX 作品
- * 包含：标题、元信息、出处标注（突出）、图片展示区、MDX 正文、点赞收藏按钮
+ * 包含：标题、元信息、出处标注（突出）、图片展示区、MDX 正文、点赞收藏按钮、
+ *       自建评论区（UserComments，打通站内用户名+密码体系）
  *
  * 修改方式：
  * - generateMetadata 控制 SEO 标题和描述
- * - 评论区替换 Giscus 配置即可
+ * - 评论区实现见 src/components/comments/user-comments.tsx
  */
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { getPostContent, getAllPosts } from "@/lib/posts";
 import { PostMeta } from "@/components/post/post-meta";
 import { PostCredit } from "@/components/post/post-credit";
 import { Separator } from "@/components/ui/separator";
 import { LikeButton } from "@/components/interaction/like-button";
 import { BookmarkButton } from "@/components/interaction/bookmark-button";
-import { GiscusComments } from "@/components/comments/giscus";
+import { UserComments } from "@/components/comments/user-comments";
 import { BilibiliEmbed } from "@/components/media/bilibili-embed";
 import { PostGallery } from "@/components/media/post-gallery";
 
@@ -61,6 +63,14 @@ export default async function PostPage({ params }: PostPageProps) {
   if (!result) notFound();
 
   const { meta, rawContent } = result;
+
+  // 取当前登录用户 + 站长判断（传给自建评论组件，用于显示"删除"按钮、已登录/未登录输入框）
+  const session = await auth();
+  const currentUserId = session?.user?.id ?? null;
+  const isAdmin =
+    !!currentUserId &&
+    !!process.env.ADMIN_USER_ID &&
+    currentUserId === process.env.ADMIN_USER_ID;
 
   // 格式化日期
   const formattedDate = new Date(meta.publishedAt).toLocaleDateString(
@@ -150,8 +160,12 @@ export default async function PostPage({ params }: PostPageProps) {
         <BookmarkButton postSlug={slug} />
       </div>
 
-      {/* ===== Giscus 评论区 ===== */}
-      <GiscusComments />
+      {/* ===== 自建评论区（打通站内用户名+密码体系） ===== */}
+      <UserComments
+        postSlug={slug}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+      />
 
       {/* 返回首页 */}
       <div className="mt-8 pt-6 border-t border-[var(--border)]">

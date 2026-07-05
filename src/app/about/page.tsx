@@ -114,7 +114,7 @@ export default function AboutPage() {
             <li>Tailwind CSS v4 — 原子化 CSS</li>
             <li>MDX — 内容管理</li>
             <li>Auth.js v5 — 用户认证</li>
-            <li>Giscus — 评论系统</li>
+            <li>自建评论系统 — 打通站内账号体系</li>
             <li>Vercel — 部署平台</li>
           </ul>
         </section>

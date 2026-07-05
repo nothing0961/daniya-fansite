@@ -1,9 +1,6 @@
-/**
- * 账号设置页 — /dashboard/settings
- * 展示账号信息（只读）
- */
 import { auth } from "@/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUploadDialog } from "@/components/auth/avatar-upload-dialog";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
@@ -21,7 +18,6 @@ export default async function SettingsPage() {
         账号设置
       </h1>
 
-      {/* 基本信息 */}
       <section className="mb-8">
         <h2 className="text-sm font-medium text-[var(--muted-foreground)] mb-3">
           基本信息
@@ -32,7 +28,7 @@ export default async function SettingsPage() {
               <AvatarImage src={user.image || undefined} alt={user.name || ""} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-medium text-[var(--foreground)]">
                 {user.name || "未知用户"}
               </p>
@@ -40,16 +36,16 @@ export default async function SettingsPage() {
                 {user.email || "无邮箱"}
               </p>
             </div>
+            <AvatarUploadDialog
+              currentImage={user.image}
+              userName={user.name}
+            />
           </div>
-          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-            账号信息来自 GitHub OAuth 登录，如需修改请在 GitHub 上更新。
-          </p>
         </div>
       </section>
 
       <Separator className="my-6" />
 
-      {/* 登出 */}
       <section>
         <h2 className="text-sm font-medium text-[var(--muted-foreground)] mb-3">
           账号操作

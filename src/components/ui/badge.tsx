@@ -15,7 +15,7 @@ const badgeVariants: Record<string, string> = {
   credit: "bg-[var(--credit)] text-[var(--credit-foreground)]",
 };
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: keyof typeof badgeVariants;
 }
 

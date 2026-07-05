@@ -1,14 +1,16 @@
 /**
  * 作品类型枚举
  * illustration: 插画/单图
+ * screenshot: 截屏/游戏/课堂截图
  * comic: 漫画/多图
  * video: 视频
  * article: 文章/同人文
  * cosplay: COS 正片
  * other: 其他类型
  */
-export const POST_TYPES = [
+const POST_TYPES = [
   "illustration",
+  "screenshot",
   "comic",
   "video",
   "article",
@@ -20,6 +22,7 @@ export type PostType = (typeof POST_TYPES)[number];
 /** 作品类型中文显示名 */
 export const POST_TYPE_LABELS: Record<PostType, string> = {
   illustration: "插画",
+  screenshot: "截屏",
   comic: "漫画",
   video: "视频",
   article: "文章",
@@ -31,7 +34,7 @@ export const POST_TYPE_LABELS: Record<PostType, string> = {
  * 来源平台枚举
  * 标注二创作品的原发布平台
  */
-export const SOURCE_PLATFORMS = [
+const SOURCE_PLATFORMS = [
   "weibo",
   "pixiv",
   "twitter",
@@ -53,27 +56,15 @@ export const PLATFORM_LABELS: Record<SourcePlatform, string> = {
   other: "其他",
 };
 
-/** 作品元数据 — 从 MDX frontmatter 解析得到 */
-export interface PostMeta {
-  slug: string;
-  title: string;
-  description: string;
-  type: PostType;
-  originalCreator: string;
-  sourceUrl: string;
-  sourcePlatform: SourcePlatform;
-  tags: string[];
-  publishedAt: string;
-  updatedAt?: string;
-  draft: boolean;
-  /** 作品配图列表（SM.MS 图床完整 URL） */
-  images: string[];
-  /** B站视频 BV 号（仅 video 类型，如 BV1xx411c7X） */
-  videoId?: string;
-}
+/**
+ * 关联角色枚举（方案 A）
+ *  - 与 prisma/schema.prisma enum Character 保持一致
+ *  - 目前只有达妮娅，未来扩角色同步在 schema、这里和 Zod 里三处各加一个值
+ */
+export const CHARACTERS = ["DANIYA"] as const;
+export type Character = (typeof CHARACTERS)[number];
 
-/** 完整作品数据 — 元数据 + MDX 编译后的源码 */
-export interface Post extends PostMeta {
-  /** MDX 编译后的 JSX 源码（由 @next/mdx 的 compileMdx 生成） */
-  code: string;
-}
+/** 关联角色中文显示名（用于下拉 / 标签） */
+export const CHARACTER_LABELS: Record<Character, string> = {
+  DANIYA: "达妮娅",
+};

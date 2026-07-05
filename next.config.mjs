@@ -7,10 +7,12 @@ const nextConfig = {
   // 鸣潮图片资源来源域名（后续如果引用外部图片需要添加）
   images: {
     remotePatterns: [
-      // SM.MS 图床
+      // SM.MS 图床 (legacy)
       { protocol: "https", hostname: "s2.loli.net" },
       { protocol: "https", hostname: "s1.loli.net" },
       { protocol: "https", hostname: "i.loli.net" },
+      // ImgURL 图床 CDN
+      { protocol: "https", hostname: "s3.bmp.ovh" },
       // B站封面图
       { protocol: "https", hostname: "api.bilibili.com" },
     ],

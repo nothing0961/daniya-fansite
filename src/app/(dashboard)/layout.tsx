@@ -1,17 +1,11 @@
 /**
  * Dashboard 布局 — 登录用户个人中心
  * 侧边栏 + 内容区布局
+ *  - 管理员（ADMIN_USER_ID）额外可见：作品管理、投稿审核
  */
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import Link from "next/link";
-
-/** 侧边栏导航项 */
-const sidebarLinks = [
-  { href: "/dashboard", label: "概览", icon: "home" },
-  { href: "/dashboard/bookmarks", label: "我的收藏", icon: "bookmark" },
-  { href: "/dashboard/settings", label: "账号设置", icon: "settings" },
-];
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +17,23 @@ export default async function DashboardLayout({
   if (!session?.user) {
     redirect("/login");
   }
+
+  const isAdmin = session.user.id === process.env.ADMIN_USER_ID;
+
+  /** 侧边栏导航项（根据权限动态生成）
+   *   方案 A 整合：账号设置 & 作品管理的内容/入口 已合并到 /dashboard 概览页
+   *   保留：概览 / 我的收藏 / 我的投稿 / 投稿审核（站长）
+   */
+  const sidebarLinks = [
+    { href: "/dashboard", label: "概览" },
+    { href: "/dashboard/bookmarks", label: "我的收藏" },
+    { href: "/dashboard/submissions", label: "我的投稿" },
+    ...(isAdmin
+      ? [
+          { href: "/dashboard/moderation", label: "投稿审核" },
+        ]
+      : []),
+  ];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">

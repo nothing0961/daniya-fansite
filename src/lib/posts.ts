@@ -25,6 +25,8 @@ export interface PostMeta {
   title: string;
   description: string;
   type: PostMetaInput["type"];
+  /** 关联角色（方案 A：可选，可空；DANIYA = 达妮娅），从 MDX frontmatter.character 解析 */
+  character?: PostMetaInput["character"];
   originalCreator: string;
   sourceUrl: string;
   sourcePlatform: PostMetaInput["sourcePlatform"];
@@ -143,8 +145,15 @@ function readPostMeta(
  * 获取所有作品元数据（按发布日期倒序）
  * 草稿仅在开发环境显示
  * 每个 post slug 只保留一个版本（优先目录形式）
+ *
+ * 新增（方案 A）：支持 opts.character 过滤 — 例如 character = 'DANIYA' 仅返回关联达妮娅的作品
  */
-export function getAllPosts(): PostMeta[] {
+export function getAllPosts(opts?: {
+  includeDrafts?: boolean;
+  character?: PostMetaInput["character"];
+}): PostMeta[] {
+  const includeDrafts = opts?.includeDrafts ?? false;
+  const characterFilter = opts?.character;
   // 确保目录存在
   if (!fs.existsSync(CONTENT_DIR)) {
     return [];
@@ -173,8 +182,8 @@ export function getAllPosts(): PostMeta[] {
     const meta = readPostMeta(resolved.file, slug, resolved.dir, fileNameDate);
     if (!meta) continue;
 
-    // 草稿仅在开发环境显示
-    if (meta.draft && process.env.NODE_ENV === "production") continue;
+    // 草稿仅在有 includeDrafts 标志或开发环境时显示
+    if (meta.draft && !includeDrafts && process.env.NODE_ENV === "production") continue;
 
     posts.push(meta);
   }
@@ -184,6 +193,11 @@ export function getAllPosts(): PostMeta[] {
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
+
+  // 关联角色过滤（方案 A：可空；传了 character 就严格匹配 meta.character）
+  if (characterFilter) {
+    return posts.filter((p) => p.character === characterFilter);
+  }
 
   return posts;
 }
@@ -215,39 +229,6 @@ export function getPostsByTag(tag: string): PostMeta[] {
   return all.filter((post) => post.tags.includes(tag));
 }
 
-/**
- * 获取所有标签及其作品数量（用于标签云/侧边栏）
- */
-export function getAllTags(): { tag: string; count: number }[] {
-  const all = getAllPosts();
-  const tagMap = new Map<string, number>();
-
-  for (const post of all) {
-    for (const tag of post.tags) {
-      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-    }
-  }
-
-  return Array.from(tagMap.entries())
-    .map(([tag, count]) => ({ tag, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
-/**
- * 获取所有作品类型及其数量
- */
-export function getAllTypes(): { type: string; count: number }[] {
-  const all = getAllPosts();
-  const typeMap = new Map<string, number>();
-
-  for (const post of all) {
-    typeMap.set(post.type, (typeMap.get(post.type) || 0) + 1);
-  }
-
-  return Array.from(typeMap.entries())
-    .map(([type, count]) => ({ type, count }))
-    .sort((a, b) => b.count - a.count);
-}
 
 /**
  * 读取 MDX 原始内容（用于详情页渲染）

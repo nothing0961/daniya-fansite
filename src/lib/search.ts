@@ -82,9 +82,3 @@ export function searchPosts(query: string, limit = 10): PostMeta[] {
   return scored.map((entry) => entry.post);
 }
 
-/**
- * 使搜索索引失效（开发时修改内容后可调用）
- */
-export function invalidateSearchIndex(): void {
-  searchIndex = null;
-}

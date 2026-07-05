@@ -39,13 +39,13 @@ export async function Header() {
           </Link>
         </div>
 
-        {/* 中间：导航链接（桌面端） */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* 中间：导航链接（桌面端）—— 小胶囊样式，跟「投稿」按钮同款视觉 */}
+        <nav className="hidden md:flex items-center gap-1.5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] rounded-md hover:bg-[var(--muted)] transition-colors"
+              className="rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--primary)]/20 hover:border-[var(--primary)] transition-colors"
             >
               {link.label}
             </Link>
@@ -53,19 +53,35 @@ export async function Header() {
         </nav>
 
         {/* 右侧：操作区 */}
-        <div className="flex items-center gap-1">
-          {/* 搜索入口 */}
-          <Link
-            href="/search"
-            className="p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] rounded-md hover:bg-[var(--muted)] transition-colors"
-            aria-label="搜索"
+        <div className="flex items-center gap-2">
+          {/* 搜索栏（桌面端）—— 原生 GET form 跳 /search?q=xxx，跟投稿按钮同款胶囊外观 */}
+          <form
+            action="/search"
+            className="hidden md:flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md pl-3 pr-1.5 h-8 w-48 focus-within:w-64 focus-within:border-[var(--primary)] focus-within:bg-[var(--card)]/80 transition-all"
+            role="search"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            <svg className="h-4 w-4 text-[var(--muted-foreground)] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
             </svg>
-          </Link>
+            <input
+              type="search"
+              name="q"
+              placeholder="搜索作品 / 标签…"
+              className="flex-1 bg-transparent outline-none text-xs text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] min-w-0"
+            />
+          </form>
 
           <ThemeToggle />
+
+          {/* 投稿入口 */}
+          {user && (
+            <Link
+              href="/submit"
+              className="rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--primary)]/20 hover:border-[var(--primary)] transition-colors"
+            >
+              投稿
+            </Link>
+          )}
 
           {/* 根据登录状态显示不同组件 */}
           {user ? (

@@ -1,11 +1,15 @@
 /**
  * Dashboard 首页 — /dashboard
- * 用户个人中心概览：用户名、头像、收藏数、点赞数
+ * 用户个人中心概览：用户信息、收藏/点赞统计、账号设置（基本信息+更换头像+退出）、站长快捷操作
+ *  —— 由方案 A 整合："账号设置"与"作品管理"的入口合并到概览页
  */
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { AvatarUploadDialog } from "@/components/auth/avatar-upload-dialog";
+import { EditNameDialog } from "@/components/auth/edit-name-dialog";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -13,28 +17,19 @@ export default async function DashboardPage() {
   const user = session?.user;
   if (!user?.id || !user) return null;
 
-  // 统计收藏和点赞数 + 账号绑定信息
+  const isAdmin = user.id === process.env.ADMIN_USER_ID;
+
+  // 统计收藏和点赞数 + 用户邮箱（基本信息展示用）
   const [bookmarkCount, likeCount, userRecord] = await Promise.all([
     prisma.bookmark.count({ where: { userId: user.id } }),
     prisma.postLike.count({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: {
-        email: true,
-        phone: true,
-        accounts: { select: { provider: true } },
-      },
+      select: { email: true }, // 仅需要 email，不再查 accounts.provider
     }),
   ]);
 
-  const linkedProviders = new Set(userRecord?.accounts?.map((a) => a.provider) || []);
-  const linkedMethods = [
-    { key: "github", label: "GitHub", linked: linkedProviders.has("github"), icon: null },
-    { key: "qq", label: "QQ", linked: linkedProviders.has("qq"), icon: null },
-    { key: "email", label: "邮箱", linked: !!userRecord?.email, icon: null },
-    { key: "phone", label: "手机", linked: !!userRecord?.phone, icon: null },
-  ];
-
+  const email = user.email || userRecord?.email || null;
   const initials = user.name?.charAt(0).toUpperCase() || "?";
 
   return (
@@ -43,26 +38,33 @@ export default async function DashboardPage() {
         个人中心
       </h1>
 
-      {/* 用户信息卡片 */}
+      {/* 用户信息卡片（头像 + 名称 + 邮箱 + 更换头像按钮 —— 原「基本信息区」已合并进来，避免两处重复展示头像昵称） */}
       <div className="flex items-center gap-4 mb-8 p-4 rounded-lg border border-[var(--border)] bg-[var(--card)]">
         <Avatar className="h-16 w-16">
           <AvatarImage src={user.image || undefined} alt={user.name || "用户"} />
           <AvatarFallback className="text-lg">{initials}</AvatarFallback>
         </Avatar>
-        <div>
+        <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-[var(--foreground)]">
             {user.name || "用户"}
           </h2>
           <p className="text-sm text-[var(--muted-foreground)]">
-            {user.email || ""}
+            {email || ""}
           </p>
         </div>
+        <AvatarUploadDialog
+          currentImage={user.image}
+          userName={user.name}
+        />
+        <EditNameDialog
+          currentName={user.name}
+        />
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* 统计卡片：收藏（可点击跳转） + 点赞 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <Link href="/dashboard/bookmarks">
-          <Card className="hover:border-[var(--primary)]/30 transition-colors cursor-pointer">
+          <Card className="hover:border-[var(--primary)]/30 transition-colors cursor-pointer h-full">
             <CardHeader className="pb-2">
               <span className="text-sm text-[var(--muted-foreground)]">
                 我的收藏
@@ -90,31 +92,89 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* 账号绑定 */}
-      <div className="mt-8">
-        <h3 className="text-sm font-medium text-[var(--foreground)] mb-3">
-          绑定账号
-        </h3>
-        <div className="space-y-2">
-          {linkedMethods.map((m) => (
-            <div
-              key={m.key}
-              className="flex items-center justify-between p-3 rounded-md border border-[var(--border)] bg-[var(--card)]"
-            >
-              <span className="text-sm text-[var(--foreground)]">{m.label}</span>
-              <span
-                className={`text-xs ${
-                  m.linked
-                    ? "text-[var(--primary)]"
-                    : "text-[var(--muted-foreground)]"
-                }`}
-              >
-                {m.linked ? "已绑定" : "未绑定"}
-              </span>
+      <Separator className="my-6" />
+
+      <section>
+        <h2 className="text-sm font-medium text-[var(--muted-foreground)] mb-3">
+          账号操作
+        </h2>
+        <Link
+          href="/api/auth/signout"
+          className="inline-flex items-center px-4 py-2 text-sm rounded-md border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors"
+        >
+          退出登录
+        </Link>
+      </section>
+
+      {/* ========== 从作品管理整合过来（站长专属快捷入口） ========== */}
+      {isAdmin ? (
+        <>
+          <Separator className="my-10" />
+          <section>
+            <h2 className="text-sm font-medium text-[var(--muted-foreground)] mb-3">
+              作品管理快捷操作
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* 1. 新增作品 */}
+              <Link href="/dashboard/posts/new">
+                <Card className="h-full hover:border-[var(--primary)]/30 transition-colors cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <span className="text-sm text-[var(--muted-foreground)]">
+                      新建
+                    </span>
+                  </CardHeader>
+                  <CardContent>
+                    <span className="text-lg font-semibold text-[var(--foreground)]">
+                      新增作品
+                    </span>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      MDX 编辑器 + 图床代理
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              {/* 2. 管理作品（列表/搜索/删除/编辑） */}
+              <Link href="/dashboard/posts">
+                <Card className="h-full hover:border-[var(--primary)]/30 transition-colors cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <span className="text-sm text-[var(--muted-foreground)]">
+                      列表
+                    </span>
+                  </CardHeader>
+                  <CardContent>
+                    <span className="text-lg font-semibold text-[var(--foreground)]">
+                      管理作品
+                    </span>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      搜索 / 分页 / 状态过滤
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              {/* 3. 投稿审核（用户投稿人工审核） */}
+              <Link href="/dashboard/moderation">
+                <Card className="h-full hover:border-[var(--primary)]/30 transition-colors cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <span className="text-sm text-[var(--muted-foreground)]">
+                      审核
+                    </span>
+                  </CardHeader>
+                  <CardContent>
+                    <span className="text-lg font-semibold text-[var(--foreground)]">
+                      投稿审核
+                    </span>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      PendingPost 通过/驳回
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             </div>
-          ))}
-        </div>
-      </div>
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }
