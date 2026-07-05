@@ -15,26 +15,31 @@ export interface MusicTrack {
   title: string;
   artist: string;
   src: string;
+  /** 封面图 URL（可选，缺省时面板显示粉色渐变占位） */
+  coverUrl?: string;
 }
 
-/** 达妮娅角色 BGM · 循环歌单（占位 — 后续替换真实 src） */
+/** 达妮娅角色 BGM · 循环歌单（track-1 已接入真实音频+封面，后续替换 track-2/3） */
 export const DANIYA_PLAYLIST: MusicTrack[] = [
   {
     id: "track-1",
-    title: "达妮娅的瞌睡小屋·开场",
-    artist: "达妮娅的瞌睡小屋",
-    src: "/music/playlist-placeholder-1.mp3",
+    title: "最初和最后的礼物",
+    artist: "鸣潮先约电台 · YUE_STEVEN · 陆可儿Kirby",
+    src: "/music/鸣潮先约电台 _ YUE_STEVEN _ 陆可儿Kirby - 最初和最后的礼物_H.ogg",
+    coverUrl: "/492b30d224bf47429e8aa73a9cfd104a20260521.jpg",
   },
   {
     id: "track-2",
     title: "星空下的悄悄话",
     artist: "达妮娅的瞌睡小屋",
     src: "/music/playlist-placeholder-2.mp3",
+    // 缺 coverUrl → 面板自动显示粉色渐变占位
   },
   {
     id: "track-3",
     title: "粉白糖果色日常",
     artist: "达妮娅的瞌睡小屋",
     src: "/music/playlist-placeholder-3.mp3",
+    // 缺 coverUrl → 面板自动显示粉色渐变占位
   },
 ];

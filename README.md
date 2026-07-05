@@ -17,25 +17,34 @@
 | 样式 | Tailwind CSS v4 + 星空泡泡主题（粉白渐变 + 毛玻璃 + 泡泡光晕动画；暗/亮主题均有粉色毛玻璃 `.surface-pink`） |
 | 内容 | MDX 本地文件（`content/posts/`），`getAllPosts({ includeDrafts })` 支持草稿预览 |
 | 媒体 | ImgURL 图床（图片，代理归一化响应，`s3.bmp.ovh` CDN 白名单）+ B站 iframe（视频，BV号嵌入）+ B 站封面图 `api.bilibili.com` 白名单 |
-| 作品类型 | 插画 / 截屏(screenshot) / 漫画 / 视频 / 文章 / COS / 其他（`POST_TYPE_LABELS` + `PLATFORM_LABELS` 全局统一；7月2日 22:00 清理后，`POST_TYPES` / `SOURCE_PLATFORMS` 数组常量已改为 **内部 const（不再 export）**，外部仅能 import `PostType` / `SourcePlatform` 两个联合类型，避免误用数组字面量） |
-| 数据库 | Prisma + Neon PostgreSQL (serverless)，模型：User（新增 `username@unique` + `passwordHash` 字段）/ Account / Bookmark / PostLike / PendingPost / VerificationToken |
-| 认证 | Auth.js v5 · **Credentials 用户名+密码**（bcryptjs 10 轮盐哈希 + JWT session）+ 前后端双图形验证码（Canvas 手绘 4 位）+ 注册 API `/api/auth/register` + 注册页 `/login/register` + Proxy 路由守卫（含 `/api/admin/*`） |
+| 作品类型 | 插画 / 截屏(screenshot) / 漫画 / 视频 / 文章 / COS / 其他（`POST_TYPE_LABELS` + `PLATFORM_LABELS` 全局统一；7月2日 22:00 清理后，`POST_TYPES` / `SOURCE_PLATFORMS` 数组常量已改为 **内部 const（不再 export）**，外部仅能 import `PostType` / `SourcePlatform` 两个联合类型，避免误用数组字面量）。Prisma `Post` / `PendingPost` 模型新增 **`character Character?`（DANIYA / OTHER 枚举，nullable 无默认）** 字段，用于关联作品所属角色 |
+| 数据库 | Prisma + Neon PostgreSQL (serverless)，模型：User（`username@unique` + `passwordHash`）/ Account / Bookmark / PostLike / PendingPost（含 `character? Character enum` + `rejectReason` + `publishedSlug`）/ VerificationToken / Comment |
+| 认证 | Auth.js v5 · **Credentials 用户名+密码**（bcryptjs 10 轮盐哈希 + JWT session）+ 前后端双图形验证码（Canvas 手绘 4 位）+ 注册 API `/api/auth/register` + 注册页 `/login/register` + Proxy 路由守卫（含 `/api/admin/*`）。**未注册用户登录专属弹窗**：`authorize()` 抛 `USER_NOT_REGISTERED` → 前端强制居中 Dialog「该用户未注册」，仅能点「确认」或右上角 X 关闭，禁止遮罩/Esc 关闭 |
 | 后台管理 | 自建 Admin CRUD — MDX 编辑器 + ImgURL 图片上传代理 + 文章增删改查 + 用户投稿人工审核（仅站长，`/dashboard/posts` 三页 403 守卫） |
-| 审核工作流 | PendingPost 三态（PENDING/APPROVED/REJECTED）+ 单用户 3 张/日 / 全站 8 张/日 上传限流 + slug 冲突检查（已发布 & 审核队列双重校验） |
-| 用户侧入口 | Header「投稿」胶囊按钮（登录后显示）→ `/submit` 投稿页（复用 PostForm，隐藏管理员字段，限流+Zod校验+slug冲突检查）；登录页 ↔ 注册页 `/login/register` 双向跳转；个人中心 `/dashboard` 概览页已合并「更换头像 + 退出登录 + 站长作品管理快捷入口」3 块内容 |
-| 权限分级 | Dashboard 侧边栏精简（普通用户：概览 / 我的收藏；站长额外：投稿审核）；「账号设置 / 作品管理」菜单项已删除（内容/入口合并进 `/dashboard` 概览页，原独立页面保留路由兼容深链）；敏感 API 双锁（proxy matcher + `requireAdmin()`） |
+| 审核工作流 | PendingPost 三态（PENDING/APPROVED/REJECTED）+ 单用户 3 张/日 / 全站 8 张/日 上传限流 + slug 冲突检查（已发布 & 审核队列双重校验）。**投稿预览独立路由 `/dashboard/submissions/[slug]`**：本人或站长可查，右上角三态胶囊 + 状态横幅（待审核锁互动 / 驳回理由+重提 / 已通过外链正式页），通过 `/submit?resubmit=<id>` 回填表单修改后重提 |
+| 用户侧入口 | Header 布局 **左 Logo / 中导航胶囊 / 右（搜索🎵播放器主题切换投稿 用户菜单 汉堡）**；「投稿」胶囊按钮（登录后显示）→ `/submit` 投稿页（含**今日额度卡片**双进度条：全站剩余 x/8 + 我的剩余 x/3，上传一张后 `router.refresh()` 自动刷新数字）；登录页 ↔ 注册页双向跳转；`/dashboard/submissions`「我的投稿」4 Tab 列表（全部 / 待审核 / 已通过 / 已驳回，带状态计数徽章）；个人中心 `/dashboard` 概览页已合并「更换头像 + 退出登录 + 站长作品管理快捷入口」3 块内容 |
+| 权限分级 | Dashboard 侧边栏精简（普通用户：概览 / 我的收藏 / **我的投稿**；站长额外：投稿审核）；「账号设置 / 作品管理」菜单项已删除（内容/入口合并进 `/dashboard` 概览页，原独立页面保留路由兼容深链）；敏感 API 双锁（proxy matcher + `requireAdmin()`） |
 | 密码 | bcryptjs v3（salt 10 轮），User 模型 `passwordHash` 字段；session 采用 JWT 策略（session.user.image 每次从数据库同步，保证头像立即可见） |
 | 评论 | **自建（打通站内用户名+密码体系）** — Prisma `Comment` 模型 + 3 API（`GET /api/posts/[slug]/comments` 读 · `POST` 发表 · `DELETE /api/comments/[id]` 删除）+ [user-comments.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/comments/user-comments.tsx) 前端组件；Zod 1-1000 字校验；删除权限：作者本人 or 站长 |
-| 测试 | Vitest + @testing-library + jsdom（**6 个测试文件，49 passed**，覆盖 submitPostSchema / upload-rate-limit / admin-guard / dashboard-layout / commentSchema / comment-guard 源码结构断言） |
+| 音乐播放器 | **方案2 · Popover 迷你面板播放器**（[music-player.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx) + [popover.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/ui/popover.tsx) + [music-playlist.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/data/music-playlist.ts)）：Header ▶️ 图标点击即展开 320px 胶囊面板（封面 60×60 + 歌名歌手 + ⏮上一首/⏯播放暂停/⏭下一首 三按钮 + 🔊 音量杆 0~1 默认 0.6 + ▰▰▰ 进度条 + mm:ss 时间），歌单循环、切歌自动续播、音量/进度拖动 seek、封面 404 自动 fallback 粉白渐变占位。音频资源存放于 `public/music/` |
+| 测试 | Vitest + @testing-library + jsdom（**22 个测试文件，218 passed / 1 todo**。覆盖：登录表单 8 / 未注册全局弹窗 8 / 角色页 17 / 头像裁剪 9 / 生日倒计时 13 / 投稿表单 7 / 全局弹窗 8 / 提交弹窗 14 / 投稿额度 8 / 投稿预览 13 / 我的投稿 11 / 投稿筛选 3 / schema角色 4 / 播放器基础 17 / 播放器Popover面板 18 / 等） |
 | 部署 | Netlify |
 
 ---
 
-## 🚧 当前项目进度总览（截止 7月2日 22:00）
+## 🚧 当前项目进度总览（截止 7月5日 24:00）
 
-> **阶段结论**：核心功能 + 评论系统**全部搭建完成 🎉**（前台展示、后台 CRUD、用户投稿+人工审核、账号密码注册登录体系、Dashboard 整合、**自建评论打通站内用户名+密码**）；冗余代码（高优+中优 10/10 条）已手动清理完毕，**PostMeta 类型定义统一为唯一来源**；待完成 0 项。方案 C：为体验一致性放弃 Giscus（GitHub 身份割裂），换成 Prisma + 3 API + 客户端组件的全自建方案，并于 22:00 将 giscus.tsx 组件及 4 条 `NEXT_PUBLIC_GISCUS_*` 环境变量**物理删除**。
+> **阶段结论**：项目核心功能 + 体验优化**全链路打通并完成 6 波增量升级**（7月2日之前：核心功能+评论系统 🎉；7月3日：全局弹窗+分级错误+投稿额度+我的投稿；7月5日：角色页+生日倒计时+头像裁剪+未注册专属弹窗+投稿预览独立路由+音乐播放器Popover面板方案2）；冗余代码（高优+中优 10/10 条）已清理完毕，**PostMeta 类型定义统一为唯一来源**；目前**待完成仅剩 2 项低优可选增强**（见待办清单）。
 >
-> 构建验证（最新 · 冗余清理后 Fresh 三重验证仍绿）：`GetDiagnostics 0 errors` · `TypeScript OK` · **39/39 页面生成成功** · `6 files / 49 passed / 1 todo`
+> **最新关键里程碑**：
+> - 🎵 **音乐播放器方案2上线**：从极简按钮升级为 Popover 320px 胶囊面板（封面+歌名+三控制按钮+音量+进度条），歌单 track-1 接入真实音频与封面
+> - 🔐 **未注册用户专属弹窗**：`authorize()` 抛 `USER_NOT_REGISTERED` → 前端强制居中 Dialog「该用户未注册」，只能点「确认」或 X 关闭
+> - 📄 **投稿预览独立路由 `/dashboard/submissions/[slug]`**：三态状态胶囊 + 状态横幅 + 驳回重提 + APPROVED 外链正式页
+> - ✂️ **头像裁剪对话框**：Avatar + react-easy-crop + ImgURL 上传 + PATCH profile 写库
+> - 💬 **角色页 & 生日倒计时（5月21日）**：达妮娅角色介绍页（Hero Banner 真实立绘图片 + 角色档案 + 作品关联 Tab）；生日倒计时组件动态文案（距生日 N 天 / 倒计时 / 当天庆祝 / 已过等状态）
+> - 📝 **受控 select 修复**：PostForm「关联角色」下拉框之前同有 value + defaultValue → 冲突警告 React 已消除
+>
+> 构建验证（最新 · 7月5日 四重验证仍绿）：`GetDiagnostics 0 errors` · `TypeScript 0 errors` · **38/38 路由生成成功**（Turbopack 2.4s）· `22 files / 218 passed / 1 todo`（vitest 873ms 跑完）
 
 ---
 
@@ -202,24 +211,99 @@
 | 6 | **Submit Page 支持 ?resubmit=<id> 回填**：Server 端拿到 searchParams.resubmit → prisma.pendingPost.findUnique → **判断本人 + status===REJECTED** 才 `prefill = { meta: {...title,description,type,tags,images,videoId, slug: ""}, body: content }`（slug 强制 '' 避免原 slug 撞库）→ 传 `<PostForm prefill={prefill}>` | [submit/page.tsx resubmit 段](file:///c:/Users/29942/Desktop/daniya-fansite/src/app/submit/page.tsx) | ✅ 已完成 |
 | 7 | **全量回归**：tests/submissions 11 + tests/submit-modal 14 + tests/submit-quota 8 + tests/global-modal 8 + tests/dashboard-layout 13 + tests/submit-post-schema 12 + tests/upload-rate-limit 9(1skip) + tests/admin-guard 5 + tests/comment-guard 7 + tests/comment-schema 4 共 **90 passed \| 1 todo (91)** · next build 路由 38 生成完成 · TS 0 errors · /dashboard/submissions + /api/user/submissions/[id] 两个新路由生成 | exit code 0 全绿 | ✅ 已完成 |
 
+**第十波 · 角色页 + 生日倒计时 + 头像裁剪对话框（7月3日 15:50 ~ 7月4日）**
+
+> 背景：补齐角色介绍页独立路由 `/character`、首页 Hero Banner 达妮娅生日（5月21日）倒计时功能、投稿/头像上传前的图片裁剪体验优化。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **角色页 `/character`**：顶部 Hero Banner 2 张真实立绘图片（492b30d...jpg + 625294f...png）+ 角色档案卡（学校/生日 5月21日 / 身高 / 共鸣属性泡泡 / 身份标签 💤🍰❄️）+ 三 Tab（角色介绍 / 技能档案 / 相关作品）+ 暗黑主题文字修复（之前 muted 色在亮背景过淡） | [character/page.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/character/page.tsx) + tests/character-page.test.ts **17 passed (17)** ✅ | ✅ 已完成 |
+| 2 | **生日倒计时组件 `birthday-countdown.tsx`**：嵌入首页角色页 Hero 胶囊下方，7 种状态动态文案——距生日 >30 天平淡提示 / ≤30 天倒数句 / ≤7 天加强调 / ≤3 天带表情 / 当天 🎉庆祝 / 已过当天次日自动重置下一年；带 emoji 随天数加强；暗/亮主题文字色修复 | [birthday-countdown.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/birthday-countdown.tsx) + tests/birthday-countdown.test.ts **13 passed (13)** ✅ | ✅ 已完成 |
+| 3 | **头像裁剪对话框升级（react-easy-crop）**：之前 AvatarUploadDialog 上传前只能预览 → 新增裁剪模式：① 选择 <5MB 图片 → ② react-easy-crop 画布（圆形裁剪区域 + 缩放滑条 + 旋转 0/90/180/270 按钮）→ ③ canvas 导出 blob → ④ 上传裁剪后 Blob 到 `/api/user/upload-image` → ⑤ PATCH `/api/user/profile` 写 image → `router.refresh()` 立即可见；Avatar 组件 fallback 首字母保留 | [avatar-upload-dialog.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/auth/avatar-upload-dialog.tsx) + tests/avatar-crop.test.ts **9 passed (9)** ✅ | ✅ 已完成 |
+| 4 | **package.json 新增依赖**：`react-easy-crop@^6.1.0`（头像裁剪画布） | [package.json](file:///C:/Users/29942/Desktop/daniya-fansite/package.json) dependencies 第 34 行 | ✅ 已完成 |
+| 5 | **首页暗/亮文字色全面修复**：page.tsx + birthday-countdown.tsx + character/page.tsx 中暗色主题下的粉色毛玻璃卡片文字原本用 `text-pink-*` 与粉色背景过近 → 改用 `text-[var(--foreground)]` / `text-[var(--muted-foreground)]` CSS 变量保证双主题可读 | diff page.tsx；tests/home-page.test.ts **5 passed** ✅ | ✅ 已完成 |
+
+**第十一波 · 未注册用户登录专属弹窗（强制关闭 · 7月5日上午）**
+
+> 背景：之前未注册用户登录时返回通用「用户名或密码错误」，用户无法区分「用户名不存在」vs「密码错」两种情况；需求升级为「该用户未注册」居中 Dialog，且只能点「确认」或右上角 X 关闭，禁止点击遮罩 / 按 Esc 关闭（防误关）。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **后端 `auth.ts authorize()` 升级**：用户不存在（或 `passwordHash` 为 null）时不再 `return null` → **`throw new Error("USER_NOT_REGISTERED")`** 抛特定错误码；密码错误仍 `return null`（走 `CredentialsSignin` → 前端显示通用错） | [auth.ts L25-L29](file:///C:/Users/29942/Desktop/daniya-fansite/src/auth.ts#L25-L29) | ✅ 已完成 |
+| 2 | **前端 LoginForm 新增 `showNotRegistered` state**：`signIn` 返回 error === "USER_NOT_REGISTERED" 时，① `setShowNotRegistered(true)` ② 刷新验证码 ③ 清空输入 —— **不设置 error 通用红色条、不触发跳转**；其他错误（密码错等）仍走原 `setError` 分支 | [login-form.tsx L24 + L50-L60](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/auth/login-form.tsx#L24-L60) | ✅ 已完成 |
+| 3 | **强制 Dialog（onOpenChange 丢弃 false 方向）**：自制 Dialog 组件原本支持 Esc/遮罩关闭 → `onOpenChange={(next) => { if (next) setShowNotRegistered(true); /* next===false 直接丢弃，遮罩/Esc 关不了 */ }}`，仅保留两个主动关闭方式 —— ① 右上角 **`<button type="button" onClick={()=>setShowNotRegistered(false)}>` X 按钮** ② DialogFooter 内 **「确认」Button** | [login-form.tsx L120-L154](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/auth/login-form.tsx#L120-L154) | ✅ 已完成 |
+| 4 | **TDD 保障**：tests/login-form.test.ts 8 条（case 3 「密码错 → USER_NOT_REGISTERED 文案区分」正则 `(?:\.|\?\.)` 修复避免误匹配） → 8/8 ✅；tests/global-modal.test.ts 8 passed ✅ | [login-form.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/login-form.test.ts) | ✅ 已完成 |
+
+**第十二波 · 投稿预览独立路由 `/dashboard/submissions/[slug]`（方案 A · 7月5日下午）**
+
+> 背景：用户投稿后在「我的投稿」列表点卡片只能看到摘要；需求新增独立路由预览页，按状态显示不同内容。
+> 方案 A（推荐）：新建 `/dashboard/submissions/[slug]` 独立路由，复制正式 `/post/[slug]` 的正文+媒体 UI，但锁定互动（点赞/收藏/评论），按 PENDING / APPROVED / REJECTED 三态显示不同横幅与按钮。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **投稿预览页文件创建**：服务端组件，三层守卫 —— ① `auth()` 未登录 → redirect `/login?callbackUrl=...` ② prisma.pendingPost.findUnique 不存在 → notFound()（防枚举 slug）③ **本人 (pendingPost.userId === session.user.id) OR 站长 (ADMIN_USER_ID)**，否则 notFound()，不给 403 避免枚举 | [submissions/[slug]/page.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L69-L96) | ✅ 已完成 |
+| 2 | **三态状态胶囊（页面右上角）**：PENDING = ⏳琥珀黄「审核中」 / APPROVED = ✅翠绿「已通过」 / REJECTED = ⚠️红「请重新编辑」；STATUS_LABEL 映射标签、图标、徽章类、胶囊类；胶囊外再追加 APPROVED 时外链「查看正式页 ↗」按钮 | [page.tsx STATUS_LABEL L39-L67](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L39-L67) | ✅ 已完成 |
+| 3 | **状态横幅（正文前）**：APPROVED → 绿边「✅已上线！此页保留查看投稿记录」+ 胶囊跳 `/post/<slug>`；PENDING/REJECTED → 🔒锁横幅「暂不开放点赞/收藏/评论」 | [page.tsx L136-L168](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L136-L168) | ✅ 已完成 |
+| 4 | **驳回 & 重提流程**：REJECTED 状态时红色边框框展示 `pendingPost.rejectReason`（空白显示「未填写驳回理由」）+ 右下角「修改后重新提交 →」Link 跳 `/submit?resubmit=<pendingPost.id>`；Submit Page 按 ?resubmit=id 回填 prefill（title/description/type/tags/images/videoId 保留，slug 强制 '' 防撞库）+ PostForm `prefill` Prop 存在（区别于编辑 initialData：prefill 新建、initialData 走 PUT） | [page.tsx L244-L263](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L244-L263) + [submit/page resubmit](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/submit/page.tsx) | ✅ 已完成 |
+| 5 | **投稿成功弹窗 onDismiss 打通**：PostForm 提交成功后 showSuccess 弹窗的 onDismiss（之前写的 TODO + void router）→ 真实 `router.push('/dashboard/submissions')` 跳「我的投稿」列表；列表卡片新增「查看详情 →」胶囊 → 预览页 `/dashboard/submissions/[slug]` | [post-form.tsx success onDismiss](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/admin/post-form.tsx) | ✅ 已完成 |
+| 6 | **TDD 测试保障**：tests/submission-preview.test.ts **13 passed (13)**（守卫 3 层 / 三态胶囊 / 锁横幅 / APPROVED 外链 / REJECTED 重提链接 / PENDING 审核中小字 / 简易 markdown→HTML 渲染 / 媒体区按 type 分支 video 或画廊 / 本人或管理员 非 403） | [submission-preview.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/submission-preview.test.ts) | ✅ 已完成 |
+
+**第十三波 · 受控 select 冲突警告修复（7月5日 15:40）**
+
+> 背景：用户在 DevTools Console 发现 React warning：`<select> 元素同时具备受控（value）和非受控（defaultValue）props，应二选一`。溯源到 PostForm「关联角色」下拉框。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **TDD RED**：tests/post-form.test.ts 新增 case 7「关联角色 select 同时有 value + defaultValue props → React 会报 mixed controlled/uncontrolled → 必须只保留一个」 → 初跑 failing ✅ | [post-form.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/post-form.test.ts) | ✅ 已完成 |
+| 2 | **修复**：移除 [post-form.tsx L372-L378 关联角色 select](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/admin/post-form.tsx#L372-L378) 上的 `defaultValue="DANIYA"` prop；character state 初始化 `useState<Character | "">("DANIYA")` 已足以保证默认选中达妮娅（value prop 完全受控） | [post-form.tsx character select](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/admin/post-form.tsx) | ✅ 已完成 |
+| 3 | **验证**：刷新 `/submit` 页面 → DevTools Console 无 warning；下拉默认仍选中达妮娅 → 31/31 tests passed ✅ | tests/post-form.test.ts 7 passed ✅ 全局 218 passed ✅ | ✅ 已完成 |
+
+**第十四波 · 角色 Character enum 模型（schema + Zod + 类型统一 + 测试 4 cases）**
+
+> 背景：为作品关联所属角色（DANIYA 达妮娅 或 OTHER 其他鸣潮角色），Post / PendingPost 两个模型 + 前后端 schema 同步新增 character 字段（nullable 无默认）。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **schema.prisma 新增 enum + 两模型字段**：`enum Character { DANIYA OTHER }`；`Post.character  Character?`；`PendingPost.character  Character?`（均 nullable，无 @default，兼容历史数据空值）；Prisma generate + Neon db push 同步 | [schema.prisma](file:///C:/Users/29942/Desktop/daniya-fansite/prisma/schema.prisma) | ✅ 已完成 |
+| 2 | **Zod schema 两处对齐**：`post-schema.ts postMetaSchema.character = z.enum(["DANIYA","OTHER"]).nullable()`（站长端强校验允许 null）；`submit-post-schema.ts submitPostSchema.character = z.enum(["DANIYA","OTHER"]).optional()`（投稿端用户可不填 → PendingPost 写 null） | [post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/post-schema.ts) + [submit-post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/submit-post-schema.ts) | ✅ 已完成 |
+| 3 | **投稿表单 UI 新增下拉**：PostForm 简介下方、类型标签与 Tag 输入之间，新增「关联角色」卡片：label + help text（非必填，默认达妮娅）+ select（不选/达妮娅/其他）；投稿预览页 & 详情页显示「角色：xxx」圆角 badge；测试用例 schema-character.test.ts 4 cases → 4/4 ✅ | [submissions/[slug]/page.tsx L223-L230](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L223-L230) + [schema-character.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/schema-character.test.ts) | ✅ 已完成 |
+
+**第十五波 · 音乐播放器方案 2 升级（Popover 迷你面板 · 7月5日晚 · 工作区进行中）**
+
+> 背景：原方案1（A+A 极简图标按钮）只有播放/暂停，看不到歌名/进度/音量，无法切歌；需求升级为方案2 —— Header ▶️ 图标点击即展开 Popover 320px 宽胶囊风面板，三层结构（封面+歌名+三控制+音量+进度条）。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **新增依赖 + 新 UI 组件**：package.json 引入 `@radix-ui/react-popover@^1.1.18`；新增 [popover.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/ui/popover.tsx)（shadcn/ui 风格封装：align=end / sideOffset=8 / w-80 宽 / 毛玻璃背景 / zoom+fade 弹出动画 / shadow-xl 主色粉阴影；Root/Trigger/Content 3 个具名导出） | package.json diff + popover.tsx 50 行 ✅ | ✅ 已完成 |
+| 2 | **[music-player.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx) 方案2全量重写（215 行）**：6 个 state（mounted/isPlaying/currentIndex/currentTime/duration/volume 默认 0.6）；`formatTime()` mm:ss 格式化；`handlePrev/Next/Ended/TimeUpdate/LoadedMetadata/Seek/TogglePlay` 8 个事件；`preload="metadata"`（提前拿到 duration） | music-player.tsx diff +632/-49 行 | ✅ 已完成 |
+| 3 | **面板 UI 三层结构**：①上排封面 60×60（有 coverUrl 用 `<img onError 隐藏>`，无则粉白渐变 div + Play 图标）+ min-w-0 flex-1 歌名（truncate）/ 歌手（muted 小字）；②中排 h-8 上一首 SkipBack / h-10 粉色大圆 ⏯播放暂停 / h-8 下一首 SkipForward + ml-auto 音量 Volume2 + w-20 range 音量条；③下排 flex-1 进度条 range + 90px 宽 tabular-nums 「01:23 / 04:05」时间显示 | [music-player.tsx L133-L276](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx#L133-L276) | ✅ 已完成 |
+| 4 | **[music-playlist.ts MusicTrack](file:///C:/Users/29942/Desktop/daniya-fansite/src/data/music-playlist.ts) 接口扩展**：`coverUrl?: string` 新增；track-1 真实化：title「最初和最后的礼物」/ artist「鸣潮先约电台·YUE_STEVEN·陆可儿Kirby」/ src「/music/鸣潮先约电台..._H.ogg」/ coverUrl 「/492b30d...jpg」；track-2/3 仍占位（缺 coverUrl → 面板自动 fallback 粉白渐变） | music-playlist.ts diff +13/-1 ✅ | ✅ 已完成 |
+| 5 | **音频资源 + Header 挂载**：`public/music/` 目录新增 track-1 真实 ogg；Header.tsx 右侧操作区在 ThemeToggle 之前渲染 `<MusicPlayer />`（所有页面可触达） | [header.tsx L57-L77](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/layout/header.tsx#L57-L77) ✅ | ✅ 已完成 |
+| 6 | **TDD 测试 18 cases（新 music-player-panel.test.ts）**：A 组 Popover 结构 4 / B 组封面+歌名+歌手 4 / C 组三按钮+图标 3 / D 组进度条+时间 4 / E 组音量 3，共 18 条源码结构断言 | [tests/music-player-panel.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/music-player-panel.test.ts) **18/18 passed** ✅ | ✅ 已完成 |
+| 7 | **全量回归（7月5日最新）**：22 files / **218 passed / 1 todo**（vitest 873ms）· tsc --noEmit **0 errors** · next build **38/38 路由生成成功**（Turbopack 2.4s）· GetDiagnostics 0 错误 —— 四重验证全绿 ✅ | exit code 0 全绿 | ✅ 已完成 |
+
 ---
 
-### 📊 完成度统计（截止 7月3日 15:50）
+### 📊 完成度统计（截止 7月5日 24:00）
 
 | 分类 | 已完成 | 待完成 | 已删除·不再需要 |
 |---|---|---|---|
 | 基础设施 | 9 项 | — | — |
 | UI & Hero & 主题 | 8 项 | — | — |
 | 后台 CRUD & 图床代理 | 2 项 | — | — |
-| 用户投稿 + 人工审核 | **12 项**（投稿页额度卡片 + 上传后实时刷新 + 我的投稿页 4 Tab + 取消/重提 + API 守卫） | — | — |
+| 用户投稿 + 人工审核 | **18 项**（投稿页额度卡片 + 上传后实时刷新 + 我的投稿页 4 Tab + 取消/重提 + API 守卫 + **投稿预览独立路由 `/dashboard/submissions/[slug]` 方案A 6 项**） | — | — |
 | 账号体系 | 9 项 | — | 5 项（GitHub/QQ/邮箱/SMS/旧短信限流） |
+| **登录体验（7月5日）** | **4 项**（未注册专属弹窗 USER_NOT_REGISTERED 错误码 + 强制 Dialog 仅两按钮可关 + 验证码刷新+清空 + 8 cases TDD） | — | — |
 | Dashboard 整合 | 6 项 | — | — |
 | 评论体系（方案 C） | 11 项（自建 Comment 模型 + 3 API + 前端组件 + 2 测试文件） | — | 1 项（Giscus 组件 + 4 条 env，见下方代码质量行合并） |
-| 代码质量 & 冗余清理（第五波 · 7月2日 22:00） | **10 项**（整文件删 giscus.tsx + .env 清 4 条 Giscus/旧 OAuth + 删 2 个重复接口 + 删 2 个未用函数 + 2 个常量去 export） | — | 2 项合并（① `src/components/comments/giscus.tsx` 组件 ② `.env.local` 中 4 条 `NEXT_PUBLIC_GISCUS_*` + 残留 OAuth 变量） |
+| 代码质量 & 冗余清理（第五波 · 7月2日 22:00） | **11 项**（原 10 项 + **第十三波 PostForm 受控 select defaultValue+value 冲突修复**） | — | 2 项合并（① `src/components/comments/giscus.tsx` 组件 ② `.env.local` 中 4 条 `NEXT_PUBLIC_GISCUS_*` + 残留 OAuth 变量） |
 | 上传体验（方案 B · 全局状态弹窗 Context） | **6 项**（新建 StatusModalProvider + useStatusModal Hook + layout wrap Provider + ImageUploader 接入成功/失败弹窗 + 删除红色内联小字 + 8 条测试 + 全量回归） | — | — |
 | **提交审核弹窗（方案 A-1 分级错误）** | **8 项**（升级 StatusModal opts API + A-1 错误分级函数 + PostForm 接入 + 删 errors._form 红色横条 + 我的上传跳转 TODO 占位 → onDismiss 真实 `router.push('/dashboard/submissions')` 跳转打通 + 14 条测试 + 全量回归 + 驳回重提 prefill prop 接入） | — | — |
 | **投稿页额度显示（方案A·Server 直读 + router.refresh）** | **7 项**（submit/page 直读限流 Map + 额度卡片 UI 两条进度条+零额度红字 + Server→Client boolean prop 序列化设计 + ImageUploader onUploadSuccess 可选回调 + PostForm refreshQuotaOnUpload 转 router.refresh 回调透传 + 8 条测试 + 全量回归 79 passed） | — | — |
-| **配置 & 上线** | ImgURL 凭证 ✅ · 角色简介文案 ✅ · GitHub OAuth ✅ · 评论：**已用自建评论系统替代 Giscus，且 giscus.tsx 组件 + Giscus env 已物理删除** ✅ · 上传弹窗：**方案 B 已落地** ✅ · 提交弹窗：**方案 A-1 已落地（onDismiss 真实跳 /dashboard/submissions）** ✅ · 投稿页额度显示：**方案A已落地（上传后自动刷新数字）** ✅ · **我的投稿页：已落地（4 Tab + 取消投稿 + 驳回后修改重提）** ✅ | **—（待完成 0 项）** | — |
+| **角色页 & 生日倒计时 & 头像裁剪（第十波）** | **5 项**（`/character` 角色页 Hero+档案+三 Tab 17 tests · 5月21日生日倒计时 7 状态 13 tests · react-easy-crop 头像裁剪画布 9 tests · 新增 `react-easy-crop@6.1.0` · 暗/亮主题文字色双主题修复） | — | — |
+| **Character enum & 关联角色字段（第十四波）** | **3 项**（schema.prisma `enum Character { DANIYA OTHER }` + Post/PendingPost 两模型 `character? Character?` nullable · 前后端 Zod schema 两处 nullable/optional · 下拉 UI + 投稿预览 badge + 4 cases TDD） | — | — |
+| **🎵 音乐播放器（方案2 Popover 面板）** | **7 项**（新增 `@radix-ui/react-popover@1.1.18` + Popover shadcn 封装 50 行 · music-player.tsx 方案2 全量重写 215 行 8 事件 · 面板三层 UI（封面/三控制/进度条+音量）· MusicTrack 接口 `coverUrl?` 扩展 + track-1 真实音频封面 · 音频资源 `public/music/` + Header 挂载 · 18 cases TDD 全部通过 · 四重验证全绿） | **2 项中优可选**（track-2/track-3 真实音频+封面替换 placeholder） | — |
+| **配置 & 上线** | ImgURL 凭证 ✅ · 角色简介文案 ✅ · 角色立绘 2 张 Hero 图（492b30d...jpg + 625294f...png）✅ · GitHub OAuth Provider 代码已删除（账号体系仅保留 Credentials 用户名密码）✅ · 评论：**自建评论替代 Giscus，giscus.tsx + Giscus env 已物理删除** ✅ · 上传弹窗：**方案 B 已落地** ✅ · 提交弹窗：**方案 A-1 已落地（onDismiss 跳 /dashboard/submissions）** ✅ · 投稿页额度：**方案A已落地（上传后自动刷新）** ✅ · 我的投稿页：**已落地（4 Tab + 取消投稿 + 驳回后重提）** ✅ · 投稿预览：**方案A独立路由已落地 /dashboard/submissions/[slug]** ✅ · 未注册登录弹窗：**强制 Dialog 已上线** ✅ · 音乐播放器：**方案2 Popover 面板已上线（track-1 真实化，track-2/3 占位）** ✅ · 头像裁剪画布 ✅ · 角色 Character enum 字段 ✅ | **—（待完成 2 项中优可选）** | — |
 
 ---
 
@@ -265,26 +349,25 @@ AUTH_URL="https://daniya-fansite.netlify.app"
 DATABASE_URL="postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
 DIRECT_URL="postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
-# GitHub OAuth（https://github.com/settings/developers 创建 OAuth App）
-# 回调 URL: https://域名/api/auth/callback/github
-AUTH_GITHUB_ID=your-github-client-id
-AUTH_GITHUB_SECRET=your-github-client-secret
+# ⚠️ 以下 4 段配置（GitHub/QQ OAuth、SendCloud 邮件、腾讯云短信）对应代码已全部物理删除（账号体系精简为 Credentials 用户名 + 密码），仅作历史记录，无需配置
+# GitHub OAuth（代码已移除 · auth.ts 只剩 Credentials provider）
+# AUTH_GITHUB_ID=your-github-client-id
+# AUTH_GITHUB_SECRET=your-github-client-secret
 
-# QQ OAuth（https://connect.qq.com 注册应用）
-# 回调 URL: https://域名/api/auth/callback/qq
-AUTH_QQ_ID=your-qq-app-id
-AUTH_QQ_SECRET=your-qq-app-secret
+# QQ OAuth（代码已移除 · qq-provider.ts + oauth-buttons.tsx 已删除）
+# AUTH_QQ_ID=your-qq-app-id
+# AUTH_QQ_SECRET=your-qq-app-secret
 
-# SendCloud 邮件发送（https://sendcloud.net）
-SENDCLOUD_API_USER=your-sendcloud-user
-SENDCLOUD_API_KEY=your-sendcloud-key
-EMAIL_FROM="noreply@your-domain.com"
+# SendCloud 邮件发送（代码已移除 · email.ts + email-login-form.tsx 已删除）
+# SENDCLOUD_API_USER=your-sendcloud-user
+# SENDCLOUD_API_KEY=your-sendcloud-key
+# EMAIL_FROM="noreply@your-domain.com"
 
-# 腾讯云短信
-TENCENT_SMS_SECRET_ID=your-secret-id
-TENCENT_SMS_SECRET_KEY=your-secret-key
-TENCENT_SMS_SDK_APP_ID=your-sdk-app-id
-TENCENT_SMS_TEMPLATE_ID=your-template-id
+# 腾讯云短信（代码已移除 · sms.ts + send-sms/route.ts + phone-login-form.tsx 已删除）
+# TENCENT_SMS_SECRET_ID=your-secret-id
+# TENCENT_SMS_SECRET_KEY=your-secret-key
+# TENCENT_SMS_SDK_APP_ID=your-sdk-app-id
+# TENCENT_SMS_TEMPLATE_ID=your-template-id
 
 # 管理员用户 ID — 在数据库 User 表中查找你的用户 ID
 # 用于 /dashboard/* 后台作品管理权限验证
@@ -467,87 +550,122 @@ model PendingPost {
 daniya-fansite/
 ├── content/posts/          # === 二创内容库（可通过后台或手动编辑）===
 ├── prisma/
-│   └── schema.prisma       # 数据库模型：User（username@unique+passwordHash）/ Account / Bookmark / PostLike / PendingPost / VerificationToken
+│   └── schema.prisma       # 数据库模型：User（username@unique+passwordHash）/ Account / Bookmark / PostLike / PendingPost（character? Character enum / rejectReason / publishedSlug）/ VerificationToken / Comment
 ├── public/                 # 公共静态资源（Hero 三张 jpg + Logo + 立绘占位）
+│   └── music/              # 【新增】🎵 站点背景音乐（ogg/mp3 等，歌单由 src/data/music-playlist.ts 管理）
 ├── src/
+│   ├── data/
+│   │   └── music-playlist.ts   # 【新增】DANIYA_PLAYLIST 歌单（MusicTrack 接口：id/title/artist/src/coverUrl?）；track-1 真实化，track-2/3 占位
 │   ├── app/
-│   │   ├── page.tsx              # 首页 — Hero + 三列布局（左图 / 信息流 / 右图）+ 分页
+│   │   ├── page.tsx              # 首页 — Hero + 三列布局（左图 / 信息流 / 右图）+ 分页 + birthday-countdown 生日倒计时组件
 │   │   ├── hero-banner.tsx       # Hero Banner 独立组件（暗/亮图自动切换 + 胶囊）
+│   │   ├── birthday-countdown.tsx # 【新增】5月21日生日倒计时 7 状态动态文案组件
 │   │   ├── side-image.tsx        # 侧边装饰图组件（暗/亮主题切换 + mask 虚化）
 │   │   ├── globals.css           # 星空泡泡主题样式入口（含 surface-pink 双主题粉色毛玻璃）
-│   │   ├── layout.tsx            # 根布局（ThemeProvider + Header + Footer）
+│   │   ├── layout.tsx            # 根布局（ThemeProvider + StatusModalProvider + Header + Footer）
 │   │   ├── post/[slug]/page.tsx  # 作品详情页
 │   │   ├── type/[type]/page.tsx  # 类型筛选页
 │   │   ├── tag/[tag]/page.tsx    # 标签筛选页
-│   │   ├── character/page.tsx    # 达妮娅角色页
+│   │   ├── character/page.tsx    # 达妮娅角色页（真实立绘 Hero + 档案卡 + 三 Tab：角色介绍/技能档案/相关作品）
 │   │   ├── about/page.tsx        # 关于本站（站长寄语/版权/联系方式）
 │   │   ├── search/page.tsx       # 搜索页
 │   │   ├── (auth)/login/         # === 登录 / 注册 ===
-│   │   │   ├── page.tsx          # 登录页：LoginForm（用户名+密码+Canvas 图形验证码）+ 底部"去注册"跳转
-│   │   │   └── register/         # 注册页（新增）：RegisterForm（用户名/密码×2+图形验证码 → /api/auth/register → 自动登录）
-│   │   ├── (dashboard)/          # 个人中心（侧边栏：概览/收藏；站长额外：投稿审核。账号设置/作品管理已合并进概览页）
-│   │   │   ├── layout.tsx        # === 侧边栏重构（方案 A）：删除「账号设置」「作品管理」2 菜单项；保留概览/收藏/投稿审核 ===
+│   │   │   ├── page.tsx          # 登录页：LoginForm（用户名+密码+Canvas 图形验证码 + 未注册专属强制 Dialog）+ 底部"去注册"跳转
+│   │   │   └── register/         # 注册页：RegisterForm（用户名/密码×2+图形验证码 → /api/auth/register → 自动登录）
+│   │   ├── (dashboard)/          # 个人中心（侧边栏：概览/收藏/我的投稿；站长额外：投稿审核。账号设置/作品管理已合并进概览页）
+│   │   │   ├── layout.tsx        # 侧边栏动态生成：普通用户 3 项 / 站长 +投稿审核
 │   │   │   └── dashboard/
-│   │   │       ├── page.tsx      # 概览页：6 段整合（用户信息 + 收藏/点赞统计 + 基本信息（含 AvatarUploadDialog 换头像）+ 账号操作（退出）+ 站长「作品管理快捷操作」3 个跳转入口（新增作品/管理作品/投稿审核））
+│   │   │       ├── page.tsx      # 概览页 6 段整合（用户信息 + 统计 + AvatarUploadDialog 裁剪换头像 + 账号操作 + 站长作品管理快捷 3 Card）
+│   │   │       ├── submissions/       # 【新增】=== 我的投稿 ===
+│   │   │       │   ├── page.tsx       # 4 Tab 列表（全部/待审核/已通过/已驳回，带状态计数徽章）+ 取消投稿 + 驳回后重提
+│   │   │       │   └── [slug]/page.tsx # 【新增】=== 投稿预览独立路由（方案A）=== 三层守卫 + 三态胶囊 + 锁横幅 + 驳回重提 + APPROVED 外链正式页
 │   │   │       ├── settings/     # 账号设置（独立页面保留，深链兼容；不再出现在侧边栏）
 │   │   │       ├── moderation/        # === 站长投稿审核（仅 ADMIN_USER_ID）===
 │   │   │       │   ├── page.tsx       # 服务端守卫 + 客户端审核面板
 │   │   │       │   └── moderation-panel.tsx  # 审核 UI：列表 + 详情抽屉 + 通过/驳回表单
 │   │   │       └── posts/             # 站长作品 CRUD（独立页面保留，深链兼容；不再出现在侧边栏）
-│   │   ├── submit/page.tsx      # === 用户投稿页面（登录守卫 + 复用 PostForm）===
+│   │   ├── submit/page.tsx      # 用户投稿页（含今日额度卡片双进度条 + ?resubmit=id 回填 prefill）
 │   │   └── api/
 │   │       ├── auth/                  # Auth.js + 账号体系
-│   │       │   ├── [...nextauth]/     # Auth.js callbacks
-│   │       │   └── register/route.ts  # 【新增】注册 POST：用户名 2-10字符（中/英/数/下划线）/密码≥6 → bcrypt 哈希 → prisma.user.create → 自动 signIn
+│   │       │   ├── [...nextauth]/     # Auth.js callbacks；authorize() 抛 USER_NOT_REGISTERED 区分未注册 vs 密码错
+│   │       │   └── register/route.ts  # 注册 POST：用户名 2-10字符 / 密码≥6 → bcrypt 哈希 → 自动 signIn
 │   │       ├── bookmarks/        # 收藏 CRUD（需登录）
 │   │       ├── likes/            # 点赞 CRUD（需登录）
+│   │       ├── comments/[id]/    # 【新增】自建评论：DELETE（本人 or 站长）
 │   │       ├── rss/              # RSS 订阅
 │   │       ├── search/           # 搜索接口
+│   │       ├── posts/[slug]/comments # 【新增】自建评论：GET 列表 + POST 发表（1-1000 字 Zod 校验）
 │   │       ├── admin/            # === 站长后台（requireAdmin 守卫）===
 │   │       │   ├── posts/        # 文章列表 / 单篇创建-更新-删除
 │   │       │   └── upload-image/ # ImgURL 上传代理（无限流）
 │   │       ├── user/             # === 用户侧 API（登录守卫）===
 │   │       │   ├── upload-image/ # ImgURL 上传（单用户 3/日 + 全站 8/日 限流）
-│   │       │   ├── submit-post/  # 写入 PendingPost（Zod 校验 + slug 冲突检查）
-│   │       │   └── profile/      # 【新增】PATCH 更新头像：auth 401 → image 字段验证 → prisma.user.update image
+│   │       │   ├── submit-post/  # 写入 PendingPost（Zod 校验 + slug 冲突检查 + character 字段写入）
+│   │       │   ├── submissions/[id]/route.ts # 【新增】GET 单条详情（本人守卫）+ DELETE（仅 PENDING 可取消，非 PENDING → 409 Conflict）
+│   │       │   └── profile/      # PATCH 更新头像：auth 401 → image 字段验证 → prisma.user.update image
 │   │       └── moderation/       # === 审核 API（requireAdmin 守卫）===
 │   │           ├── posts/        # GET 投稿列表（按 status 过滤 + 状态计数）
 │   │           └── posts/[id]/   # GET 详情 / PUT approve 写MDX or reject
 │   ├── components/
-│   │   ├── admin/          # 后台/投稿复用组件：MDX 编辑器、图片上传器（uploadEndpoint prop）、BV号输入、PostForm（validationSchema/hiddenFields/uploadEndpoint 多态 props）
+│   │   ├── admin/          # 后台/投稿复用组件：MDX 编辑器、图片上传器（uploadEndpoint+onUploadSuccess prop）、BV号输入、PostForm（validationSchema/hiddenFields/uploadEndpoint/prefill/refreshQuotaOnUpload 多态 props + 关联角色 character 下拉）
 │   │   ├── auth/           # === 认证组件 ===
-│   │   │   ├── login-form.tsx          # 【新增】登录表单：用户名/密码/<Captcha> → signIn credentials → 中文"用户名或密码错误"
-│   │   │   ├── register-form.tsx       # 【新增】注册表单：用户名(USERNAME_RE)/密码×2/<Captcha> → fetch /api/auth/register → 自动 signIn
-│   │   │   ├── captcha.tsx             # 【新增】Canvas 手绘 4 位图形验证码（噪点30/干扰线3/旋转字符，排除I/O/0/1易混；forwardRef refresh；点击刷新）
-│   │   │   ├── avatar-upload-dialog.tsx # 【新增】更换头像对话框（Dialog 复合组件 → 选图<5MB → /api/user/upload-image 上传 → /api/user/profile PATCH 写库）
-│   │   │   ├── user-menu.tsx           # 登录后的下拉用户菜单（改用 ui/Avatar 组件 + fallback 首字母）
+│   │   │   ├── login-form.tsx          # 登录表单（含 showNotRegistered 强制 Dialog，仅 X/确认 可关）
+│   │   │   ├── register-form.tsx       # 注册表单
+│   │   │   ├── captcha.tsx             # Canvas 手绘 4 位图形验证码
+│   │   │   ├── avatar-upload-dialog.tsx # 更换头像对话框（react-easy-crop 裁剪画布 + 缩放 + 旋转 4 角度 + Blob 上传）
+│   │   │   ├── user-menu.tsx           # 登录后的下拉用户菜单（ui/Avatar + fallback 首字母）
 │   │   │   └── sign-in-button.tsx      # 未登录时显示的登录入口按钮
-│   │   ├── comments/       # 自建评论（user-comments.tsx）
+│   │   ├── comments/       # 自建评论（user-comments.tsx：加载中/空态/列表 + 删除按钮 + 字数计数 X/1000）
 │   │   ├── feed/           # FeedCard / FeedList / FeedPagination
 │   │   ├── interaction/    # LikeButton / BookmarkButton（乐观更新）
-│   │   ├── layout/         # Header（含动态投稿胶囊按钮）/ Footer / MobileNav
+│   │   ├── layout/         # Header（左 Logo / 中导航胶囊 / 右：搜索🎵播放器主题切换投稿 用户菜单 汉堡）/ Footer / MobileNav
 │   │   ├── media/          # PostGallery（图片网格）+ BilibiliEmbed（BV号 iframe）
-│   │   ├── post/           # PostMeta / PostCredit（出处标注·暖金）/ PostTypeBadge
-│   │   ├── shared/         # ThemeProvider / ThemeToggle（暗/亮切换）
+│   │   ├── post/           # PostMeta + 关联角色 badge / PostCredit（出处标注·暖金）/ PostTypeBadge
+│   │   ├── shared/         # ThemeProvider / ThemeToggle / **🎵 MusicPlayer（方案2 Popover 面板）**
 │   │   └── ui/             # === 基础 UI ===
-│   │       ├── dialog.tsx        # 【新增】自制 Radix 风格 Dialog 复合组件（Dialog/Trigger/Content/Title/Description；Portal 到 body；Esc 关；backdrop-blur）
-│   │       └── Button / Card / Badge / Input / Avatar / Skeleton / Separator ...
+│   │       ├── dialog.tsx        # 自制 Radix 风格 Dialog 5 具名导出（Dialog/Trigger/Content/Title/Description）
+│   │       ├── popover.tsx       # 【新增】shadcn/ui Popover 封装（Root/Trigger/Content；align=end；w-80 毛玻璃；zoom+fade 动画）
+│   │       ├── status-modal.tsx  # 【新增】全局 StatusModalProvider + useStatusModal（showSuccess/showError；成功可 autoClose + onDismiss 回调）
+│   │       └── Button / Card / Badge / Input / Avatar / Skeleton / Separator / Accordion ...
 │   ├── lib/
 │   │   ├── validators/           # Zod 校验
-│   │   │   ├── post-schema.ts        # 站长后台 postMetaSchema（强校验，所有必填）
-│   │   │   └── submit-post-schema.ts # 用户投稿 submitPostSchema（originalCreator/sourceUrl 可选，images/video 互斥 refine）
-│   │   ├── password.ts      # 【新增】bcryptjs 封装：hashPassword(salt 10轮) / verifyPassword
-│   │   ├── admin.ts       # requireAdmin() — 会话 + ADMIN_USER_ID 双校验（返回 error 或 session）
+│   │   │   ├── post-schema.ts        # 站长后台 postMetaSchema（character enum nullable）
+│   │   │   ├── submit-post-schema.ts # 用户投稿 submitPostSchema（character enum optional + images/video refine）
+│   │   │   └── comment-schema.ts     # 【新增】评论 content 1-1000 字 trim
+│   │   ├── password.ts      # bcryptjs 封装：hashPassword(salt 10轮) / verifyPassword
+│   │   ├── admin.ts         # requireAdmin() — 会话 + ADMIN_USER_ID 双校验
 │   │   ├── upload-rate-limit.ts # 用户投稿图片限流：单用户 3/日 + 全站 8/日（进程内 Map）
-│   │   ├── posts.ts       # MDX 读取工具（getAllPosts({ includeDrafts }) / getPostBySlug / 筛选）
-│   │   ├── posts-io.ts    # createPostMdx() — 从 admin/moderation 写入 MDX 文件（revalidatePath 刷新缓存）
-│   │   ├── slugify.ts     # slugifyWithSuffix() — 中文转拼音连字符 + SLUG_REGEX 3-60字符约束 + 随机hex后缀
-│   │   ├── search.ts      # 搜索索引
-│   │   ├── prisma.ts      # Prisma 客户端单例
-│   │   └── utils.ts       # cn() — clsx + tailwind-merge 合并工具
-│   └── types/post.ts      # PostMeta / Post 类型定义（POST_TYPES + POST_TYPE_LABELS 7 种，含 screenshot）
-├── tests/                  # Vitest 单元测试（4 files / 38 passed / 1 todo）：admin-guard / submit-post-schema / upload-rate-limit / dashboard-layout（源码结构断言 13 cases）
-├── tests/dashboard-layout.test.ts   # 【本次新增】Dashboard 整合方案 A：侧边栏菜单删除（账号设置+作品管理）+ 概览页删绑定账号/整合设置/作品管理入口
+│   │   ├── submit-error-classifier.ts # 【新增】A-1 错误分级：GREEN/YELLOW/RED 三级关键词匹配；系统级错误统一显示「系统维护中…」
+│   │   ├── posts.ts         # MDX 读取工具（getAllPosts({ includeDrafts }) / 筛选）
+│   │   ├── posts-io.ts      # createPostMdx() — 从 admin/moderation 写入 MDX 文件
+│   │   ├── slugify.ts       # slugifyWithSuffix() — 中文转拼音 + SLUG_REGEX 3-60字符 + 随机hex后缀
+│   │   ├── search.ts        # 搜索索引
+│   │   ├── prisma.ts        # Prisma 客户端单例
+│   │   └── utils.ts         # cn() — clsx + tailwind-merge 合并工具
+│   └── types/post.ts        # PostMeta 类型定义（POST_TYPES 7 种含 screenshot；数组已内部 const 不再 export；对外仅 PostType/SourcePlatform 联合类型）
+├── tests/                    # Vitest 单元测试（**22 files / 218 passed / 1 todo**）
+├── tests/login-form.test.ts             # 登录表单（含 USER_NOT_REGISTERED 弹窗区分）8 cases
+├── tests/global-modal.test.ts           # 全局 StatusModal 8 cases
+├── tests/submit-modal.test.ts           # 提交成功/分级错误弹窗 14 cases
+├── tests/submit-quota.test.ts           # 投稿页额度双进度条 8 cases
+├── tests/submissions.test.ts            # 我的投稿 4 Tab + 取消/重提 11 cases
+├── tests/submission-preview.test.ts     # 投稿预览方案A 独立路由 13 cases
+├── tests/music-player.test.ts           # 音乐播放器基础逻辑 17 cases
+├── tests/music-player-panel.test.ts     # 音乐播放器方案2 Popover 面板 18 cases
+├── tests/character-page.test.ts         # 角色页 Hero+档案+三 Tab 17 cases
+├── tests/birthday-countdown.test.ts     # 生日倒计时 7 状态 13 cases
+├── tests/avatar-crop.test.ts            # 头像裁剪 react-easy-crop 9 cases
+├── tests/schema-character.test.ts       # Character enum schema 4 cases
+├── tests/post-form.test.ts              # PostForm 受控 props + 关联角色下拉 7 cases
+├── tests/home-page.test.ts              # 首页布局 5 cases
+├── tests/header.test.ts                 # Header 三列结构 + MusicPlayer 挂载 8 cases
+├── tests/posts-filter.test.ts           # 类型/标签/筛选 3 cases
+├── tests/dashboard-layout.test.ts       # Dashboard 侧边栏精简 + 概览页整合 13 cases
+├── tests/submit-post-schema.test.ts     # submitPostSchema 长度限制/枚举/refine 12 cases
+├── tests/upload-rate-limit.test.ts      # 限流 Map 9 cases (1 skip _resetForTests)
+├── tests/admin-guard.test.ts            # requireAdmin 401/403/OK 5 cases
+├── tests/comment-schema.test.ts         # Comment 1-1000 trim 4 cases
+├── tests/comment-guard.test.ts          # 评论 API auth+本人/站长删除 7 cases
 ├── vitest.config.ts        # vitest 配置（jsdom + vite-tsconfig-paths 支持 @/ 别名）
 ├── auth.ts                 # Auth.js v5 核心配置（Credentials 用户名密码；JWT session strategy；jwt/session callbacks 同步 userId & image）
 ├── proxy.ts                # Next.js 16 Proxy（middleware）— 路由保护（含 /api/admin/*）
@@ -679,7 +797,7 @@ daniya-fansite/
 ## 待办清单
 
 ### 必须完成
-—（0 项待完成）
+—（**核心功能 0 项待完成**；以下为中低优先级可选增量，不阻塞上线）
 
 ### 已删除 · 不再需要配置（代码已移除）
 > 账号体系已从「GitHub/QQ OAuth + 邮箱 Magic Link + 手机短信验证码」4 种方式 → 精简为「用户名 + 密码（bcrypt 哈希）+ 注册页 + Canvas 图形验证码」。
@@ -693,12 +811,18 @@ daniya-fansite/
 
 ### 待用户完成
 - [x] **角色简介文案**：首页 Hero Banner 角色胶囊结构化 4 段内容（💤日常/🍰契约+数据别问/──分隔线/💬校服泡泡自白）已填写
+- [x] **角色页立绘图片 ×2**（7月3日）：`/character` 顶部 Hero Banner 2 张真实立绘图片 `492b30d224bf47429e8aa73a9cfd104a20260521.jpg` + `625294f4d0b740f4bf5ce693ddb0b35920260521.png` 已就位，同时用作歌单 track-1 封面
 - [x] **ImgURL 凭证**（7月2日）：`.env.local` 中 `IMGURL_UID` 和 `IMGURL_TOKEN` 已填入真实值（从 https://www.imgurl.org/vip/user 获取），用户投稿图片上传 / 站长图片上传均可正常调用 ImgURL API
+- [x] **站点背景音乐首曲接入**（7月5日）：`public/music/鸣潮先约电台 _ YUE_STEVEN _ 陆可儿Kirby - 最初和最后的礼物_H.ogg` 已就位；歌单 track-1 title/artist/src/coverUrl 已真实化
+- [ ] **🎵 歌单 track-2 / track-3 真实化**（中优，推荐完成）：将 `/music/playlist-placeholder-2.mp3` / `playlist-placeholder-3.mp3` 两个占位 src 替换为真实达妮娅同人音频或鸣潮原声 OGG，并补充 `coverUrl`（缺省时面板会显示粉白渐变占位，不影响功能）
 
-### 可选增强
-- [ ] 添加更多 OAuth 提供商（Google 等）
-- [ ] 自定义 404 页面设计
-- [ ] 添加图片轮播组件替换详情页的静态图片展示
+### 可选增强（低优先级 · 锦上添花）
+- [ ] 🎵 音乐播放器追加：播放模式切换（列表循环 / 单曲循环 / 随机播放）+ 播放列表抽屉（展开歌单全部曲目直接点选）
+- [ ] 🎞️ 详情页图片展示升级：从 PostGallery 静态网格 → 点击进入 lightbox 灯箱 / 左右滑动图片轮播
+- [ ] 🔐 安全增强：登录失败 5 次 / 10 分钟 用户名粒度 IP 级限流（目前 only 图形验证码 + bcrypt 慢哈希）；密码重置流程（目前需联系站长手动改）
+- [ ] 📱 移动端体验升级：Header 投稿胶囊与搜索栏合并进 MobileNav 汉堡抽屉；首页 feed 卡片圆角 + 图片尺寸手机端微调（目前 max-w-2xl 居中 + 左右 padding 可工作）
+- [ ] 🤖 更多鸣潮角色扩展：当新增 OTHER 角色作品时，可考虑在 `/character` 页面增加角色切换 Tab，每个角色独立档案页
+- [ ] 🔍 搜索结果高级过滤：按作品类型、发布时间、关联角色多选过滤（目前 `/search` 只按关键词匹配 title/description/tags）
 
 ---
 
@@ -1165,12 +1289,17 @@ npx prisma generate  # 重新生成 Prisma Client（schema 改动后执行）
 ## 设计理念
 
 - **微博风格信息流**：窄内容区（max-w-2xl），卡片式布局，图片在上文字在下
-- **出处标注优先**：每篇作品必须标注原作者名、来源平台和原帖链接，暖金色突出展示
-- **暗/亮双主题**：默认「星空泡泡」暗色主题呼应鸣潮 UI；亮色主题使用白日粉白星尘 + 50% 粉色毛玻璃 Header/Footer/信息流表面
+- **出处标注优先**：每篇作品必须标注原作者名、来源平台和原帖链接，暖金色突出展示；角色归属（DANIYA / OTHER）用 `character Character enum` 在 schema + Zod + UI 三处统一
+- **暗/亮双主题**：默认「星空泡泡」暗色主题呼应鸣潮 UI；亮色主题使用白日粉白星尘 + 50% 粉色毛玻璃 Header/Footer/信息流表面；全站文字色一律使用 `text-[var(--foreground)] / text-[var(--muted-foreground)]` CSS 变量，**禁止硬编码 `text-pink-*` 类**，避免粉色背景上文字过淡
 - **图片外链化 + 代理层抽象**：作品配图使用 ImgURL 图床外链，视频使用 B站 BV 号 iframe 嵌入，仓库不存储媒体文件；统一上传代理屏蔽图床实现细节
 - **Hero 响应式三列布局**：桌面端 flex + sticky 滚动 + mask 渐变虚化左右装饰图；手机端隐藏侧边图；Banner 内部拆分为角色胶囊 + 标题胶囊 + 筛选标签三层胶囊结构
 - **后台 CRUD + 权限守卫**：MDX 从手动写文件扩展到后台可视化编辑，Auth 中间件 + 管理员校验双锁，图床切换不影响前端
-- **用户投稿 + 人工审核**：开放登录用户投稿入口，但所有内容必须经过站长人工审核后才会生成 MDX 发布；驳回的投稿不会进入内容库
+- **用户投稿 + 人工审核双页闭环**：开放登录用户投稿入口 → `/submit` 投稿（含今日额度实时刷新 + 限流）→ 写入 PendingPost → 站长审核通过/驳回 → 用户在「我的投稿 4 Tab」查看状态 → **点卡片进入投稿预览独立路由 `/dashboard/submissions/[slug]`（方案A）**查看详情/驳回理由/修改后重提；非 APPROVED 稿件锁定点赞/收藏/评论，通过后在正式页 `/post/<slug>` 汇总互动
 - **ImgURL 免费版限流保护**：用户上传图片共用站长免费账号的 UID/TOKEN，实施「单用户 3 张/日 + 全站 8 张/日」双层限流，防止免费额度被耗尽导致站长本人无法发文
-- **权限分级**：Dashboard 侧边栏根据 `ADMIN_USER_ID` 动态生成；普通用户只能看到「概览/收藏/设置」，站长额外看到「作品管理/投稿审核」；所有敏感 API 路由均有 `requireAdmin()` 服务端守卫兜底
+- **权限分级 + 防枚举**：Dashboard 侧边栏根据 `ADMIN_USER_ID` 动态生成；普通用户「概览/收藏/我的投稿」，站长额外「投稿审核」；敏感 API 均有 `requireAdmin()` 兜底；投稿预览页非本人非管理员一律 `notFound()`（不给 403），避免通过 URL 枚举 slug 是否存在
+- **登录体验分级**：密码错误 → 通用「用户名或密码错误」红色提示 + 验证码刷新；未注册用户 → `authorize()` 抛 `USER_NOT_REGISTERED` → 前端**居中强制 Dialog**，只能点「确认」或 X 关闭（禁止遮罩/Esc 关闭），防止用户混淆
+- **用户反馈全链路全局弹窗（方案 B StatusModal Context）**：上传成功/失败、投稿成功/失败（A-1 错误分级 GREEN/YELLOW/RED，RED 级错误隐藏技术细节统一替换「系统维护中…」）、投稿成功 onDismiss 跳「我的投稿」—— 任何时候都不要在按钮下方用红色内联小字显示错误，**统一屏幕居中彩色边框弹窗**
+- **受控组件单一原则**：所有 `<select>` / `<input>` 只允许一种受控模式——要么 `value`（配合 `useState` 完全受控）要么 `defaultValue`（非受控），**禁止两者同时存在**；提交表单受控 props 冲突会触发 React mixed controlled/uncontrolled warning（见第十三波受控 select 修复记录）
+- **TDD 源码结构断言优先**：功能开发一律「先写 vitest cases → failing → 实现 → passing → 全量回归」，避免 UI 功能回归；对视觉体验类（角色页/倒计时/播放器面板/弹窗）使用源码结构断言（import fs 读取源码 grep regex），不依赖 jsdom 渲染减少测试耗时
+- **音乐播放轻量无侵入**：音乐播放器挂载在 Header 所有页面可触达，但默认不自动播（遵守浏览器自动播放策略）；播放中图标高亮 animate-pulse 呼吸灯；面板 Popover 展开也不干扰页面滚动与表单输入；音频资源存于 `public/music/` 目录与图床外链彻底分开，避免加载受 CDN 影响
 - **版权尊重**：About 页面明确声明所有权利归原作者，提供邮箱/GitHub/B站 三个下架联系渠道；投稿被驳回时必须填写理由，便于用户理解审核标准
