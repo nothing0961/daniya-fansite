@@ -42,7 +42,6 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  // ===== 1. 登录守卫（未登录 → 401） =====
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "请先登录后再发表评论" }, { status: 401 });
@@ -53,7 +52,7 @@ export async function POST(
     return NextResponse.json({ error: "缺少 slug 参数" }, { status: 400 });
   }
 
-  // ===== 2. 解析 body & Zod 校验（content 1-1000 字，trim 去前后空白） =====
+  // commentSchema 1 - 1000 trim 后端兜底
   let body: unknown;
   try {
     body = await request.json();
@@ -70,7 +69,6 @@ export async function POST(
     );
   }
 
-  // ===== 3. 入库 =====
   const comment = await prisma.comment.create({
     data: {
       userId: session.user.id,

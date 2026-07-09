@@ -52,20 +52,16 @@ function resolvePostPath(slug: string): { file: string; dir: string } | null {
   let dirResult: string | null = null;
 
   for (const entry of entries) {
-    // 去掉 .mdx 后缀获取名称部分
     const name = entry.replace(/\.mdx$/, "");
-    // 匹配 YYYY-MM-DD-slug 格式，提取 slug 部分
     const match = name.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
     if (match && match[1] === slug) {
       const fullPath = path.join(CONTENT_DIR, entry);
-      // 目录形式优先
       if (fs.statSync(fullPath).isDirectory()) {
         const indexFile = path.join(fullPath, "index.mdx");
         if (fs.existsSync(indexFile)) {
           return { file: indexFile, dir: fullPath };
         }
       } else if (!fileResult) {
-        // 单文件形式作为备选
         dirResult = path.dirname(fullPath);
         fileResult = fullPath;
       }
@@ -88,10 +84,8 @@ function parseFileName(entryName: string): {
   slug: string;
   publishedAt: string;
 } | null {
-  // 去掉 .mdx 后缀（如果是单文件形式）
   const name = entryName.replace(/\.mdx$/, "");
 
-  // 匹配 YYYY-MM-DD-slug 格式
   const match = name.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
   if (!match) return null;
 
@@ -115,13 +109,11 @@ function readPostMeta(
     const raw = fs.readFileSync(filePath, "utf-8");
     const { data } = matter(raw);
 
-    // 如果文件名包含日期，优先使用文件名的日期
     const frontmatterInput = {
       ...data,
       publishedAt: data.publishedAt || fileNameDate,
     };
 
-    // Zod 校验 frontmatter
     const parsed = postMetaSchema.safeParse(frontmatterInput);
     if (!parsed.success) {
       console.warn(
@@ -154,7 +146,6 @@ export function getAllPosts(opts?: {
 }): PostMeta[] {
   const includeDrafts = opts?.includeDrafts ?? false;
   const characterFilter = opts?.character;
-  // 确保目录存在
   if (!fs.existsSync(CONTENT_DIR)) {
     return [];
   }
@@ -164,7 +155,6 @@ export function getAllPosts(opts?: {
   const posts: PostMeta[] = [];
 
   for (const entry of entries) {
-    // 跳过非相关文件（如 .DS_Store）
     if (entry.startsWith(".")) continue;
 
     const parsed = parseFileName(entry);
@@ -172,7 +162,6 @@ export function getAllPosts(opts?: {
 
     const { slug, publishedAt: fileNameDate } = parsed;
 
-    // 去重：同一个 slug 的目录和单文件同时存在时，优先目录
     if (seenSlugs.has(slug)) continue;
     seenSlugs.add(slug);
 
@@ -182,19 +171,16 @@ export function getAllPosts(opts?: {
     const meta = readPostMeta(resolved.file, slug, resolved.dir, fileNameDate);
     if (!meta) continue;
 
-    // 草稿仅在有 includeDrafts 标志或开发环境时显示
     if (meta.draft && !includeDrafts && process.env.NODE_ENV === "production") continue;
 
     posts.push(meta);
   }
 
-  // 按发布日期倒序排列
   posts.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
-  // 关联角色过滤（方案 A：可空；传了 character 就严格匹配 meta.character）
   if (characterFilter) {
     return posts.filter((p) => p.character === characterFilter);
   }

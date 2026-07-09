@@ -16,7 +16,6 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // ===== 1. 登录守卫（未登录 → 401） =====
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "请先登录后再操作" }, { status: 401 });
@@ -27,13 +26,12 @@ export async function DELETE(
     return NextResponse.json({ error: "缺少评论 id" }, { status: 400 });
   }
 
-  // ===== 2. 评论是否存在 =====
   const comment = await prisma.comment.findUnique({ where: { id } });
   if (!comment) {
     return NextResponse.json({ error: "评论不存在或已被删除" }, { status: 404 });
   }
 
-  // ===== 3. 权限：作者本人 OR 站长 ADMIN_USER_ID =====
+  // 作者本人 或 ADMIN 才能删
   const adminUserId = process.env.ADMIN_USER_ID;
   const isOwner = comment.userId === session.user.id;
   const isAdmin = !!adminUserId && session.user.id === adminUserId;
@@ -45,7 +43,6 @@ export async function DELETE(
     );
   }
 
-  // ===== 4. 执行删除 =====
   await prisma.comment.delete({ where: { id } });
 
   return NextResponse.json({ success: true, deletedId: id });

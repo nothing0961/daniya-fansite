@@ -10,7 +10,7 @@ import type { PostType } from "@/types/post";
  * GET 管理员查看单条投稿详情
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAdmin();
+  const { error } = await requireAdmin();
   if (error) return error;
 
   const { id } = await params;
@@ -21,8 +21,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!post) {
     return NextResponse.json({ error: "投稿不存在" }, { status: 404 });
   }
-  // 不需要 session 参数，但保留在 requireAdmin 返回值里避免 TS 报错
-  void session;
   return NextResponse.json(post);
 }
 

@@ -44,7 +44,6 @@ export async function POST(request: Request) {
   const rawBodyField = (rawBody as Record<string, unknown>)?.body;
   const mdxContent = typeof rawBodyField === "string" ? rawBodyField.trim() : "";
 
-  // 生成 / 检查 slug
   let slug: string;
   if (data.slug) {
     slug = data.slug;
@@ -52,9 +51,7 @@ export async function POST(request: Request) {
     slug = slugifyWithSuffix(data.title);
   }
 
-  // slug 冲突检查：
-  // 1) 前台已发布作品（MDX 文件里的 slug）——getPostBySlug
-  // 2) 审核表 PendingPost 中任何状态（防止两个投稿撞 slug）
+  // 防止两个投稿撞 slug
   const publishedExisting = getPostBySlug(slug);
   if (publishedExisting) {
     return NextResponse.json({ error: "此 slug 已被已发布作品占用，请修改" }, { status: 409 });
@@ -88,7 +85,7 @@ export async function POST(request: Request) {
         originalCreator: data.originalCreator ?? null,
         sourcePlatform: data.sourcePlatform ?? null,
         sourceUrl: data.sourceUrl ?? null,
-        content: mdxContent, // 从原始请求体取出的 MDX 正文
+        content: mdxContent,
         status: "PENDING",
       },
       select: { id: true, slug: true, createdAt: true },

@@ -15,9 +15,12 @@
  */
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-// 保留 ai SDK streamText 引入（给测试静态源码断言 + 未来真对接）。当前走手写 SSE，未实际使用。
 import { streamText } from "ai";
-void streamText; // 防 lint 未使用警告
+
+/* 留用未来对接 DeepSeek V4 Flash / AstrBot OpenAPI（当前用手写 SSE，未实际调用 streamText。
+ * 保留在 import 中以确保 Vercel AI SDK 依赖锁版本与 tsc 类型校验。
+ * 待真模型开通后：直接在此文件用 streamText() 替换 SSE 分支，前端零改动。*/
+void streamText;
 
 // ========================================================================
 // 常量区（全部集中在这里，后面改参数只动这一块）

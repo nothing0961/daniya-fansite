@@ -25,7 +25,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
   if (!rec) {
     return NextResponse.json({ error: "投稿不存在" }, { status: 404 });
   }
-  // 所有权守卫：他人投稿 403
   if (rec.userId !== userId) {
     return NextResponse.json({ error: "无权查看他人投稿" }, { status: 403 });
   }
@@ -44,7 +43,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   if (!rec) {
     return NextResponse.json({ error: "投稿不存在" }, { status: 404 });
   }
-  // 所有权守卫：本人投稿才能删
   if (rec.userId !== userId) {
     return NextResponse.json(
       { error: "无权操作他人投稿" },

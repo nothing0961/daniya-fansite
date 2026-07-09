@@ -57,7 +57,6 @@ export function RegisterForm() {
         return;
       }
 
-      // 注册成功，自动登录
       const result = await signIn("credentials", {
         username,
         password,

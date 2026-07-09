@@ -266,7 +266,6 @@ export default function DaniyaChatFAB() {
               <AvatarImage
                 src={DANIYA_AVATAR_SRC}
                 alt={DANIYA_AVATAR_ALT}
-                // Next/Image Avatar 组件可能是 <img>，这里统一作为 Avatar 的 src（组件内包装了 <img>）
                 width={40}
                 height={40}
               />
@@ -505,6 +504,3 @@ export default function DaniyaChatFAB() {
     </Dialog>
   );
 }
-
-// 防 next-image 未使用警告（Image 类型已 import）
-void Image;

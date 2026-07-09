@@ -45,7 +45,6 @@ function formatTime(sec: number): string {
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ── 状态 ───────────────────────────────────────────────────────
   const [mounted, setMounted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -55,12 +54,10 @@ export function MusicPlayer() {
 
   const track = DANIYA_PLAYLIST[currentIndex];
 
-  // ── SSR 水合保护 ───────────────────────────────────────────────
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ── 音量变更同步到 audio 元素 ────────────────────────────────────
   useEffect(() => {
     if (!mounted) return;
     if (audioRef.current) {
@@ -79,7 +76,6 @@ export function MusicPlayer() {
     }
   }, [currentIndex, mounted, isPlaying]);
 
-  // ── 切换播放 / 暂停 ────────────────────────────────────────────
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
@@ -94,39 +90,32 @@ export function MusicPlayer() {
     }
   };
 
-  // ── 上一首（循环） ─────────────────────────────────────────────
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + DANIYA_PLAYLIST.length) % DANIYA_PLAYLIST.length);
   };
 
-  // ── 下一首（循环） ─────────────────────────────────────────────
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % DANIYA_PLAYLIST.length);
   };
 
-  // ── 曲目 ended：自动下一曲（循环） ─────────────────────────────
   const handleEnded = () => {
     setCurrentIndex((prev) => (prev + 1) % DANIYA_PLAYLIST.length);
   };
 
-  // ── timeupdate：同步进度条 currentTime ─────────────────────────
   const handleTimeUpdate = () => {
     if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
   };
 
-  // ── loadedmetadata：拿到总时长 duration ────────────────────────
   const handleLoadedMetadata = () => {
     if (audioRef.current) setDuration(audioRef.current.duration || 0);
   };
 
-  // ── 进度条 seek：拖动到指定秒 ──────────────────────────────────
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const t = Number(e.target.value);
     if (audioRef.current) audioRef.current.currentTime = t;
     setCurrentTime(t);
   };
 
-  // ── 未挂载占位按钮，避免水合不匹配 ─────────────────────────────
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" disabled aria-label="音乐播放器">
@@ -157,7 +146,6 @@ export function MusicPlayer() {
         {/* 上排：封面 + 歌名歌手 */}
         <div className="flex items-center gap-3 mb-4">
           {track.coverUrl ? (
-            // 封面：真实封面（60×60，圆角+描边）
             <img
               src={track.coverUrl}
               alt={track.title + " 封面"}
@@ -255,7 +243,6 @@ export function MusicPlayer() {
         </div>
       </HoverCardContent>
 
-      {/* 真实 <audio>，不显示原生 controls */}
       <audio
         ref={audioRef}
         src={DANIYA_PLAYLIST[currentIndex].src}

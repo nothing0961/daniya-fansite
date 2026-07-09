@@ -34,13 +34,9 @@ export function AvatarUploadDialog({
   const { update } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 外层更换头像 Dialog
   const [open, setOpen] = useState(false);
-  // 当前头像预览（上传/或已裁剪后最终结果：裁剪后显示在大头像
   const [preview, setPreview] = useState<string | null>(null);
-  // 正在裁剪的图片源：URL.createObjectURL(file)——非空即代表处于裁剪界面（UI切换用
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-  // Cropper 受控值
   const [crop, setCrop] = useState<Crop>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -51,9 +47,6 @@ export function AvatarUploadDialog({
   const initials = userName?.charAt(0).toUpperCase() || "?";
   const displayImage = preview ?? currentImage;
 
-  /* =========================================================
-   * 1) 选择图片：只设置裁剪源，不直接上传（裁剪确认后才上传，经验 447309）
-   * ========================================================= */
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,9 +73,6 @@ export function AvatarUploadDialog({
     setCroppedAreaPixels(null);
   }
 
-  /* =========================================================
-   * 2) 取消裁剪：回到初始界面
-   * ========================================================= */
   function handleCancelCrop() {
     if (cropImageSrc) {
       URL.revokeObjectURL(cropImageSrc);
@@ -93,10 +83,6 @@ export function AvatarUploadDialog({
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  /* =========================================================
-   * 3) Canvas 绘制裁剪区域 → 生成 File（头像统一 512×512 jpeg）
-   *    参考 react-easy-crop 官方示例：
-   * ========================================================= */
   function createImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -151,9 +137,6 @@ export function AvatarUploadDialog({
     });
   }
 
-  /* =========================================================
-   * 4) 确认裁剪：生成裁剪 File 后再调用上传接口（唯一入口）
-   * ========================================================= */
   async function handleConfirmCrop() {
     if (!cropImageSrc || !croppedAreaPixels) {
       setError("请先调整裁剪区域");
@@ -171,12 +154,8 @@ export function AvatarUploadDialog({
     }
   }
 
-  /* =========================================================
-   * 5) 上传裁剪后的头像
-   * ========================================================= */
   async function upload(file: File) {
-    // 防止 handleConfirmCrop 外层没有调用了 uploading=true，upload里不用再 set，但为独立调用时也安全
-    const shouldManageState = arguments.length === 1 && uploading;
+    const isDirectCall = arguments.length === 1 && uploading;
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -210,7 +189,6 @@ export function AvatarUploadDialog({
       setPreview(imageUrl);
       await update({ image: imageUrl });
 
-      // 全部完成 → 关闭 Dialog，并清理裁剪源
       if (cropImageSrc) {
         URL.revokeObjectURL(cropImageSrc);
       }
@@ -224,13 +202,10 @@ export function AvatarUploadDialog({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      void shouldManageState;
+      void isDirectCall;
     }
   }
 
-  /* =========================================================
-   * 6) Cropper onCropComplete 回调：记录像素位置（useCallback 引用稳定
-   * ========================================================= */
   const handleCropComplete = useCallback(
     (_croppedArea: Area, croppedAreaPixelsData: Area) => {
       setCroppedAreaPixels(croppedAreaPixelsData);
@@ -243,7 +218,6 @@ export function AvatarUploadDialog({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        // 关闭时清理裁剪临时资源
         if (!next && cropImageSrc) {
           URL.revokeObjectURL(cropImageSrc);
           setCropImageSrc(null);

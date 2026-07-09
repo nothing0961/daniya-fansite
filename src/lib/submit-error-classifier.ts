@@ -16,7 +16,6 @@
 
 /** 🟢 用户级关键词（占 ~80% 错误，用户能看懂能解决） */
 const GREEN_KEYWORDS: Array<[RegExp, string?]> = [
-  // 表单字段校验类
   [/标题.*(空|不能|不超过)/],
   [/简介.*(空|不能|不超过)/],
   [/BV.*(号|格式|不正|必须以 BV 开头)/i],
@@ -25,11 +24,9 @@ const GREEN_KEYWORDS: Array<[RegExp, string?]> = [
   [/视频.*BV/],
   [/slug.*(存在|格式|不正|重复)/i],
   [/slug 只能包含/],
-  // 限流 / 额度类
   [/今日.*(上传|用|张)/],
   [/(每用户|全站).*每日.*(张|限)/],
   [/(额度|限额|次数)/],
-  // 图床类
   [/ImgURL/i, "具体"], // ImgURL 额度 / 格式用户看了能解决
   [/文件.*(大|大小|超过|MB)/i],
   [/图片.*(格式|类型|不支持)/i],
@@ -96,7 +93,6 @@ export function classifySubmitError(rawError: unknown): ClassifiedError {
     }
   }
 
-  // 🟢 用户级匹配
   for (const [re, _hint] of GREEN_KEYWORDS) {
     if (re.test(s)) {
       return {
@@ -107,7 +103,6 @@ export function classifySubmitError(rawError: unknown): ClassifiedError {
     }
   }
 
-  // 🟡 半系统级匹配
   for (const [re] of YELLOW_KEYWORDS) {
     if (re.test(s)) {
       return {
@@ -125,8 +120,6 @@ export function classifySubmitError(rawError: unknown): ClassifiedError {
     detail: s || "未知错误，请稍后重试",
   };
 }
-
-// ---------- 内部辅助：给 🟢🟡 一句话人话总结 ----------
 
 function buildGreenSummary(s: string): string {
   if (/今日|每日|额度|限额|限流|上传.*(张|用)/.test(s)) return "上传额度已用完";
