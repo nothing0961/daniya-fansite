@@ -123,6 +123,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     title,
     description,
     type: existing.type as PostType, // PendingPost.type 是 submit 枚举，PostType 已统一包含 screenshot
+    character: existing.character ?? undefined,
     originalCreator,
     sourcePlatform,
     sourceUrl,

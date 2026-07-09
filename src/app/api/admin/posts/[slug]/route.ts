@@ -93,6 +93,7 @@ export async function PUT(
     };
     if (validated.updatedAt) rawFrontmatter.updatedAt = validated.updatedAt;
     if (validated.videoId) rawFrontmatter.videoId = validated.videoId;
+    if (validated.character) rawFrontmatter.character = validated.character;
 
     const fileContent = matter.stringify((mdxBody || "").trim(), rawFrontmatter);
 

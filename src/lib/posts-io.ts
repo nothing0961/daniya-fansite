@@ -46,6 +46,7 @@ export function createPostMdx(
   };
   if (frontmatterMeta.updatedAt) rawFrontmatter.updatedAt = frontmatterMeta.updatedAt;
   if (frontmatterMeta.videoId) rawFrontmatter.videoId = frontmatterMeta.videoId;
+  if (frontmatterMeta.character) rawFrontmatter.character = frontmatterMeta.character;
 
   const fileContent = matter.stringify((mdxBody || "").trim(), rawFrontmatter);
   const dirPath = path.join(CONTENT_DIR, `${frontmatterMeta.publishedAt}-${slug}`);

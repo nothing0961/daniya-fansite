@@ -1,9 +1,12 @@
 /**
- * MusicPlayer — 方案2：Popover 迷你面板播放器
+ * MusicPlayer — 方案A：HoverCard 悬停下拉面板播放器
  *
- * 结构：
- *   Header 里一个 ▶️ 图标按钮（点击即展开 Popover + 切换播放暂停）
- *   面板内容（320px 宽胶囊风卡片）：
+ * 触发方式（用户确认的三条规则）：
+ *   1. 鼠标悬停 ▶️ 按钮 → 80ms 延迟后下拉展开面板（防快速划过误触）
+ *   2. 鼠标离开 按钮+面板 → 200ms 延迟后自动收起（防按钮→面板间隙闪断）
+ *   3. 点击 ▶️ 按钮 → 只切换播放/暂停（面板开合完全交给 hover 延迟机制，不参与）
+ *
+ * 面板内容（320px 宽胶囊风卡片，与原 Popover 一致）：
  *     ┌ 封面 60×60  歌名（truncate）
  *     │           歌手（小一号 muted）
  *     ├ ⏮ 上一首   ⏯ 播放暂停（粉）  ⏭ 下一首   🔊 音量杆
@@ -28,7 +31,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { DANIYA_PLAYLIST } from "@/data/music-playlist";
 
 /** 时间格式化：秒数 → mm:ss */
@@ -133,14 +136,14 @@ export function MusicPlayer() {
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <HoverCard openDelay={80} closeDelay={200}>
+      <HoverCardTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           onClick={togglePlay}
-          aria-label={isPlaying ? "暂停音乐 / 打开面板" : "播放音乐 / 打开面板"}
-          title={isPlaying ? "暂停音乐 / 打开面板" : "播放音乐 / 打开面板"}
+          aria-label={isPlaying ? "暂停音乐" : "播放音乐"}
+          title={isPlaying ? "暂停音乐" : "播放音乐"}
         >
           {isPlaying ? (
             <Pause className="h-5 w-5 text-[var(--primary)] animate-pulse" />
@@ -148,9 +151,9 @@ export function MusicPlayer() {
             <Play className="h-5 w-5" />
           )}
         </Button>
-      </PopoverTrigger>
+      </HoverCardTrigger>
 
-      <PopoverContent>
+      <HoverCardContent className="w-80">
         {/* 上排：封面 + 歌名歌手 */}
         <div className="flex items-center gap-3 mb-4">
           {track.coverUrl ? (
@@ -250,7 +253,7 @@ export function MusicPlayer() {
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
         </div>
-      </PopoverContent>
+      </HoverCardContent>
 
       {/* 真实 <audio>，不显示原生 controls */}
       <audio
@@ -261,6 +264,6 @@ export function MusicPlayer() {
         onLoadedMetadata={handleLoadedMetadata}
         preload="metadata"
       />
-    </Popover>
+    </HoverCard>
   );
 }

@@ -26,17 +26,20 @@
 | 权限分级 | Dashboard 侧边栏精简（普通用户：概览 / 我的收藏 / **我的投稿**；站长额外：投稿审核）；「账号设置 / 作品管理」菜单项已删除（内容/入口合并进 `/dashboard` 概览页，原独立页面保留路由兼容深链）；敏感 API 双锁（proxy matcher + `requireAdmin()`） |
 | 密码 | bcryptjs v3（salt 10 轮），User 模型 `passwordHash` 字段；session 采用 JWT 策略（session.user.image 每次从数据库同步，保证头像立即可见） |
 | 评论 | **自建（打通站内用户名+密码体系）** — Prisma `Comment` 模型 + 3 API（`GET /api/posts/[slug]/comments` 读 · `POST` 发表 · `DELETE /api/comments/[id]` 删除）+ [user-comments.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/comments/user-comments.tsx) 前端组件；Zod 1-1000 字校验；删除权限：作者本人 or 站长 |
-| 音乐播放器 | **方案2 · Popover 迷你面板播放器**（[music-player.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx) + [popover.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/ui/popover.tsx) + [music-playlist.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/data/music-playlist.ts)）：Header ▶️ 图标点击即展开 320px 胶囊面板（封面 60×60 + 歌名歌手 + ⏮上一首/⏯播放暂停/⏭下一首 三按钮 + 🔊 音量杆 0~1 默认 0.6 + ▰▰▰ 进度条 + mm:ss 时间），歌单循环、切歌自动续播、音量/进度拖动 seek、封面 404 自动 fallback 粉白渐变占位。音频资源存放于 `public/music/` |
-| 测试 | Vitest + @testing-library + jsdom（**22 个测试文件，218 passed / 1 todo**。覆盖：登录表单 8 / 未注册全局弹窗 8 / 角色页 17 / 头像裁剪 9 / 生日倒计时 13 / 投稿表单 7 / 全局弹窗 8 / 提交弹窗 14 / 投稿额度 8 / 投稿预览 13 / 我的投稿 11 / 投稿筛选 3 / schema角色 4 / 播放器基础 17 / 播放器Popover面板 18 / 等） |
-| 部署 | Netlify |
+| 音乐播放器 | **方案3 · HoverCard 悬停展开面板**（[music-player.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx) + [hover-card.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/ui/hover-card.tsx) + [music-playlist.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/data/music-playlist.ts)）：**Header ▶️ 图标鼠标悬停即展开** 320px 胶囊面板（HoverCard，`openDelay=80ms / closeDelay=200ms` 双延迟防闪烁）；**点击只切播放/暂停**，面板开合完全交给 hover；面板内容不变（封面 60×60 + 歌名歌手 + ⏮/⏯/⏭ + 🔊 音量杆 + ▰▰▰ 进度条 + mm:ss 时间）；移动端保留 click 触发 fallback。音频资源存放于 `public/music/` |
+| 🤖 AI 聊天 | **达妮娅 AI 对话 · FAB 悬浮按钮 + Dialog**（[daniya-chat-fab.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/daniya-chat-fab.tsx) + [route.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/api/chat/route.ts)）：右下角 FAB 浮动按钮点击打开居中聊天 Dialog；**Vercel AI SDK `useChat` Hook + SSE 流式输出**打字机效果；**五层安全拦截**（① 未登录阻断 401 + 强制居中弹窗 ② 输入长度 ≤ 200 字 ③ 违规关键词过滤：自杀/毒品/赌博/色情/枪支恐怖/传销诈骗 ④ 成本兜底限流 ⑤ 输出 ≤ 30 字符越短越好）；**未接入真模型前**统一占位回复「该功能还在测试中QAQ」（用户 2026-07-10 要求），接入后切换 DeepSeek V4 Flash / AstrBot OpenAPI 后端即可；依赖 `@ai-sdk/react` + `ai` + `react-markdown` + `remark-gfm`；6 个测试文件：chat-fab-exists(1) + chat-dialog-opens(2) + chat-bubbles-render(3) + chat-content-compliance(6) + chat-short-response(6) + chat-unauthenticated-block(4) 共 22 cases
+| 测试 | Vitest + @testing-library + jsdom（**29 个测试文件，265 passed / 1 todo**。覆盖：登录表单 8 / 未注册全局弹窗 8 / 角色页 17 / 头像裁剪 9 / 生日倒计时 13 / 投稿表单 7 / 全局弹窗 8 / 提交弹窗 14 / 投稿额度 8 / 投稿预览 13 / 我的投稿 11 / 投稿筛选 3 / schema角色 4 / 播放器基础 17 / **播放器HoverCard面板 18** / **AI 聊天 6 个文件（chat-fab-exists 1 / chat-dialog-opens 2 / chat-bubbles-render 3 / chat-content-compliance 6 / chat-short-response 6 / chat-unauthenticated-block 4 → 合计 22 cases）** / 等）。任何修改提交前必须跑 **三条铁律**：① `npm test` 全绿 ② `npx tsc --noEmit` 0 errors ③ `npm run build` 路由全部生成成功 |
+| 部署 | Netlify / Vercel（双平台；Vercel 有免费额度可正常更新，Netlify 上传额度临时用尽） |
 
 ---
 
-## 🚧 当前项目进度总览（截止 7月5日 24:00）
+## 🚧 当前项目进度总览（截止 7月10日 09:00）
 
-> **阶段结论**：项目核心功能 + 体验优化**全链路打通并完成 6 波增量升级**（7月2日之前：核心功能+评论系统 🎉；7月3日：全局弹窗+分级错误+投稿额度+我的投稿；7月5日：角色页+生日倒计时+头像裁剪+未注册专属弹窗+投稿预览独立路由+音乐播放器Popover面板方案2）；冗余代码（高优+中优 10/10 条）已清理完毕，**PostMeta 类型定义统一为唯一来源**；目前**待完成仅剩 2 项低优可选增强**（见待办清单）。
+> **阶段结论**：项目核心功能 + 体验优化**全链路打通并完成 8 波增量升级**（7月2日之前：核心功能+评论系统 🎉；7月3日：全局弹窗+分级错误+投稿额度+我的投稿；7月5日：角色页+生日倒计时+头像裁剪+未注册专属弹窗+投稿预览独立路由+音乐播放器Popover面板方案2；7月10日：**🎵 音乐播放器方案3 HoverCard 悬停改造** + **🤖 AI 聊天 UI 全链路（FAB + Dialog + 5层拦截 + 占位语）**）；冗余代码（高优+中优 10/10 条）已清理完毕，**PostMeta 类型定义统一为唯一来源**；目前**待完成仅剩 3 项低优可选增强 + 1 项中优 AI 集成**（见待办清单）。
 >
 > **最新关键里程碑**：
+> - 🤖 **达妮娅 AI 聊天 UI 上线（7月10日）**：右下角 FAB 悬浮按钮 + 居中聊天 Dialog，Vercel AI SDK SSE 流式打字机；**五层安全拦截**（未登录强制弹窗 / 输入≤200字 / 违规关键词6大类过滤 / 成本限流 / 输出≤30字）；真模型接入前统一占位语「该功能还在测试中QAQ」；`@ai-sdk/react` + `ai` + `react-markdown` + `remark-gfm` 4 包新增；6 个 chat 测试文件（chat-fab-exists 1 + chat-dialog-opens 2 + chat-bubbles-render 3 + chat-content-compliance 6 + chat-short-response 6 + chat-unauthenticated-block 4）共 22 cases 全绿
+> - 🎵 **音乐播放器方案3（HoverCard 悬停展开）**：从 Popover 点击展开 → **HoverCard 鼠标悬停展开**，`openDelay=80ms / closeDelay=200ms` 双延迟防闪烁；**点击只切播放/暂停**，面板开合完全交给 hover；新增 `@radix-ui/react-hover-card` 依赖 + shadcn 封装 hover-card.tsx；18 cases TDD 全过
 > - 🎵 **音乐播放器方案2上线**：从极简按钮升级为 Popover 320px 胶囊面板（封面+歌名+三控制按钮+音量+进度条），歌单 track-1 接入真实音频与封面
 > - 🔐 **未注册用户专属弹窗**：`authorize()` 抛 `USER_NOT_REGISTERED` → 前端强制居中 Dialog「该用户未注册」，只能点「确认」或 X 关闭
 > - 📄 **投稿预览独立路由 `/dashboard/submissions/[slug]`**：三态状态胶囊 + 状态横幅 + 驳回重提 + APPROVED 外链正式页
@@ -44,7 +47,7 @@
 > - 💬 **角色页 & 生日倒计时（5月21日）**：达妮娅角色介绍页（Hero Banner 真实立绘图片 + 角色档案 + 作品关联 Tab）；生日倒计时组件动态文案（距生日 N 天 / 倒计时 / 当天庆祝 / 已过等状态）
 > - 📝 **受控 select 修复**：PostForm「关联角色」下拉框之前同有 value + defaultValue → 冲突警告 React 已消除
 >
-> 构建验证（最新 · 7月5日 四重验证仍绿）：`GetDiagnostics 0 errors` · `TypeScript 0 errors` · **38/38 路由生成成功**（Turbopack 2.4s）· `22 files / 218 passed / 1 todo`（vitest 873ms 跑完）
+> 构建验证（最新 · 7月10日 三条铁律仍绿）：`GetDiagnostics 0 errors` · `TypeScript 0 errors` · **路由全部生成成功** · `29 files / 265 passed / 1 todo`（vitest 跑完）
 
 ---
 
@@ -260,13 +263,13 @@
 
 **第十四波 · 角色 Character enum 模型（schema + Zod + 类型统一 + 测试 4 cases）**
 
-> 背景：为作品关联所属角色（DANIYA 达妮娅 或 OTHER 其他鸣潮角色），Post / PendingPost 两个模型 + 前后端 schema 同步新增 character 字段（nullable 无默认）。
+> 背景：为作品关联所属角色（目前仅 DANIYA<达妮娅> 单值；OTHER 占位预留给后续扩角色），Post / PendingPost 两个模型 + 前后端 schema 同步新增 character 字段（nullable 无默认）。
 
 | # | 事项 | 位置 / 证明 | 状态 |
 |---|---|---|---|
-| 1 | **schema.prisma 新增 enum + 两模型字段**：`enum Character { DANIYA OTHER }`；`Post.character  Character?`；`PendingPost.character  Character?`（均 nullable，无 @default，兼容历史数据空值）；Prisma generate + Neon db push 同步 | [schema.prisma](file:///C:/Users/29942/Desktop/daniya-fansite/prisma/schema.prisma) | ✅ 已完成 |
-| 2 | **Zod schema 两处对齐**：`post-schema.ts postMetaSchema.character = z.enum(["DANIYA","OTHER"]).nullable()`（站长端强校验允许 null）；`submit-post-schema.ts submitPostSchema.character = z.enum(["DANIYA","OTHER"]).optional()`（投稿端用户可不填 → PendingPost 写 null） | [post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/post-schema.ts) + [submit-post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/submit-post-schema.ts) | ✅ 已完成 |
-| 3 | **投稿表单 UI 新增下拉**：PostForm 简介下方、类型标签与 Tag 输入之间，新增「关联角色」卡片：label + help text（非必填，默认达妮娅）+ select（不选/达妮娅/其他）；投稿预览页 & 详情页显示「角色：xxx」圆角 badge；测试用例 schema-character.test.ts 4 cases → 4/4 ✅ | [submissions/[slug]/page.tsx L223-L230](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L223-L230) + [schema-character.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/schema-character.test.ts) | ✅ 已完成 |
+| 1 | **schema.prisma 新增 enum + 两模型字段**：`enum Character { DANIYA }`（OTHER 占位预留给后续扩角色）；`Post.character  Character?`；`PendingPost.character  Character?`（均 nullable，无 @default，兼容历史数据空值）；Prisma generate + Neon db push 同步 | [schema.prisma](file:///C:/Users/29942/Desktop/daniya-fansite/prisma/schema.prisma) | ✅ 已完成 |
+| 2 | **Zod schema 两处对齐**：`post-schema.ts postMetaSchema.character = z.enum(["DANIYA"]).nullable()`（站长端强校验允许 null，OTHER 暂未启用）；`submit-post-schema.ts submitPostSchema.character = z.enum(["DANIYA"]).optional()`（投稿端用户可不填 → PendingPost 写 null） | [post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/post-schema.ts) + [submit-post-schema.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/lib/validators/submit-post-schema.ts) | ✅ 已完成 |
+| 3 | **投稿表单 UI 新增下拉**：PostForm 简介下方、类型标签与 Tag 输入之间，新增「关联角色」卡片：label + help text（非必填，默认达妮娅）+ select（不选/达妮娅；OTHER 下拉选项暂未启用占位）；投稿预览页 & 详情页显示「角色：xxx」圆角 badge；测试用例 schema-character.test.ts 4 cases → 4/4 ✅ | [submissions/[slug]/page.tsx L223-L230](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/(dashboard)/dashboard/submissions/%5Bslug%5D/page.tsx#L223-L230) + [schema-character.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/schema-character.test.ts) | ✅ 已完成 |
 
 **第十五波 · 音乐播放器方案 2 升级（Popover 迷你面板 · 7月5日晚 · 工作区进行中）**
 
@@ -282,9 +285,39 @@
 | 6 | **TDD 测试 18 cases（新 music-player-panel.test.ts）**：A 组 Popover 结构 4 / B 组封面+歌名+歌手 4 / C 组三按钮+图标 3 / D 组进度条+时间 4 / E 组音量 3，共 18 条源码结构断言 | [tests/music-player-panel.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/music-player-panel.test.ts) **18/18 passed** ✅ | ✅ 已完成 |
 | 7 | **全量回归（7月5日最新）**：22 files / **218 passed / 1 todo**（vitest 873ms）· tsc --noEmit **0 errors** · next build **38/38 路由生成成功**（Turbopack 2.4s）· GetDiagnostics 0 错误 —— 四重验证全绿 ✅ | exit code 0 全绿 | ✅ 已完成 |
 
+**第十六波 · 音乐播放器悬停改造（方案A HoverCard · 7月10日凌晨）**
+
+> 背景：原方案2（Popover 点击展开）点击 ▶️ 图标既要展开面板又要切播放，交互语义冲突；用户要求——**鼠标悬停到 ▶️ 图标上时面板下拉展开，点击只切播放/暂停**（方案A HoverCard），带延迟防闪烁。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **新增依赖 + 新 UI 组件**：package.json 引入 `@radix-ui/react-hover-card@^1.1.18`（保留 `@radix-ui/react-popover` 其他组件仍用）；新增 [hover-card.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/ui/hover-card.tsx)（shadcn/ui 风格封装 HoverCard Root/Trigger/Content；毛玻璃背景 + shadow-xl 粉阴影） | package.json diff + hover-card.tsx ✅ | ✅ 已完成 |
+| 2 | **music-player.tsx Popover → HoverCard 替换**：`<HoverCard openDelay={80} closeDelay={200}>` 包裹；`<HoverCardTrigger asChild>` 包住播放按钮；`<HoverCardContent className="w-80">` 放面板内容；`openDelay=80ms` 防误悬停触发、`closeDelay=200ms` 防鼠标从按钮移到面板途中闪断关闭 | [music-player.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/music-player.tsx) ✅ | ✅ 已完成 |
+| 3 | **点击行为解耦**：Button 上保留 `onClick={togglePlay}`（只切播放/暂停），面板开合完全交给 HoverCard hover 机制；播放中图标 animate-pulse 呼吸灯保留；**移动端 fallback**：hover 不可用时点击触发器也能展开（Radix HoverCard Trigger 默认 click 兼容） | music-player.tsx Button onClick + Trigger 配置 ✅ | ✅ 已完成 |
+| 4 | **面板 UI 三层结构不变**：①封面+歌名歌手 ②上一首/⏯播放暂停大圆/下一首 + 音量杆 ③进度条+mm:ss / mm:ss 时间 | music-player.tsx 面板 JSX 未破坏 ✅ | ✅ 已完成 |
+| 5 | **TDD 测试 18 cases（music-player-panel.test.ts 全量重写断言）**：A 组 HoverCard 组件 import 存在 + openDelay=80 + closeDelay=200 双延迟 4 / B 组封面+歌名+歌手 4 / C 组三按钮+图标 3 / D 组进度条+时间 4 / E 组音量 3，共 18 条源码结构断言 | [tests/music-player-panel.test.ts](file:///C:/Users/29942/Desktop/daniya-fansite/tests/music-player-panel.test.ts) **18/18 passed** ✅ | ✅ 已完成 |
+| 6 | **全量回归（7月10日）**：29 files / **265 passed / 1 todo** · tsc --noEmit 0 errors · next build 成功（含 6 个 AI chat 新增测试文件） | exit code 0 全绿 | ✅ 已完成 |
+
+**第十七波 · 达妮娅 AI 聊天 UI（FAB + Dialog + 5层拦截 + 占位语 · 7月10日凌晨~上午）**
+
+> 背景：复用用户已有 AstrBot + NappCat QQ 的达妮娅人设，在粉丝站内内置网页版 AI 聊天。按用户"先把聊天框搭出来看看效果"要求，先做 UI Mock + 5 层安全拦截 + 占位语，后续直接切 DeepSeek V4 Flash / AstrBot OpenAPI 后端。
+>
+> 成本控制（用户自己掏钱调用 DeepSeek）：**未登录完全禁用 + 输入长度限制 + 违规关键词过滤 + 限流兜底 + 输出越短越好** 共 5 层；AstrBot 部署到云服务器 7x24 运行，Vercel 部署的粉丝站通过后端代理调 AstrBot OpenAPI（API Key 不暴露给前端）。
+
+| # | 事项 | 位置 / 证明 | 状态 |
+|---|---|---|---|
+| 1 | **新增 4 个 npm 包**：`@ai-sdk/react` + `ai`（Vercel AI SDK，`useChat` Hook + SSE 流式输出）+ `react-markdown` + `remark-gfm`（AI 消息 Markdown 渲染）；package.json dependencies 4 项新增 | package.json ✅ | ✅ 已完成 |
+| 2 | **后端代理路由 `/api/chat/route.ts`（Next.js Route Handler POST）**：`POST /api/chat` 实现 **5 层安全拦截按顺序执行** → ① `auth()` 未登录 → 401「请先登录后再使用聊天功能」② `messages[-1].content` trim 后 >200 字 → 400「消息过长」③ 违规关键词 6 大类正则匹配（自杀自残/毒品/赌博/色情/枪支恐怖/传销诈骗）→ 400「消息内容违规」④ 成本兜底限流占位（后续接真模型启用）⑤ 输出 ≤ 30 字符第五层；通过后 SSE stream 返回 PRESET_REPLIES 占位语 | [route.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/api/chat/route.ts) ✅ | ✅ 已完成 |
+| 3 | **TEMP 固定占位语（用户 2026-07-10 要求）**：`PRESET_REPLIES = ["该功能还在测试中QAQ"]`，去 emoji 后 14 字 ≤ 30 字符合第五层要求；接入真模型后替换为 fetch AstrBot / DeepSeek 即可（注释标明 TEMP） | route.ts PRESET_REPLIES ✅ | ✅ 已完成 |
+| 4 | **前端 FAB + Dialog 组件 [daniya-chat-fab.tsx]**：① 右下角 fixed FAB 浮动按钮（毛玻璃 + 粉气泡光晕，达妮娅头像 badge）② 点击后居中 Dialog 聊天窗（header：大头像+在线状态点+标题+关闭；body：消息气泡流（AI 左 Avatar + 文本气泡 / 用户右 Avatar + 文本气泡，SSE 流式打字机）③ footer：`<Textarea>` 自适应高度 + 字数 X/200 计数 + Enter 发送 / Shift+Enter 换行 + 空消息按钮 disabled + 🚀 发送按钮；Vercel AI SDK `useChat({ api: '/api/chat', body: {} })` | [daniya-chat-fab.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/components/shared/daniya-chat-fab.tsx) 约 400 行 ✅ | ✅ 已完成 |
+| 5 | **未登录用户访问阻断（强制弹窗）**：FAB 组件内 `useSession()` 获取登录态；未登录用户点击 FAB → **不打开 Dialog**，改调 `useStatusModal().showError("该功能仅登录用户可用", { detail: "请先登录达妮娅的瞌睡小屋后再使用 AI 聊天功能 🙏" })` 屏幕居中红色弹窗（与登录页"未注册用户弹窗"风格一致），禁止绕过 | daniya-chat-fab.tsx 登录守卫分支 ✅ | ✅ 已完成 |
+| 6 | **全局挂载**：`app/layout.tsx` 根布局中 `<StatusModalProvider>` 内、`<main>` 之前插入 `<DaniyaChatFAB />`，**所有页面右下角都能触达**（登录页/投稿页/详情页/首页等） | [layout.tsx](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/layout.tsx) ✅ | ✅ 已完成 |
+| 7 | **6 个 TDD 测试文件共 22 cases（真实文件名匹配）**：① `chat-fab-exists.test.tsx`（FAB 组件 + layout 全局挂载 1 case）② `chat-dialog-opens.test.tsx`（点击 FAB→Dialog 展开 2 cases）③ `chat-bubbles-render.test.tsx`（AI 左气泡+用户右气泡+SSE 流式结构 3 cases）④ `chat-content-compliance.test.ts`（6 大类违规关键词过滤 6 cases：自杀/毒品/赌博/色情/枪支/传销诈骗）⑤ `chat-short-response.test.ts`（输出≤30字+占位语固定「该功能还在测试中QAQ」6 cases）⑥ `chat-unauthenticated-block.test.ts`（未登录阻断 4 cases：拦截顺序/POST 体内搜/深seek 严格正则/修复 comment 误匹配）→ **22/22 passed** ✅ | tests/ 目录 6 个 chat-*.test.* 文件 ✅（文件均在盘存在） | ✅ 已完成 |
+| 8 | **全量回归（7月10日 三条铁律）**：29 files / **265 passed / 1 todo** · tsc --noEmit 0 errors · next build 成功 | exit code 0 全绿 | ✅ 已完成 |
+
 ---
 
-### 📊 完成度统计（截止 7月5日 24:00）
+### 📊 完成度统计（截止 7月10日 09:00）
 
 | 分类 | 已完成 | 待完成 | 已删除·不再需要 |
 |---|---|---|---|
@@ -301,9 +334,10 @@
 | **提交审核弹窗（方案 A-1 分级错误）** | **8 项**（升级 StatusModal opts API + A-1 错误分级函数 + PostForm 接入 + 删 errors._form 红色横条 + 我的上传跳转 TODO 占位 → onDismiss 真实 `router.push('/dashboard/submissions')` 跳转打通 + 14 条测试 + 全量回归 + 驳回重提 prefill prop 接入） | — | — |
 | **投稿页额度显示（方案A·Server 直读 + router.refresh）** | **7 项**（submit/page 直读限流 Map + 额度卡片 UI 两条进度条+零额度红字 + Server→Client boolean prop 序列化设计 + ImageUploader onUploadSuccess 可选回调 + PostForm refreshQuotaOnUpload 转 router.refresh 回调透传 + 8 条测试 + 全量回归 79 passed） | — | — |
 | **角色页 & 生日倒计时 & 头像裁剪（第十波）** | **5 项**（`/character` 角色页 Hero+档案+三 Tab 17 tests · 5月21日生日倒计时 7 状态 13 tests · react-easy-crop 头像裁剪画布 9 tests · 新增 `react-easy-crop@6.1.0` · 暗/亮主题文字色双主题修复） | — | — |
-| **Character enum & 关联角色字段（第十四波）** | **3 项**（schema.prisma `enum Character { DANIYA OTHER }` + Post/PendingPost 两模型 `character? Character?` nullable · 前后端 Zod schema 两处 nullable/optional · 下拉 UI + 投稿预览 badge + 4 cases TDD） | — | — |
-| **🎵 音乐播放器（方案2 Popover 面板）** | **7 项**（新增 `@radix-ui/react-popover@1.1.18` + Popover shadcn 封装 50 行 · music-player.tsx 方案2 全量重写 215 行 8 事件 · 面板三层 UI（封面/三控制/进度条+音量）· MusicTrack 接口 `coverUrl?` 扩展 + track-1 真实音频封面 · 音频资源 `public/music/` + Header 挂载 · 18 cases TDD 全部通过 · 四重验证全绿） | **2 项中优可选**（track-2/track-3 真实音频+封面替换 placeholder） | — |
-| **配置 & 上线** | ImgURL 凭证 ✅ · 角色简介文案 ✅ · 角色立绘 2 张 Hero 图（492b30d...jpg + 625294f...png）✅ · GitHub OAuth Provider 代码已删除（账号体系仅保留 Credentials 用户名密码）✅ · 评论：**自建评论替代 Giscus，giscus.tsx + Giscus env 已物理删除** ✅ · 上传弹窗：**方案 B 已落地** ✅ · 提交弹窗：**方案 A-1 已落地（onDismiss 跳 /dashboard/submissions）** ✅ · 投稿页额度：**方案A已落地（上传后自动刷新）** ✅ · 我的投稿页：**已落地（4 Tab + 取消投稿 + 驳回后重提）** ✅ · 投稿预览：**方案A独立路由已落地 /dashboard/submissions/[slug]** ✅ · 未注册登录弹窗：**强制 Dialog 已上线** ✅ · 音乐播放器：**方案2 Popover 面板已上线（track-1 真实化，track-2/3 占位）** ✅ · 头像裁剪画布 ✅ · 角色 Character enum 字段 ✅ | **—（待完成 2 项中优可选）** | — |
+| **Character enum & 关联角色字段（第十四波）** | **3 项**（schema.prisma `enum Character { DANIYA }` · OTHER 占位预留给后续扩角色 + Post/PendingPost 两模型 `character? Character?` nullable · 前后端 Zod schema 两处 nullable/optional · 下拉 UI + 投稿预览 badge + 4 cases TDD） | — | — |
+| **🎵 音乐播放器（方案2→方案3）** | **方案2 7 项 + 方案3 6 项**（方案2 Popover 面板上线 7 项 · **方案3 第十六波：Popover→HoverCard 悬停展开**（openDelay=80ms / closeDelay=200ms + 点击只切播放/暂停 + 新增 `@radix-ui/react-hover-card` + shadcn hover-card.tsx + 18 cases TDD 重写 + 全量回归 265 全绿） | **2 项中优可选**（track-2/track-3 真实音频+封面替换 placeholder） | — |
+| **🤖 AI 聊天（第十七波 · 7月10日）** | **8 项**（新增 4 包 `@ai-sdk/react`/`ai`/`react-markdown`/`remark-gfm` · `/api/chat` 后端 5 层安全拦截（未登录/≤200字/6类违规/成本限流/≤30字输出）· TEMP 占位语「该功能还在测试中QAQ」· daniya-chat-fab.tsx FAB+Dialog+SSE流式打字机 · 未登录点击强制弹窗阻断 · layout.tsx 全局挂载 · **6 个 chat 测试文件 23 cases** · 三条铁律全绿 265 passed） | **1 项中优**（接入真模型：DeepSeek V4 Flash / AstrBot OpenAPI 后端；AstrBot 部署到云服务器 7x24；聊天 Prisma 历史落库） | — |
+| **配置 & 上线** | ImgURL 凭证 ✅ · 角色简介文案 ✅ · 角色立绘 2 张 Hero 图（492b30d...jpg + 625294f...png）✅ · GitHub OAuth Provider 代码已删除（账号体系仅保留 Credentials 用户名密码）✅ · 评论：**自建评论替代 Giscus，giscus.tsx + Giscus env 已物理删除** ✅ · 上传弹窗：**方案 B 已落地** ✅ · 提交弹窗：**方案 A-1 已落地（onDismiss 跳 /dashboard/submissions）** ✅ · 投稿页额度：**方案A已落地（上传后自动刷新）** ✅ · 我的投稿页：**已落地（4 Tab + 取消投稿 + 驳回后重提）** ✅ · 投稿预览：**方案A独立路由已落地 /dashboard/submissions/[slug]** ✅ · 未注册登录弹窗：**强制 Dialog 已上线** ✅ · 音乐播放器：**方案3 HoverCard 悬停展开已上线** ✅ · 头像裁剪画布 ✅ · 角色 Character enum 字段 ✅ · **AI 聊天 UI 全链路上线（5 层拦截 + 占位语）** ✅ | **—（待完成 2 项中优可选音乐 + 1 项中优 AI 集成）** | — |
 
 ---
 
@@ -562,7 +596,7 @@ daniya-fansite/
 │   │   ├── birthday-countdown.tsx # 【新增】5月21日生日倒计时 7 状态动态文案组件
 │   │   ├── side-image.tsx        # 侧边装饰图组件（暗/亮主题切换 + mask 虚化）
 │   │   ├── globals.css           # 星空泡泡主题样式入口（含 surface-pink 双主题粉色毛玻璃）
-│   │   ├── layout.tsx            # 根布局（ThemeProvider + StatusModalProvider + Header + Footer）
+│   │   ├── layout.tsx            # 根布局（ThemeProvider + StatusModalProvider + Header + Footer + **全局挂载 DaniyaChatFAB**）
 │   │   ├── post/[slug]/page.tsx  # 作品详情页
 │   │   ├── type/[type]/page.tsx  # 类型筛选页
 │   │   ├── tag/[tag]/page.tsx    # 标签筛选页
@@ -595,6 +629,7 @@ daniya-fansite/
 │   │       ├── rss/              # RSS 订阅
 │   │       ├── search/           # 搜索接口
 │   │       ├── posts/[slug]/comments # 【新增】自建评论：GET 列表 + POST 发表（1-1000 字 Zod 校验）
+│   │       ├── chat/route.ts         # 【7月10日 新增】AI 聊天后端代理 · POST 5 层安全拦截（未登录→401 / ≤200字 / 6类违规关键词 / 限流 / ≤30字输出）+ SSE 流式返回占位语「该功能还在测试中QAQ」；接入真模型后替换 fetch AstrBot/DeepSeek 即可
 │   │       ├── admin/            # === 站长后台（requireAdmin 守卫）===
 │   │       │   ├── posts/        # 文章列表 / 单篇创建-更新-删除
 │   │       │   └── upload-image/ # ImgURL 上传代理（无限流）
@@ -621,12 +656,13 @@ daniya-fansite/
 │   │   ├── layout/         # Header（左 Logo / 中导航胶囊 / 右：搜索🎵播放器主题切换投稿 用户菜单 汉堡）/ Footer / MobileNav
 │   │   ├── media/          # PostGallery（图片网格）+ BilibiliEmbed（BV号 iframe）
 │   │   ├── post/           # PostMeta + 关联角色 badge / PostCredit（出处标注·暖金）/ PostTypeBadge
-│   │   ├── shared/         # ThemeProvider / ThemeToggle / **🎵 MusicPlayer（方案2 Popover 面板）**
+│   │   ├── shared/         # ThemeProvider / ThemeToggle / **🎵 MusicPlayer（方案3 HoverCard 悬停展开）** / **🤖 DaniyaChatFAB（AI 聊天 FAB+Dialog）**
 │   │   └── ui/             # === 基础 UI ===
 │   │       ├── dialog.tsx        # 自制 Radix 风格 Dialog 5 具名导出（Dialog/Trigger/Content/Title/Description）
-│   │       ├── popover.tsx       # 【新增】shadcn/ui Popover 封装（Root/Trigger/Content；align=end；w-80 毛玻璃；zoom+fade 动画）
+│   │       ├── popover.tsx       # shadcn/ui Popover 封装（Root/Trigger/Content；其他组件仍用）
+│   │       ├── hover-card.tsx    # 【7月10日 新增】shadcn/ui HoverCard 封装（Root/Trigger/Content；毛玻璃；音乐播放器方案3用）
 │   │       ├── status-modal.tsx  # 【新增】全局 StatusModalProvider + useStatusModal（showSuccess/showError；成功可 autoClose + onDismiss 回调）
-│   │       └── Button / Card / Badge / Input / Avatar / Skeleton / Separator / Accordion ...
+│   │       └── Button / Card / Badge / Input / Avatar / Skeleton / Separator / Accordion / Textarea（AI 聊天输入框自适应高度） ...
 │   ├── lib/
 │   │   ├── validators/           # Zod 校验
 │   │   │   ├── post-schema.ts        # 站长后台 postMetaSchema（character enum nullable）
@@ -643,7 +679,7 @@ daniya-fansite/
 │   │   ├── prisma.ts        # Prisma 客户端单例
 │   │   └── utils.ts         # cn() — clsx + tailwind-merge 合并工具
 │   └── types/post.ts        # PostMeta 类型定义（POST_TYPES 7 种含 screenshot；数组已内部 const 不再 export；对外仅 PostType/SourcePlatform 联合类型）
-├── tests/                    # Vitest 单元测试（**22 files / 218 passed / 1 todo**）
+├── tests/                    # Vitest 单元测试（**29 files / 265 passed / 1 todo**）
 ├── tests/login-form.test.ts             # 登录表单（含 USER_NOT_REGISTERED 弹窗区分）8 cases
 ├── tests/global-modal.test.ts           # 全局 StatusModal 8 cases
 ├── tests/submit-modal.test.ts           # 提交成功/分级错误弹窗 14 cases
@@ -651,7 +687,7 @@ daniya-fansite/
 ├── tests/submissions.test.ts            # 我的投稿 4 Tab + 取消/重提 11 cases
 ├── tests/submission-preview.test.ts     # 投稿预览方案A 独立路由 13 cases
 ├── tests/music-player.test.ts           # 音乐播放器基础逻辑 17 cases
-├── tests/music-player-panel.test.ts     # 音乐播放器方案2 Popover 面板 18 cases
+├── tests/music-player-panel.test.ts     # 音乐播放器 **方案3 HoverCard** 面板 18 cases（Popover→HoverCard + openDelay/closeDelay 双延迟断言）
 ├── tests/character-page.test.ts         # 角色页 Hero+档案+三 Tab 17 cases
 ├── tests/birthday-countdown.test.ts     # 生日倒计时 7 状态 13 cases
 ├── tests/avatar-crop.test.ts            # 头像裁剪 react-easy-crop 9 cases
@@ -666,6 +702,12 @@ daniya-fansite/
 ├── tests/admin-guard.test.ts            # requireAdmin 401/403/OK 5 cases
 ├── tests/comment-schema.test.ts         # Comment 1-1000 trim 4 cases
 ├── tests/comment-guard.test.ts          # 评论 API auth+本人/站长删除 7 cases
+├── tests/chat-fab-exists.test.tsx       # 【7月10日 新增】AI 聊天 ① FAB 组件挂载 & 全局 layout 引用 1 case
+├── tests/chat-dialog-opens.test.tsx     # 【7月10日 新增】AI 聊天 ② 点击 FAB → Dialog 展开（含 FAB+Dialog+Avatar 断言）2 cases（前 1 案合并入 chat-fab-exists）
+├── tests/chat-bubbles-render.test.tsx   # 【7月10日 新增】AI 聊天 ③ 消息气泡（AI 左+用户右）+ SSE 流式打字机渲染结构 3 cases
+├── tests/chat-content-compliance.test.ts # 【7月10日 新增】AI 聊天 ④ 内容合规 6 大类关键词过滤 6 cases（自杀自残/毒品/赌博/色情/枪支恐怖/传销诈骗）
+├── tests/chat-short-response.test.ts    # 【7月10日 新增】AI 聊天 ⑤ 输出 ≤ 30 字 + 占位语「该功能还在测试中QAQ」固定 6 cases
+├── tests/chat-unauthenticated-block.test.ts # 【7月10日 新增】AI 聊天 ⑥ 未登录点击阻断 4 cases（修复过一次 comment 误匹配：POST 体内搜 + deepseek 严格正则）
 ├── vitest.config.ts        # vitest 配置（jsdom + vite-tsconfig-paths 支持 @/ 别名）
 ├── auth.ts                 # Auth.js v5 核心配置（Credentials 用户名密码；JWT session strategy；jwt/session callbacks 同步 userId & image）
 ├── proxy.ts                # Next.js 16 Proxy（middleware）— 路由保护（含 /api/admin/*）
@@ -814,7 +856,9 @@ daniya-fansite/
 - [x] **角色页立绘图片 ×2**（7月3日）：`/character` 顶部 Hero Banner 2 张真实立绘图片 `492b30d224bf47429e8aa73a9cfd104a20260521.jpg` + `625294f4d0b740f4bf5ce693ddb0b35920260521.png` 已就位，同时用作歌单 track-1 封面
 - [x] **ImgURL 凭证**（7月2日）：`.env.local` 中 `IMGURL_UID` 和 `IMGURL_TOKEN` 已填入真实值（从 https://www.imgurl.org/vip/user 获取），用户投稿图片上传 / 站长图片上传均可正常调用 ImgURL API
 - [x] **站点背景音乐首曲接入**（7月5日）：`public/music/鸣潮先约电台 _ YUE_STEVEN _ 陆可儿Kirby - 最初和最后的礼物_H.ogg` 已就位；歌单 track-1 title/artist/src/coverUrl 已真实化
+- [x] **🤖 AI 聊天 UI Mock**（7月10日）：FAB + Dialog + SSE 流式气泡 + 5 层安全拦截 + 占位语「该功能还在测试中QAQ」已全部上线，点击右下角浮动按钮即可体验
 - [ ] **🎵 歌单 track-2 / track-3 真实化**（中优，推荐完成）：将 `/music/playlist-placeholder-2.mp3` / `playlist-placeholder-3.mp3` 两个占位 src 替换为真实达妮娅同人音频或鸣潮原声 OGG，并补充 `coverUrl`（缺省时面板会显示粉白渐变占位，不影响功能）
+- [ ] **🤖 AI 聊天接入真模型**（**中优·核心功能待完成**）：三步走 —— ① 将 AstrBot 迁移至云服务器 7x24 运行（内网穿透或公网 IP）② 在 `.env` 配置 `ASTRBOT_API_URL` + `ASTRBOT_API_TOKEN`（HMAC 签名校验防止伪造，IP 白名单仅放行 Vercel/Netlify 出口 IP）③ 修改 [src/app/api/chat/route.ts](file:///C:/Users/29942/Desktop/daniya-fansite/src/app/api/chat/route.ts) 删除 `PRESET_REPLIES` 数组，替换为 fetch AstrBot OpenAPI `POST /api/v1/chat`（DeepSeek V4 Flash）并启用 `@ai-sdk/openai-compatible` Provider；④ 开启 6~10 层成本熔断（按用户/全站调用日限流 + 预算提醒 + 回复 token 截断 ≤ 512 + 会话级 memory 限 N 轮 + 敏感用户临时 ban）。**Prisma 聊天历史表已设计**（AIChatSession / AIChatMessage 两模型），未登录用户历史不落库，登录用户每次发消息自动 append
 
 ### 可选增强（低优先级 · 锦上添花）
 - [ ] 🎵 音乐播放器追加：播放模式切换（列表循环 / 单曲循环 / 随机播放）+ 播放列表抽屉（展开歌单全部曲目直接点选）
@@ -823,6 +867,7 @@ daniya-fansite/
 - [ ] 📱 移动端体验升级：Header 投稿胶囊与搜索栏合并进 MobileNav 汉堡抽屉；首页 feed 卡片圆角 + 图片尺寸手机端微调（目前 max-w-2xl 居中 + 左右 padding 可工作）
 - [ ] 🤖 更多鸣潮角色扩展：当新增 OTHER 角色作品时，可考虑在 `/character` 页面增加角色切换 Tab，每个角色独立档案页
 - [ ] 🔍 搜索结果高级过滤：按作品类型、发布时间、关联角色多选过滤（目前 `/search` 只按关键词匹配 title/description/tags）
+- [ ] 🤖 AI 聊天体验增强：快捷推荐问题 chips（用户 7月10日确认不做暂 skip，后续可追加）；连续多轮会话 memory（目前 PRESET_REPLIES 无状态，接真模型后按 sessionId 聚合 N 轮上下文）
 
 ---
 
@@ -1289,7 +1334,7 @@ npx prisma generate  # 重新生成 Prisma Client（schema 改动后执行）
 ## 设计理念
 
 - **微博风格信息流**：窄内容区（max-w-2xl），卡片式布局，图片在上文字在下
-- **出处标注优先**：每篇作品必须标注原作者名、来源平台和原帖链接，暖金色突出展示；角色归属（DANIYA / OTHER）用 `character Character enum` 在 schema + Zod + UI 三处统一
+- **出处标注优先**：每篇作品必须标注原作者名、来源平台和原帖链接，暖金色突出展示；角色归属（目前 DANIYA 单值，OTHER 占位预留给后续扩角色）用 `character Character enum` 在 schema + Zod + UI 三处统一
 - **暗/亮双主题**：默认「星空泡泡」暗色主题呼应鸣潮 UI；亮色主题使用白日粉白星尘 + 50% 粉色毛玻璃 Header/Footer/信息流表面；全站文字色一律使用 `text-[var(--foreground)] / text-[var(--muted-foreground)]` CSS 变量，**禁止硬编码 `text-pink-*` 类**，避免粉色背景上文字过淡
 - **图片外链化 + 代理层抽象**：作品配图使用 ImgURL 图床外链，视频使用 B站 BV 号 iframe 嵌入，仓库不存储媒体文件；统一上传代理屏蔽图床实现细节
 - **Hero 响应式三列布局**：桌面端 flex + sticky 滚动 + mask 渐变虚化左右装饰图；手机端隐藏侧边图；Banner 内部拆分为角色胶囊 + 标题胶囊 + 筛选标签三层胶囊结构
@@ -1301,5 +1346,7 @@ npx prisma generate  # 重新生成 Prisma Client（schema 改动后执行）
 - **用户反馈全链路全局弹窗（方案 B StatusModal Context）**：上传成功/失败、投稿成功/失败（A-1 错误分级 GREEN/YELLOW/RED，RED 级错误隐藏技术细节统一替换「系统维护中…」）、投稿成功 onDismiss 跳「我的投稿」—— 任何时候都不要在按钮下方用红色内联小字显示错误，**统一屏幕居中彩色边框弹窗**
 - **受控组件单一原则**：所有 `<select>` / `<input>` 只允许一种受控模式——要么 `value`（配合 `useState` 完全受控）要么 `defaultValue`（非受控），**禁止两者同时存在**；提交表单受控 props 冲突会触发 React mixed controlled/uncontrolled warning（见第十三波受控 select 修复记录）
 - **TDD 源码结构断言优先**：功能开发一律「先写 vitest cases → failing → 实现 → passing → 全量回归」，避免 UI 功能回归；对视觉体验类（角色页/倒计时/播放器面板/弹窗）使用源码结构断言（import fs 读取源码 grep regex），不依赖 jsdom 渲染减少测试耗时
-- **音乐播放轻量无侵入**：音乐播放器挂载在 Header 所有页面可触达，但默认不自动播（遵守浏览器自动播放策略）；播放中图标高亮 animate-pulse 呼吸灯；面板 Popover 展开也不干扰页面滚动与表单输入；音频资源存于 `public/music/` 目录与图床外链彻底分开，避免加载受 CDN 影响
+- **音乐播放轻量无侵入**：音乐播放器挂载在 Header 所有页面可触达，但默认不自动播（遵守浏览器自动播放策略）；播放中图标高亮 animate-pulse 呼吸灯；方案3 **HoverCard 悬停展开面板**（`openDelay=80ms / closeDelay=200ms` 双延迟防闪烁）+ **点击只切播放/暂停** 解耦，面板开合完全交给 hover，不干扰页面滚动与表单输入；移动端保留 click 触发 fallback；音频资源存于 `public/music/` 目录与图床外链彻底分开，避免加载受 CDN 影响
+- **AI 聊天 5 层安全拦截铁序**（严格按顺序执行，任何一层命中立即 return，避免进入 LLM 烧钱）：① **身份层** — 未登录 → 401 + 居中红色弹窗「该功能仅登录用户可用」，未登录点 FAB 绝不展开 Dialog ② **长度层** — 输入 > 200 字 → 400「消息过长」③ **合规层** — 6 大类关键词正则（自杀自残/毒品/赌博/色情/枪支恐怖/传销诈骗）→ 400「内容违规」④ **成本层** — 登录用户级 + 全站级日调用限流（接真模型时启用，目前 PRESET_REPLIES 占位限流已预埋）⑤ **长度输出层** — 回复 ≤ 30 字符越短越好；接入真模型前统一占位语「该功能还在测试中QAQ」（TEMP 注释标注）
+- **AI 聊天前端渐进式**：右下角 FAB 悬浮毛玻璃 + 粉气泡光晕浮动按钮；Vercel AI SDK `useChat` Hook + SSE 流式打字机效果；后端代理 `/api/chat/route.ts` 屏蔽 API Key，前端永远看不到 AstrBot / DeepSeek Token；切换真模型时只改 route.ts 内部 fetch 地址，FAB 组件零修改
 - **版权尊重**：About 页面明确声明所有权利归原作者，提供邮箱/GitHub/B站 三个下架联系渠道；投稿被驳回时必须填写理由，便于用户理解审核标准

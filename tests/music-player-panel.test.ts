@@ -7,38 +7,56 @@ const PLAYER_SRC = fs.readFileSync(path.join(ROOT, "src/components/shared/music-
 const PLAYLIST_SRC = fs.readFileSync(path.join(ROOT, "src/data/music-playlist.ts"), "utf-8");
 
 /**
- * MusicPlayer 方案2升级：Popover 迷你面板
+ * MusicPlayer 方案A升级：HoverCard 悬停下拉面板
  * ──────────────────────────────────────
- * 点击 🎵 按钮 → 弹出 320px 宽的面板：
+ * 鼠标悬停 🎵 按钮（延迟开/关）→ 下拉 320px 宽的面板：
  *   上：封面 + 歌名 + 歌手
  *   中：⏮ 上一首 | ⏯ 播放/暂停 | ⏭ 下一首 | 🔊 音量杆
  *   下：进度条 + mm:ss 时间
+ * 点击 🎵 按钮：只切换播放/暂停（面板开合完全由 hover 管）
  *
  * 目标文件：music-player.tsx / music-playlist.ts（加 coverUrl）
  */
-describe("MusicPlayer 方案2：Popover 迷你面板（封面/歌名/上下一曲/进度/音量）", () => {
+describe("MusicPlayer 方案A：HoverCard 悬停下拉面板（鼠标悬停展开，点击只切播放暂停）", () => {
 
-  describe("A. Popover 结构：外层容器 + Trigger + Content", () => {
+  describe("A. HoverCard 悬停容器结构：外层 + Trigger + Content + 延迟配置", () => {
 
-    it("1) 必须从 @/components/ui/popover 导入 Popover、PopoverTrigger、PopoverContent", () => {
+    it("1) 必须从 @/components/ui/hover-card 导入 HoverCard、HoverCardTrigger、HoverCardContent（替换之前的 Popover）", () => {
       expect(PLAYER_SRC).toMatch(
-        /import\s*\{[^}]*\bPopover\b[^}]*\bPopoverTrigger\b[^}]*\bPopoverContent\b[^}]*\}\s*from\s*["']@\/components\/ui\/popover["']/
+        /import\s*\{[^}]*\bHoverCard\b[^}]*\bHoverCardTrigger\b[^}]*\bHoverCardContent\b[^}]*\}\s*from\s*["']@\/components\/ui\/hover-card["']/
       );
     });
 
-    it("2) 最外层 JSX 用 <Popover> 包裹（替代之前的 Fragment 或直接 Button）", () => {
-      // 至少出现一个 <Popover> 开标签
-      expect(PLAYER_SRC).toMatch(/<Popover\b/);
+    it("2) 最外层 JSX 用 <HoverCard> 包裹（替代之前的 Popover）", () => {
+      expect(PLAYER_SRC).toMatch(/<HoverCard\b/);
     });
 
-    it("3) 原播放/暂停按钮必须放在 <PopoverTrigger asChild> 里（点击即触发弹出）", () => {
-      expect(PLAYER_SRC).toMatch(/<PopoverTrigger\s+asChild\s*>/);
+    it("3) 原播放/暂停按钮必须放在 <HoverCardTrigger asChild> 里（悬停即触发下拉）", () => {
+      expect(PLAYER_SRC).toMatch(/<HoverCardTrigger\s+asChild\s*>/);
       // Trigger 内包含 <Button variant="ghost" size="icon"
-      expect(PLAYER_SRC).toMatch(/<PopoverTrigger\s+asChild\s*>[\s\S]{0,200}<Button[^>]*variant\s*=\s*["']ghost["'][^>]*size\s*=\s*["']icon["']/);
+      expect(PLAYER_SRC).toMatch(/<HoverCardTrigger\s+asChild\s*>[\s\S]{0,200}<Button[^>]*variant\s*=\s*["']ghost["'][^>]*size\s*=\s*["']icon["']/);
     });
 
-    it("4) 面板内容用 <PopoverContent> 包裹，宽 w-80（320px）或自定义宽度", () => {
-      expect(PLAYER_SRC).toMatch(/<PopoverContent[^>]*>/);
+    it("4) 面板内容用 <HoverCardContent> 包裹，宽 w-80（320px）或自定义宽度", () => {
+      expect(PLAYER_SRC).toMatch(/<HoverCardContent[^>]*>/);
+    });
+
+    it("5) 必须配置 openDelay + closeDelay（鼠标悬停延迟 + 离开延迟收起，防按钮→面板间隙闪断；要求：0<openDelay≤300，100≤closeDelay≤500）", () => {
+      const delayRe = /<HoverCard[^>]*\sopenDelay\s*=\s*\{?\s*(\d+)\s*\}?[^>]*\scloseDelay\s*=\s*\{?\s*(\d+)\s*\}?/;
+      const match = delayRe.exec(PLAYER_SRC);
+      expect(match).not.toBeNull();
+      if (!match) return;
+      const openDelay = Number(match[1]);
+      const closeDelay = Number(match[2]);
+      expect(openDelay).toBeGreaterThan(0);
+      expect(openDelay).toBeLessThanOrEqual(300);
+      expect(closeDelay).toBeGreaterThanOrEqual(100);
+      expect(closeDelay).toBeLessThanOrEqual(500);
+    });
+
+    it("6) HoverCardTrigger 里的 Button onClick 必须调用 togglePlay（点击只切播放/暂停，面板开合完全交给 hover 延迟机制）", () => {
+      const re = /<HoverCardTrigger\s+asChild\s*>[\s\S]{0,400}<Button[^>]*\sonClick\s*=\s*\{\s*togglePlay\s*\}[^>]*>/;
+      expect(re.test(PLAYER_SRC)).toBe(true);
     });
 
   });

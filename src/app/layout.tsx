@@ -13,6 +13,7 @@ import { SessionProvider } from "@/components/auth/session-provider";
 import { StatusModalProvider } from "@/components/ui/status-modal";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import DaniyaChatFAB from "@/components/shared/daniya-chat-fab";
 import "./globals.css";
 
 /** 站点全局 SEO 元数据 */
@@ -49,6 +50,8 @@ export default function RootLayout({
               {/* flex-1 让 main 撑满剩余空间，把 footer 推到底部 */}
               <main className="flex-1">{children}</main>
               <Footer />
+              {/* 右下角悬浮 AI 聊天按钮（全局所有页面都可访问） */}
+              <DaniyaChatFAB />
             </StatusModalProvider>
           </ThemeProvider>
         </SessionProvider>
