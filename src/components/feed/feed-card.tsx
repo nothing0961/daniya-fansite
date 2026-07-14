@@ -10,6 +10,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Play } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PostTypeBadge } from "@/components/post/post-type-badge";
@@ -21,6 +22,7 @@ interface FeedCardProps {
 }
 
 export function FeedCard({ post }: FeedCardProps) {
+  const router = useRouter();
   const formattedDate = new Date(post.publishedAt).toLocaleDateString(
     "zh-CN",
     {
@@ -86,18 +88,18 @@ export function FeedCard({ post }: FeedCardProps) {
           {post.tags.length > 0 && (
             <div className="flex gap-1.5 mt-2.5 flex-wrap">
               {post.tags.map((tag) => (
-                <span
+                <button
                   key={tag}
+                  type="button"
                   className="text-xs text-[var(--primary)] hover:underline"
                   onClick={(e) => {
-                    // 阻止链接冒泡到外层卡片 Link
-                    e.preventDefault();
                     e.stopPropagation();
-                    window.location.href = `/tag/${tag}`;
+                    e.preventDefault();
+                    router.push(`/tag/${tag}`);
                   }}
                 >
                   #{tag}
-                </span>
+                </button>
               ))}
             </div>
           )}

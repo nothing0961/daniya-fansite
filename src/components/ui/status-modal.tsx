@@ -20,8 +20,8 @@ interface StatusModalState {
   detail?: string;
   /** 成功弹窗是否自动关闭：true=默认1500ms / 数字=自定义毫秒 / false=必须手动关 */
   successAutoClose?: boolean | number;
-  /** 成功弹窗关闭（任何方式：知道了按钮/X/遮罩/Esc/自动超时）后的回调，用于跳转"我的上传"等 */
-  onDismiss?: () => void;
+  /** 成功弹窗关闭（任何方式：知道了按钮/X/遮罩/Esc/自动超时）后的回调（已迁移到 ref，此处保留兼容） */
+
 }
 
 interface ShowSuccessOptions {
@@ -77,12 +77,14 @@ export function StatusModalProvider({
   );
   // 记录本次 dismiss 是否已经回调过（避免 Esc / 知道了 / 遮罩 / 自动超时 重复触发）
   const dismissFiredRef = React.useRef(false);
+  // 使用 ref 存储 onDismiss，避免 autoClose timer 的 stale closure 丢失回调
+  const onDismissRef = React.useRef<(() => void) | undefined>(undefined);
 
   const fireDismissOnce = React.useCallback(() => {
     if (dismissFiredRef.current) return;
     dismissFiredRef.current = true;
-    state.onDismiss?.();
-  }, [state.onDismiss]);
+    onDismissRef.current?.();
+  }, []);
 
   const close = React.useCallback(() => {
     setState((s) => ({ ...s, type: null }));
@@ -108,12 +110,12 @@ export function StatusModalProvider({
       dismissFiredRef.current = false;
 
       const autoClose = opts.autoClose ?? true;
+      onDismissRef.current = opts.onDismiss;
       setState({
         type: "success",
         title,
         message: opts.message,
         successAutoClose: autoClose,
-        onDismiss: opts.onDismiss,
       });
 
       if (autoClose !== false) {
@@ -131,7 +133,7 @@ export function StatusModalProvider({
     ) => {
       clearAutoCloseTimer();
       dismissFiredRef.current = false;
-      setState({ type: "error", title, detail: opts.detail, message: opts.message, onDismiss: opts.detail ? undefined : undefined });
+      setState({ type: "error", title, detail: opts.detail, message: opts.message });
     },
     [],
   );

@@ -29,7 +29,16 @@ function Dialog({ children, open: controlledOpen, onOpenChange }: DialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? onOpenChange! : setInternalOpen;
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      if (isControlled) {
+        onOpenChange?.(value);
+      } else {
+        setInternalOpen(value);
+      }
+    },
+    [isControlled, onOpenChange],
+  );
 
   return (
     <DialogContext.Provider value={{ open, setOpen }}>
@@ -98,6 +107,8 @@ const DialogContent = React.forwardRef<
       {/* Panel */}
       <div
         ref={ref}
+        role="dialog"
+        aria-modal="true"
         className={cn(
           "relative z-10 w-full max-w-md mx-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-lg",
           className,

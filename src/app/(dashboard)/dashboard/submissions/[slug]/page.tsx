@@ -110,8 +110,12 @@ export default async function SubmissionPreviewPage({
   // ---------- 4. 正文简单 markdown → HTML（与 /post/[slug] 同款简易渲染）----------
   const rawBody = pendingPost.content ?? "";
   // PendingPost.content 直接是 MDX 正文（不带 frontmatter），所以跳过 --- 去除段；但为了健壮性还是保留去除
-  const renderedBody = rawBody
+  let renderedBody = rawBody
     .replace(/^---[\s\S]*?---\n*/, "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  renderedBody = renderedBody
     .replace(
       /^### (.+)$/gm,
       '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>',
@@ -122,12 +126,12 @@ export default async function SubmissionPreviewPage({
     )
     .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
     .replace(
-      /^> (.+)$/gm,
+      /^&gt; (.+)$/gm,
       '<blockquote class="border-l-2 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)]">$1</blockquote>',
     )
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n\n/g, '</p><p class="mb-3">')
-    .replace(/^(.+)$/gm, '<p class="mb-3">$1</p>');
+    .replace(/\n\n/g, '</p><p class="mb-3">');
+  renderedBody = renderedBody.replace(/^(?!<)(.+)$/gm, '<p class="mb-3">$1</p>');
 
   const postType = (pendingPost.type as PostType) || "illustration";
 

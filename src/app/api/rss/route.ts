@@ -4,11 +4,23 @@
  */
 import { getAllPosts } from "@/lib/posts";
 
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function cdataSafe(s: string): string {
+  return s.replace(/]]>/g, "]]]]><![CDATA[>");
+}
+
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daniya-fansite.vercel.app";
   const posts = getAllPosts();
 
-  // 生成 RSS XML
   const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
@@ -22,13 +34,13 @@ export async function GET() {
       .map(
         (post) => `
     <item>
-      <title><![CDATA[${post.title}]]></title>
+      <title><![CDATA[${cdataSafe(post.title)}]]></title>
       <link>${baseUrl}/post/${post.slug}</link>
-      <description><![CDATA[${post.description}]]></description>
-      <author>${post.originalCreator}</author>
+      <description><![CDATA[${cdataSafe(post.description)}]]></description>
+      <author>${xmlEscape(post.originalCreator)}</author>
       <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
       <guid isPermaLink="true">${baseUrl}/post/${post.slug}</guid>
-      ${post.tags.map((tag) => `<category>${tag}</category>`).join("\n      ")}
+      ${post.tags.map((tag) => `<category>${xmlEscape(tag)}</category>`).join("\n      ")}
     </item>`
       )
       .join("")}

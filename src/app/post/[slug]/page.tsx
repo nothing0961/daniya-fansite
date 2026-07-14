@@ -9,6 +9,7 @@
  * - 评论区实现见 src/components/comments/user-comments.tsx
  */
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { getPostContent, getAllPosts } from "@/lib/posts";
@@ -137,17 +138,25 @@ export default async function PostPage({ params }: PostPageProps) {
         <div
           className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap"
           dangerouslySetInnerHTML={{
-            __html: rawContent
-              // 去除 frontmatter 部分（--- ... ---）
-              .replace(/^---[\s\S]*?---\n*/, "")
-              // 简单的 Markdown 转 HTML（后续替换为 MDX 编译）
-              .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
-              .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-8 mb-3">$1</h2>')
-              .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
-              .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)]">$1</blockquote>')
-              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\n\n/g, '</p><p class="mb-3">')
-              .replace(/^(.+)$/gm, '<p class="mb-3">$1</p>'),
+            __html: (() => {
+              let html = rawContent
+                .replace(/^---[\s\S]*?---\n*/, "")
+                // Escape HTML entities before Markdown conversion
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+              // Convert Markdown to HTML (headings, lists, blockquotes before <p> wrapping)
+              html = html
+                .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-8 mb-3">$1</h2>')
+                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+                .replace(/^&gt; (.+)$/gm, '<blockquote class="border-l-2 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)]">$1</blockquote>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p class="mb-3">');
+              // Wrap remaining lines in <p> — skip lines already converted to HTML
+              html = html.replace(/^(?!<)(.+)$/gm, '<p class="mb-3">$1</p>');
+              return html;
+            })(),
           }}
         />
       </div>
@@ -169,12 +178,12 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {/* 返回首页 */}
       <div className="mt-8 pt-6 border-t border-[var(--border)]">
-        <a
+        <Link
           href="/"
           className="text-sm text-[var(--primary)] hover:underline inline-flex items-center gap-1"
         >
           ← 返回作品列表
-        </a>
+        </Link>
       </div>
     </article>
   );

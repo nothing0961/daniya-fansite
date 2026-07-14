@@ -5,7 +5,7 @@
  * 修改方式：调整每页数量修改 pageSize 默认值
  */
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface FeedPaginationProps {
   currentPage: number;
@@ -14,6 +14,12 @@ interface FeedPaginationProps {
   basePath?: string;
 }
 
+const linkClass = cn(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors",
+  "border border-[var(--border)] bg-transparent hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]",
+  "h-9 px-3 text-sm",
+);
+
 export function FeedPagination({
   currentPage,
   totalPages,
@@ -21,18 +27,18 @@ export function FeedPagination({
 }: FeedPaginationProps) {
   if (totalPages <= 1) return null;
 
+  const separator = basePath.includes("?") ? "&" : "?";
+
   return (
     <div className="flex items-center justify-center gap-4 mt-8">
       {currentPage > 1 ? (
-        <Link href={`${basePath}?page=${currentPage - 1}`}>
-          <Button variant="outline" size="sm">
-            ← 上一页
-          </Button>
+        <Link href={`${basePath}${separator}page=${currentPage - 1}`} className={linkClass}>
+          ← 上一页
         </Link>
       ) : (
-        <Button variant="outline" size="sm" disabled>
+        <span className={cn(linkClass, "opacity-50 cursor-not-allowed")}>
           ← 上一页
-        </Button>
+        </span>
       )}
 
       <span className="text-sm text-[var(--muted-foreground)]">
@@ -40,15 +46,13 @@ export function FeedPagination({
       </span>
 
       {currentPage < totalPages ? (
-        <Link href={`${basePath}?page=${currentPage + 1}`}>
-          <Button variant="outline" size="sm">
-            下一页 →
-          </Button>
+        <Link href={`${basePath}${separator}page=${currentPage + 1}`} className={linkClass}>
+          下一页 →
         </Link>
       ) : (
-        <Button variant="outline" size="sm" disabled>
+        <span className={cn(linkClass, "opacity-50 cursor-not-allowed")}>
           下一页 →
-        </Button>
+        </span>
       )}
     </div>
   );

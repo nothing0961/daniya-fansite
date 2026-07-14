@@ -16,6 +16,7 @@
  * 避免客户端组件自己去拿 auth session 造成冗余请求 & bundle 变大。
  */
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -296,9 +297,9 @@ export function UserComments({
           <p className="text-sm text-[var(--muted-foreground)]">
             登录后即可评论（使用站内的用户名 + 密码登录）
           </p>
-          <Button asChild size="sm" variant="default">
-            <a href="/login">去登录 →</a>
-          </Button>
+          <Link href="/login" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-3 bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90 transition-colors">
+            去登录 →
+          </Link>
         </div>
       )}
     </div>

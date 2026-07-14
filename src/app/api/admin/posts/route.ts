@@ -24,6 +24,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "缺少文章标识 (slug)" }, { status: 400 });
     }
 
+    // 防止路径遍历和非法字符
+    const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/;
+    if (!SLUG_RE.test(slug)) {
+      return NextResponse.json({ error: "slug 格式不合法（仅允许小写字母、数字、连字符，3-60 字符）" }, { status: 400 });
+    }
+
     // Validate frontmatter
     const parsed = postMetaSchema.safeParse(frontmatter);
     if (!parsed.success) {

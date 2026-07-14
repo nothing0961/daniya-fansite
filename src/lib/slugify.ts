@@ -26,11 +26,13 @@ export function slugify(input: string): string {
  */
 export function slugifyWithSuffix(input: string, saltLen = 4): string {
   const base = slugify(input);
-  // 生成 saltLen 个 [a-z0-9] 随机字符
+  // 确保 base + suffix 不超过 60 字符（与 submit-post-schema SLUG_REGEX 对齐）
+  const maxBase = 60 - 1 - saltLen; // 减去 '-' 和 suffix
+  const trimmed = base.length > maxBase ? base.slice(0, maxBase).replace(/-+$/, "") : base;
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let suffix = "";
   for (let i = 0; i < saltLen; i++) {
     suffix += chars[Math.floor(Math.random() * chars.length)];
   }
-  return `${base}-${suffix}`;
+  return `${trimmed}-${suffix}`;
 }

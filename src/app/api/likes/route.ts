@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "缺少 postSlug" }, { status: 400 });
   }
 
-  // 检查是否已点赞
+  // 使用 upsert 消除 TOCTOU 竞态条件
   const existing = await prisma.postLike.findUnique({
     where: {
       userId_postSlug: {
@@ -69,13 +69,22 @@ export async function POST(request: Request) {
     const count = await prisma.postLike.count({ where: { postSlug } });
     return NextResponse.json({ liked: false, count });
   } else {
-    // 点赞
-    await prisma.postLike.create({
-      data: {
-        userId: session.user.id,
-        postSlug,
-      },
-    });
+    // 点赞 — 用 create 捕获唯一约束冲突（防止并发重复创建）
+    try {
+      await prisma.postLike.create({
+        data: {
+          userId: session.user.id,
+          postSlug,
+        },
+      });
+    } catch (err: any) {
+      if (err?.code === "P2002") {
+        // 并发场景：另一请求已创建，视为已点赞
+        const count = await prisma.postLike.count({ where: { postSlug } });
+        return NextResponse.json({ liked: true, count });
+      }
+      throw err;
+    }
     const count = await prisma.postLike.count({ where: { postSlug } });
     return NextResponse.json({ liked: true, count });
   }

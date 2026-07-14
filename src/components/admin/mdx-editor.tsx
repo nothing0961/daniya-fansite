@@ -9,14 +9,19 @@ interface MdxEditorProps {
 }
 
 function renderMarkdown(raw: string): string {
-  return raw
+  let html = raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  html = html
     .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-8 mb-3">$1</h2>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)]">$1</blockquote>')
+    .replace(/^&gt; (.+)$/gm, '<blockquote class="border-l-2 border-[var(--primary)] pl-4 italic text-[var(--muted-foreground)]">$1</blockquote>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n\n/g, '</p><p class="mb-3">')
-    .replace(/^(.+)$/gm, '<p class="mb-3">$1</p>');
+    .replace(/\n\n/g, '</p><p class="mb-3">');
+  html = html.replace(/^(?!<)(.+)$/gm, '<p class="mb-3">$1</p>');
+  return html;
 }
 
 export function MdxEditor({ value, onChange }: MdxEditorProps) {

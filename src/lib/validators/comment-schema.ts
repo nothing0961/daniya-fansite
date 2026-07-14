@@ -16,5 +16,3 @@ export const commentSchema = z.object({
     .min(1, "评论内容至少 1 个字符")
     .max(1000, "评论内容最多 1000 字"),
 });
-
-type CommentSchemaInput = z.infer<typeof commentSchema>;

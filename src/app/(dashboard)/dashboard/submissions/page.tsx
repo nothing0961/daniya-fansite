@@ -33,7 +33,7 @@ const STATUS_LABEL_ZH: Record<PendingPostStatus, string> = {
 };
 
 interface PageProps {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }
 
 export const metadata = {
@@ -63,8 +63,10 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
     redirect("/login?callbackUrl=/dashboard/submissions");
   }
 
+  const params = await searchParams;
+
   // --- Tab 过滤 ---
-  const rawStatus = (searchParams.status ?? "ALL").toUpperCase();
+  const rawStatus = (params.status ?? "ALL").toUpperCase();
   const tab: TabKey = (["ALL", "PENDING", "APPROVED", "REJECTED"].includes(rawStatus)
     ? rawStatus
     : "ALL") as TabKey;

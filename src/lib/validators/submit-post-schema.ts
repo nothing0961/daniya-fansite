@@ -29,7 +29,7 @@ export const submitPostSchema = z
       .array(z.string().min(1).max(20))
       .max(8, "标签最多 8 个")
       .default([]),
-    images: z.array(z.string().url("images 中每项必须是合法 URL")).max(20, "图片最多 20 张"),
+    images: z.array(z.string().url("images 中每项必须是合法 URL")).max(20, "图片最多 20 张").default([]),
     videoId: z
       .string()
       .regex(BV_REGEX, "BV 号格式不正确（必须以 BV 开头 + 10 位字母数字）")
@@ -57,11 +57,10 @@ export const submitPostSchema = z
     }
     // 非 video 类型：至少 1 张图片
     if (val.type !== "video" && val.images.length === 0) {
+      const typeLabel = val.type === "illustration" ? "插画" : val.type === "screenshot" ? "截图" : val.type;
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `${
-          val.type === "illustration" ? "插画" : val.type === "screenshot" ? "截图" : ""
-        } 类型至少上传 1 张图片`,
+        message: `${typeLabel} 类型至少上传 1 张图片`,
         path: ["images"],
       });
     }

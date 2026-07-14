@@ -43,6 +43,12 @@ export async function PUT(
       return NextResponse.json({ error: "缺少文章标识 (slug)" }, { status: 400 });
     }
 
+    // 防止路径遍历和非法字符
+    const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/;
+    if (!SLUG_RE.test(newSlug)) {
+      return NextResponse.json({ error: "slug 格式不合法" }, { status: 400 });
+    }
+
     const parsed = postMetaSchema.safeParse(frontmatter);
     if (!parsed.success) {
       return NextResponse.json(

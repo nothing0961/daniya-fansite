@@ -10,8 +10,8 @@ import { searchPosts } from "@/lib/search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") || "";
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const query = (searchParams.get("q") || "").trim();
+  const limit = Math.min(parseInt(searchParams.get("limit") || "10", 10), 100);
 
   const results = searchPosts(query, limit);
 

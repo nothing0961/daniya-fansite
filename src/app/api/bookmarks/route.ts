@@ -43,9 +43,13 @@ export async function POST(request: Request) {
       },
     });
     return NextResponse.json({ bookmark });
-  } catch {
-    // 重复收藏（unique 约束冲突）
-    return NextResponse.json({ error: "已收藏" }, { status: 409 });
+  } catch (err: any) {
+    // Prisma unique constraint violation
+    if (err?.code === "P2002") {
+      return NextResponse.json({ error: "已收藏" }, { status: 409 });
+    }
+    console.error("[bookmarks] create failed:", err);
+    return NextResponse.json({ error: "收藏失败，请稍后重试" }, { status: 500 });
   }
 }
 

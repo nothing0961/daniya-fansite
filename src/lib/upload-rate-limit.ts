@@ -53,7 +53,7 @@ export function getSiteTodayUploadCount(): number {
   return siteCounts.get(todayKey()) ?? 0;
 }
 
-/** 测试用：清今天 key 导不导出，测试无法清内存状态污染。测试用。不导出，reset 测试里调用，避免互相干扰 */
+/** 测试用：重置内存计数（避免测试间互相污染） */
 export function _resetForTests(): void {
   userCounts.clear();
   siteCounts.clear();

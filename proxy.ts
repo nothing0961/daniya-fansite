@@ -11,5 +11,5 @@ export const proxy = auth;
 
 export const config = {
   // 需要登录才能访问的路由
-  matcher: ["/dashboard/:path*", "/api/bookmarks/:path*", "/api/likes/:path*", "/api/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/api/bookmarks/:path*", "/api/admin/:path*"],
 };
