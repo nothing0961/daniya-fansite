@@ -60,7 +60,7 @@ const nextConfig = {
               "media-src 'self' https: data: blob:",
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self' data:",
-              "script-src 'self' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "connect-src 'self' https://*.imgurl.org",
               "frame-ancestors 'self'",
               "object-src 'none'",
