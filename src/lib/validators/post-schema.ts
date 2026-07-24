@@ -62,10 +62,18 @@ export const postMetaSchema = z.object({
   /** 标签 — 可选，最多 8 个 */
   tags: z.array(z.string().min(1)).max(8).optional().default([]),
 
-  /** 发布日期 — ISO 日期字符串 */
-  publishedAt: z.string().refine((d) => !isNaN(Date.parse(d)), {
-    message: "日期格式不正确，请使用 YYYY-MM-DD",
-  }),
+  /** 发布日期 — ISO 日期字符串，格式必须为 YYYY-MM-DD */
+  publishedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "日期格式必须为 YYYY-MM-DD")
+    .refine((d) => {
+      const date = new Date(d);
+      return date.getFullYear().toString() === d.slice(0, 4) &&
+        (date.getMonth() + 1).toString().padStart(2, "0") === d.slice(5, 7) &&
+        date.getDate().toString().padStart(2, "0") === d.slice(8, 10);
+    }, {
+      message: "日期格式不正确，请使用 YYYY-MM-DD",
+    }),
 
   /** 更新日期 — 可选 */
   updatedAt: z.string().optional(),

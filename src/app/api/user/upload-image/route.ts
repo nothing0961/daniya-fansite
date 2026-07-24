@@ -40,6 +40,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "未选择文件" }, { status: 400 });
     }
 
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ success: false, message: "仅支持图片文件" }, { status: 400 });
+    }
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ success: false, message: `图片大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB` }, { status: 400 });
+    }
+
     const imgFormData = new FormData();
     imgFormData.append("file", file);
     imgFormData.append("uid", process.env.IMGURL_UID || "");

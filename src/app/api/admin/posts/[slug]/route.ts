@@ -8,6 +8,7 @@ import path from "path";
 import matter from "gray-matter";
 
 const CONTENT_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), "content", "posts");
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/;
 
 export async function GET(
   _request: Request,
@@ -17,6 +18,9 @@ export async function GET(
   if (error) return error;
 
   const { slug } = await params;
+  if (!SLUG_RE.test(slug)) {
+    return NextResponse.json({ error: "slug 格式不合法" }, { status: 400 });
+  }
   const content = getPostContent(slug);
   if (!content) {
     return NextResponse.json({ error: "文章不存在" }, { status: 404 });
@@ -43,8 +47,6 @@ export async function PUT(
       return NextResponse.json({ error: "缺少文章标识 (slug)" }, { status: 400 });
     }
 
-    // 防止路径遍历和非法字符
-    const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/;
     if (!SLUG_RE.test(newSlug)) {
       return NextResponse.json({ error: "slug 格式不合法" }, { status: 400 });
     }
@@ -128,6 +130,9 @@ export async function DELETE(
   if (error) return error;
 
   const { slug } = await params;
+  if (!SLUG_RE.test(slug)) {
+    return NextResponse.json({ error: "slug 格式不合法" }, { status: 400 });
+  }
 
   try {
     const content = getPostContent(slug);

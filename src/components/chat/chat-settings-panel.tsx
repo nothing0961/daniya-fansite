@@ -290,6 +290,14 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
       return;
     }
 
+    const MAX_ZIP_SIZE = 1 * 1024 * 1024;
+    if (file.size > MAX_ZIP_SIZE) {
+      setUploadStatus("error");
+      setUploadMessage(`压缩包大小不能超过 ${MAX_ZIP_SIZE / 1024 / 1024}MB`);
+      setTimeout(() => setUploadStatus("idle"), 3000);
+      return;
+    }
+
     setUploadStatus("uploading");
     setUploadMessage("正在解析压缩包...");
 
@@ -318,12 +326,34 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
         throw new Error("压缩包中未找到 config.json 文件");
       }
 
-      const skillsData = configData.skills as SkillDefinition[] | undefined;
-      const mcpServersData = configData.mcpServers as McpServerConfig[] | undefined;
+      if (typeof configData !== "object" || configData === null) {
+        throw new Error("config.json 格式不正确");
+      }
+
+      const skillsData = configData.skills;
+      const mcpServersData = configData.mcpServers;
+
+      if (skillsData !== undefined && !Array.isArray(skillsData)) {
+        throw new Error("skills 必须是数组格式");
+      }
+      if (mcpServersData !== undefined && !Array.isArray(mcpServersData)) {
+        throw new Error("mcpServers 必须是数组格式");
+      }
+
       if (skillsData && Array.isArray(skillsData)) {
+        for (const skill of skillsData) {
+          if (typeof skill !== "object" || skill === null || !skill.name || typeof skill.name !== "string") {
+            throw new Error("skills 中包含无效的 skill 对象");
+          }
+        }
         setSkills(prev => [...prev, ...skillsData.map(s => ({ ...s, id: s.id || generateId() }))]);
       }
       if (mcpServersData && Array.isArray(mcpServersData)) {
+        for (const server of mcpServersData) {
+          if (typeof server !== "object" || server === null || !server.name || typeof server.name !== "string") {
+            throw new Error("mcpServers 中包含无效的服务器对象");
+          }
+        }
         setMcpServers(prev => [...prev, ...mcpServersData.map(s => ({ ...s, id: s.id || generateId() }))]);
       }
 
