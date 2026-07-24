@@ -29,22 +29,7 @@ vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: null, status: "unauthenticated" as const }),
 }));
 
-// Vercel "ai" 包 useChat 轻量 mock（空壳就行，不做真实请求）
-vi.mock("ai", () => ({
-  useChat: () => ({
-    messages: [],
-    input: "",
-    setInput: vi.fn(),
-    handleInputChange: vi.fn(),
-    handleSubmit: vi.fn(),
-    append: vi.fn(),
-    isLoading: false,
-    error: null,
-    reload: vi.fn(),
-    stop: vi.fn(),
-    setMessages: vi.fn(),
-  }),
-}));
+
 
 describe("AI 聊天 T-4：FAB 悬浮聊天入口（右下角）", () => {
   beforeEach(() => {

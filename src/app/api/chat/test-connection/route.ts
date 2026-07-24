@@ -52,6 +52,15 @@ export function classifyProtocol(params: {
       hint: "请在控制台确认你的 API Key 是否有效且已开通对应模型权限（无效 key 检查）",
     };
   }
+
+  // 3.5 HTTP 400：请求参数错误（常见原因：模型名称不正确、参数格式错误）
+  if (status === 400) {
+    return {
+      ok: false,
+      protocol: "bad-request",
+      hint: "请求参数错误！请检查模型名称是否正确。DeepSeek 正确模型名：deepseek-chat / deepseek-v2-chat / deepseek-r1-chat",
+    };
+  }
   // 解析响应 JSON 找 invalid_api_key / invalidApiKey / error.code=INVALID_API_KEY
   try {
     const json = JSON.parse(text);

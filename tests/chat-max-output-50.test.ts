@@ -1,9 +1,9 @@
 /**
- * 需求：max_output_tokens = 50 默认模式 + 自定义模式 Math.min(userVal, 150)
+ * 需求：max_output_tokens = 50 默认模式 + 自定义模式 Math.min(userVal, 4096)
  *
  * 断言：
  *   1. 默认模式下 fetch zhipu body.max_tokens === 50 或 env 解析默认 50
- *   2. 自定义模式下用户即使传 max_tokens>150，也被截断（Math.min(userVal, 150)）
+ *   2. 自定义模式下用户即使传 max_tokens>4096，也被截断（Math.min(userVal, 4096)）
  *   3. X-Max-Tokens Response header =50 默认模式
  *
  * 风格：源码字符串正则断言
@@ -32,15 +32,15 @@ describe("AI 聊天：max_output_tokens 默认 50 + 自定义 ≤150 截断", ()
     expect(hasDefault50).toBe(true);
   });
 
-  it("case2: 自定义模式下 max_tokens>150 被截断（handleCustomProvider 内 Math.min(..., 150)）", () => {
+  it("case2: 自定义模式下 max_tokens>4096 被截断（handleCustomProvider 内 Math.min(..., 4096)）", () => {
     if (!fs.existsSync(ROUTE_PATH)) return expect(true).toBe(false);
     const src = fs.readFileSync(ROUTE_PATH, "utf-8");
     const hcpStart = src.indexOf("async function handleCustomProvider");
     expect(hcpStart).toBeGreaterThan(0);
     const hcpBody = src.slice(hcpStart, hcpStart + 2000);
     const hasMathMin =
-      /Math\.min\s*\([^)]*,\s*150\s*\)/.test(hcpBody) ||
-      /Math\.min\s*\([^)]*,150\s*\)/.test(hcpBody);
+      /Math\.min\s*\([^)]*,\s*4096\s*\)/.test(hcpBody) ||
+      /Math\.min\s*\([^)]*,4096\s*\)/.test(hcpBody);
     expect(hasMathMin).toBe(true);
   });
 

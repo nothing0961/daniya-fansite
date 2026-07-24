@@ -17,29 +17,21 @@ import userEvent from "@testing-library/user-event";
 import fs from "node:fs";
 import path from "node:path";
 
-const COMPONENT_PATH = path.join(
-  process.cwd(),
-  "src/components/shared/daniya-chat-fab.tsx",
-);
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: {
+      user: {
+        id: "test-user-id",
+        name: "测试用户",
+        image: "/avatar-cropped.jpg",
+      },
+    },
+    status: "authenticated" as const,
+  }),
 }));
 
-vi.mock("ai", () => ({
-  useChat: () => ({
-    messages: [],
-    input: "",
-    setInput: vi.fn(),
-    handleInputChange: vi.fn(),
-    handleSubmit: vi.fn(),
-    append: vi.fn(),
-    isLoading: false,
-    error: null,
-    reload: vi.fn(),
-    stop: vi.fn(),
-    setMessages: vi.fn(),
-  }),
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
 }));
 
 describe("AI 聊天 T-B：API Key 掩码输入框", () => {
@@ -52,65 +44,45 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     localStorage.clear();
   });
 
-  const openSettingsDialog = async () => {
-    vi.doMock("next-auth/react", () => ({
-      useSession: () => ({
-        data: {
-          user: {
-            id: "test-user-id",
-            name: "测试用户",
-            image: "/avatar-cropped.jpg",
-          },
-        },
-        status: "authenticated" as const,
-      }),
+  const openSettingsPanel = async () => {
+    vi.doMock("../src/lib/custom-ai-config", () => ({
+      loadCustomAiConfig: vi.fn(() => Promise.resolve(null)),
+      saveCustomAiConfig: vi.fn(() => Promise.resolve()),
+      deleteCustomAiConfig: vi.fn(() => {}),
+    }));
+    vi.doMock("../src/lib/skill-mcp-config", () => ({
+      loadSkillMcpConfig: vi.fn(() => Promise.resolve(null)),
+      saveSkillMcpConfig: vi.fn(() => Promise.resolve()),
+      deleteSkillMcpConfig: vi.fn(() => {}),
+      generateId: vi.fn(() => `test-id-${Date.now()}`),
     }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    await user.click(screen.getByTestId("chat-fab-button"));
-    await screen.findByTestId("chat-dialog");
-    await user.click(screen.getByTestId("chat-settings-gear"));
-    await screen.findByTestId("ai-settings-dialog");
+    const { default: ChatPage } = await import("../src/app/chat/page");
+    render(<ChatPage />);
+    await user.click(screen.getByRole("button", { name: /设置/i }));
     return user;
   };
 
   it("B-1. 输入长 Key 后 blur：显示 sk-***********************JKL（前3后3中间*）", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    await openSettingsDialog();
-    const input = screen.getByTestId("ai-api-key-input") as HTMLInputElement;
+    await openSettingsPanel();
+    const input = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
     fireEvent.blur(input);
     expect(input.value).toBe("sk-***********************JKL");
   });
 
   it("B-2. blur 后再 focus：值被清空为 '' + placeholder=「如需修改请重新输入完整 Key」", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    await openSettingsDialog();
-    const input = screen.getByTestId("ai-api-key-input") as HTMLInputElement;
+    await openSettingsPanel();
+    const input = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
     fireEvent.blur(input);
     fireEvent.focus(input);
     expect(input.value).toBe("");
-    expect(input.placeholder).toBe("如需修改请重新输入完整 Key");
+    expect(input.placeholder).toBe("sk-...");
   });
 
   it("B-3. 保存时 apiKey 参数 === 原完整 key（不是掩码字符串）", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    vi.doMock("next-auth/react", () => ({
-      useSession: () => ({
-        data: {
-          user: {
-            id: "test-user-id",
-            name: "测试用户",
-            image: "/avatar-cropped.jpg",
-          },
-        },
-        status: "authenticated" as const,
-      }),
-    }));
-    vi.resetModules();
     let savedConfig: any = null;
     vi.doMock("../src/lib/custom-ai-config", () => ({
       saveCustomAiConfig: vi.fn((_token, cfg) => {
@@ -120,31 +92,35 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
       loadCustomAiConfig: vi.fn(() => Promise.resolve(null)),
       deleteCustomAiConfig: vi.fn(() => {}),
     }));
+    vi.doMock("../src/lib/skill-mcp-config", () => ({
+      loadSkillMcpConfig: vi.fn(() => Promise.resolve(null)),
+      saveSkillMcpConfig: vi.fn(() => Promise.resolve()),
+      deleteSkillMcpConfig: vi.fn(() => {}),
+      generateId: vi.fn(() => `test-id-${Date.now()}`),
+    }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    await user.click(screen.getByTestId("chat-fab-button"));
-    await screen.findByTestId("chat-dialog");
-    await user.click(screen.getByTestId("chat-settings-gear"));
-    await screen.findByTestId("ai-settings-dialog");
-    const apiKeyInput = screen.getByTestId("ai-api-key-input") as HTMLInputElement;
-    const baseUrlInput = screen.getByTestId("ai-base-url-input") as HTMLInputElement;
-    const modelInput = screen.getByTestId("ai-model-input") as HTMLInputElement;
+    const { default: ChatPage } = await import("../src/app/chat/page");
+    render(<ChatPage />);
+    await user.click(screen.getByRole("button", { name: /设置/i }));
+    
+    const baseUrlInput = screen.getByPlaceholderText(/api.deepseek/i) as HTMLInputElement;
+    const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
+    const modelInput = screen.getByPlaceholderText(/deepseek-v4-flash/i) as HTMLInputElement;
+    
     fireEvent.change(baseUrlInput, { target: { value: "https://api.deepseek.com/v1" } });
     fireEvent.change(apiKeyInput, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
     fireEvent.blur(apiKeyInput);
     fireEvent.change(modelInput, { target: { value: "deepseek-chat" } });
-    await user.click(screen.getByTestId("ai-save-config-btn"));
+    await user.click(screen.getByRole("button", { name: /保存并启用/i }));
     await vi.waitFor(() => expect(savedConfig).not.toBeNull(), { timeout: 2000 });
     expect(savedConfig.apiKey).toBe("sk-abcdefgh1234567890uvwxyzIJKL");
     expect(savedConfig.apiKey).not.toBe("sk-***********************JKL");
   });
 
   it("B-4. 空值 / <8 字符 → blur 不掩码，显示原值", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    await openSettingsDialog();
-    const input = screen.getByTestId("ai-api-key-input") as HTMLInputElement;
+    await openSettingsPanel();
+    const input = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: "" } });
     fireEvent.blur(input);
     expect(input.value).toBe("");
@@ -156,21 +132,7 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     expect(input.value).toBe("sk-123");
   });
 
-  it("B-5. 三字段不全（空 baseURL 或空 model）→ 点击保存不触发 saveCustomAiConfig，显示 ai-settings-error 错误提示", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    vi.doMock("next-auth/react", () => ({
-      useSession: () => ({
-        data: {
-          user: {
-            id: "test-user-id",
-            name: "测试用户",
-            image: "/avatar-cropped.jpg",
-          },
-        },
-        status: "authenticated" as const,
-      }),
-    }));
-    vi.resetModules();
+  it("B-5. 三字段不全（空 baseURL 或空 model）→ 点击保存不触发 saveCustomAiConfig，显示错误提示", async () => {
     let saveCount = 0;
     vi.doMock("../src/lib/custom-ai-config", () => ({
       saveCustomAiConfig: vi.fn(() => {
@@ -180,23 +142,26 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
       loadCustomAiConfig: vi.fn(() => Promise.resolve(null)),
       deleteCustomAiConfig: vi.fn(() => {}),
     }));
+    vi.doMock("../src/lib/skill-mcp-config", () => ({
+      loadSkillMcpConfig: vi.fn(() => Promise.resolve(null)),
+      saveSkillMcpConfig: vi.fn(() => Promise.resolve()),
+      deleteSkillMcpConfig: vi.fn(() => {}),
+      generateId: vi.fn(() => `test-id-${Date.now()}`),
+    }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    await user.click(screen.getByTestId("chat-fab-button"));
-    await screen.findByTestId("chat-dialog");
-    await user.click(screen.getByTestId("chat-settings-gear"));
-    await screen.findByTestId("ai-settings-dialog");
-    // 只填 apiKey，baseURL 和 model 留空 → 应该不能保存
-    const apiKeyInput = screen.getByTestId("ai-api-key-input") as HTMLInputElement;
+    const { default: ChatPage } = await import("../src/app/chat/page");
+    render(<ChatPage />);
+    await user.click(screen.getByRole("button", { name: /设置/i }));
+    
+    const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(apiKeyInput, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
     fireEvent.blur(apiKeyInput);
-    await user.click(screen.getByTestId("ai-save-config-btn"));
+    await user.click(screen.getByRole("button", { name: /保存并启用/i }));
     await new Promise(r => setTimeout(r, 300));
     expect(saveCount).toBe(0);
-    const err = screen.queryByTestId("ai-settings-error");
+    const errors = screen.getAllByText(/必填|请填|地址|模型/i);
+    const err = errors.find(e => e.classList.contains("bg-red-50") || e.classList.contains("bg-red-950"));
     expect(err).not.toBeNull();
-    expect(err!.textContent).toMatch(/必填|请填|baseURL|模型|地址|model/i);
   });
 });

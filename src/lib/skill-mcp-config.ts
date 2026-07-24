@@ -1,6 +1,42 @@
-export const CUSTOM_AI_CONFIG_STORAGE_KEY = "daniya:ai:config:v1";
+export interface SkillParameter {
+  name: string;
+  type: "string" | "number" | "boolean" | "array" | "object";
+  description: string;
+  required?: boolean;
+}
 
-const USER_KEY_ENCRYPTION_SALT = "daniya-custom-ai-v1";
+export interface SkillDefinition {
+  id: string;
+  name: string;
+  description: string;
+  parameters: SkillParameter[];
+  enabled: boolean;
+}
+
+export interface McpServerTool {
+  name: string;
+  description: string;
+  parameters: SkillParameter[];
+  enabled: boolean;
+}
+
+export interface McpServerConfig {
+  id: string;
+  name: string;
+  baseURL: string;
+  apiKey?: string;
+  tools: McpServerTool[];
+  enabled: boolean;
+}
+
+export interface SkillMcpSettings {
+  skills: SkillDefinition[];
+  mcpServers: McpServerConfig[];
+}
+
+export const SKILL_MCP_STORAGE_KEY = "daniya:ai:skillmcp:v1";
+
+const USER_KEY_ENCRYPTION_SALT = "daniya-skillmcp-v1";
 
 function getSubtle(): SubtleCrypto | null {
   try {
@@ -36,31 +72,31 @@ async function deriveKey(sessionToken: string): Promise<CryptoKey | null> {
   }
 }
 
-export async function saveCustomAiConfig(
+export async function saveSkillMcpConfig(
   sessionToken: string,
-  cfg: { baseURL: string; apiKey: string; model: string; maxTokens?: number },
+  config: SkillMcpSettings,
 ): Promise<void> {
   try {
     const key = await deriveKey(sessionToken);
     if (!key) return;
     const subtle = getSubtle();
     if (!subtle) return;
-    const plaintext = new TextEncoder().encode(JSON.stringify(cfg));
+    const plaintext = new TextEncoder().encode(JSON.stringify(config));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ciphertextWithTag = await subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
     const combined = new Uint8Array([...iv, ...new Uint8Array(ciphertextWithTag)]);
     const storageValue = btoa(String.fromCharCode(...combined));
-    localStorage.setItem(CUSTOM_AI_CONFIG_STORAGE_KEY, storageValue);
+    localStorage.setItem(SKILL_MCP_STORAGE_KEY, storageValue);
   } catch {
     return;
   }
 }
 
-export async function loadCustomAiConfig(
+export async function loadSkillMcpConfig(
   sessionToken: string,
-): Promise<{ baseURL: string; apiKey: string; model: string; maxTokens?: number } | null> {
+): Promise<SkillMcpSettings | null> {
   try {
-    const stored = localStorage.getItem(CUSTOM_AI_CONFIG_STORAGE_KEY);
+    const stored = localStorage.getItem(SKILL_MCP_STORAGE_KEY);
     if (!stored) return null;
     const key = await deriveKey(sessionToken);
     if (!key) return null;
@@ -81,10 +117,14 @@ export async function loadCustomAiConfig(
   }
 }
 
-export function deleteCustomAiConfig(): void {
+export function deleteSkillMcpConfig(): void {
   try {
-    localStorage.removeItem(CUSTOM_AI_CONFIG_STORAGE_KEY);
+    localStorage.removeItem(SKILL_MCP_STORAGE_KEY);
   } catch {
     return;
   }
+}
+
+export function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 }

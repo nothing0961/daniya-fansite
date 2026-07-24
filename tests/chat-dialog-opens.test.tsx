@@ -1,12 +1,11 @@
 /**
- * UI Mock 组件测试 T-5：点 FAB 弹出 Dialog，内含输入框 + 发送按钮
+ * UI Mock 组件测试 T-5：点 FAB 跳转到聊天页面
  *
  * 断言：
- *   1. data-testid="chat-dialog" 容器初始不可见
- *   2. 点击 FAB 后，chat-dialog 出现
- *   3. Dialog 内必须有 <textarea data-testid="chat-input"> 输入框（多行，Enter 发送/Shift+Enter 换行）
- *   4. Dialog 内必须有 data-testid="chat-send-btn" 发送按钮（纸飞机图标或「发送」文案）
- *   5. Dialog 顶部标题区含「达妮娅」文字
+ *   1. daniya-chat-fab.tsx 文件存在
+ *   2. 登录态：FAB 按钮是 Link 链接，指向 /chat
+ *   3. 未登录态：点击 FAB 弹出登录提示 Dialog
+ *   4. 源码层面使用 shadcn/ui Dialog 组件
  *
  * 风格：RTL + userEvent
  */
@@ -27,38 +26,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-// 组件内 useSession 来自 next-auth/react（官方包），需 mock 此处
-vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: {
-      user: {
-        id: "test-user-id",
-        name: "测试用户",
-        image: "/avatar-cropped.jpg",
-      },
-    },
-    status: "authenticated" as const,
-  }),
-}));
-
-// Vercel "ai" 包 useChat 轻量 mock（空壳，不做真实请求）
-vi.mock("ai", () => ({
-  useChat: () => ({
-    messages: [],
-    input: "",
-    setInput: vi.fn(),
-    handleInputChange: vi.fn(),
-    handleSubmit: vi.fn(),
-    append: vi.fn(),
-    isLoading: false,
-    error: null,
-    reload: vi.fn(),
-    stop: vi.fn(),
-    setMessages: vi.fn(),
-  }),
-}));
-
-describe("AI 聊天 T-5：点 FAB 弹出 Dialog + 输入区组件", () => {
+describe("AI 聊天 T-5：点 FAB 跳转到聊天页面", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -67,35 +35,55 @@ describe("AI 聊天 T-5：点 FAB 弹出 Dialog + 输入区组件", () => {
     expect(fs.existsSync(COMPONENT_PATH)).toBe(true);
   });
 
-  it("5-2. 初始：Dialog 不可见", async () => {
+  it("5-2. 登录态：FAB 按钮是 Link 链接，指向 /chat", async () => {
     if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    expect(screen.queryByTestId("chat-dialog")).not.toBeInTheDocument();
-  });
-
-  it("5-3. 点击 FAB 后：Dialog 出现，并含达妮娅标题", async () => {
-    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
-    const user = userEvent.setup();
+    vi.doMock("next-auth/react", () => ({
+      useSession: () => ({
+        data: {
+          user: {
+            id: "test-user-id",
+            name: "测试用户",
+            image: "/avatar-cropped.jpg",
+          },
+        },
+        status: "authenticated" as const,
+      }),
+    }));
+    vi.resetModules();
     const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
     render(<Comp />);
     const btn = screen.getByTestId("chat-fab-button");
-    await user.click(btn);
-    const dialog = await screen.findByTestId("chat-dialog");
-    expect(dialog).toBeInTheDocument();
-    // 标题含「达妮娅」
-    expect(dialog.textContent).toMatch(/达\s*妮\s*娅/);
+    expect(btn).toHaveAttribute("href", "/chat");
   });
 
-  it("5-4. Dialog 内必须含 textarea 输入框（chat-input）+ 发送按钮（chat-send-btn）", async () => {
+  it("5-3. 未登录态：点击 FAB 弹出登录提示 Dialog，含达妮娅标题", async () => {
     if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
+    vi.doMock("next-auth/react", () => ({
+      useSession: () => ({ data: null, status: "unauthenticated" as const }),
+    }));
+    vi.resetModules();
     const user = userEvent.setup();
     const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
     render(<Comp />);
     await user.click(screen.getByTestId("chat-fab-button"));
-    const dialog = await screen.findByTestId("chat-dialog");
-    expect(dialog.querySelector("[data-testid='chat-input']")).not.toBeNull();
-    expect(dialog.querySelector("[data-testid='chat-send-btn']")).not.toBeNull();
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.textContent).toMatch(/达\s*妮\s*娅/);
+  });
+
+  it("5-4. 未登录 Dialog 内含登录引导和去登录按钮", async () => {
+    if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
+    vi.doMock("next-auth/react", () => ({
+      useSession: () => ({ data: null, status: "unauthenticated" as const }),
+    }));
+    vi.resetModules();
+    const user = userEvent.setup();
+    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
+    render(<Comp />);
+    await user.click(screen.getByTestId("chat-fab-button"));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toMatch(/登录/);
+    expect(dialog.querySelector("a[href='/login']")).not.toBeNull();
   });
 
   it("5-5. 源码层面必须使用 shadcn/ui Dialog 组件（与项目其他弹窗风格统一）", () => {
