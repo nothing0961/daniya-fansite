@@ -119,6 +119,57 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </section>
 
+      {/* ===== Mobile: 可折叠角色介绍卡 ===== */}
+      <section className="md:hidden mx-4 mt-[-2rem] relative z-20 mb-6">
+        <details className="group rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-xl overflow-hidden">
+          <summary className="flex items-center justify-between px-4 py-3 cursor-pointer list-none select-none">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/A722CEB5396985A57C541E3CEF95F101.jpg"
+                alt="达妮娅"
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-[var(--primary)]/30"
+              />
+              <div>
+                <span className="text-sm font-bold text-[var(--foreground)]">达妮娅</span>
+                <span className="ml-1.5 text-[10px] font-medium text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded-full">Daniya</span>
+              </div>
+            </div>
+            <svg className="h-4 w-4 text-[var(--muted-foreground)] transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </summary>
+          <div className="px-4 pb-4 space-y-3 border-t border-[var(--border)] pt-3">
+            {/* 身份标签 */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">💤 学院瞌睡王</span>
+              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">🍰 甜点党</span>
+              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">❄️ 泡泡共鸣</span>
+            </div>
+
+            {/* 角色简介 */}
+            <div className="text-[12.5px] text-[var(--muted-foreground)] leading-relaxed space-y-2">
+              <p>任何时间、任何地点、任何一位讲师的课堂……你都有概率看见她在偷偷睡觉。</p>
+              <p>课题迷茫时只要带甜点 + 软磨硬泡多说几句好话，她就帮你「蒙对」正确方向；甜点味道不错的话还附赠「来源不明」的测量数据。</p>
+              <blockquote className="border-l-2 border-[var(--credit)] pl-2 italic text-[var(--credit)] text-xs">
+                「至于这些数据来自哪里……她劝你最好别问。」
+              </blockquote>
+            </div>
+
+            {/* 立绘 + 角色自白 */}
+            <div className="flex items-start gap-3 pt-2 border-t border-[var(--border)]/50">
+              <img
+                src="/324E6938CA1A90C930208816149E5FE9.jpg"
+                alt="达妮娅立绘"
+                className="w-16 h-16 rounded-full object-cover shrink-0 ring-2 ring-[var(--primary)]/20"
+              />
+              <p className="text-[12px] leading-relaxed text-[var(--foreground)]">
+                「经常有人问我为什么不穿校服……校服是提供虚质防护的对吧？但我在学院登记的共鸣能力就是『制造隔绝虚质、提供防护的泡泡』呀？哈哈哈，是不是很意外。」
+              </p>
+            </div>
+          </div>
+        </details>
+      </section>
+
       {/* ===== 内容区：左图 + 信息流 + 右图 ===== */}
       <div className="flex justify-center">
         {/* 左侧装饰图 */}

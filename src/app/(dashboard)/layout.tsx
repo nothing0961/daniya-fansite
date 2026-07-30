@@ -40,7 +40,7 @@ export default async function DashboardLayout({
       <div className="flex flex-col sm:flex-row gap-8">
         {/* 侧边栏 */}
         <aside className="w-full sm:w-48 shrink-0">
-          <nav className="flex sm:flex-col gap-1">
+          <nav className="flex sm:flex-col gap-1 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0 sm:whitespace-normal">
             {sidebarLinks.map((link) => (
               <Link
                 key={link.href}

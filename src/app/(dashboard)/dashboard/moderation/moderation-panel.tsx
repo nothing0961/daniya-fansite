@@ -68,6 +68,14 @@ interface ListResponse {
 
 export function ModerationPanel() {
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [tab, setTab] = useState<PendingPostStatus | "ALL">("PENDING");
   const [list, setList] = useState<PendingPostListItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -301,7 +309,7 @@ export function ModerationPanel() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setSelectedId(item.id)}
+                  onClick={() => { if (isMobile) { router.push(`/dashboard/submissions/${item.slug}`); } else { setSelectedId(item.id); } }}
                   className={`w-full text-left p-3 rounded-xl border transition-all ${
                     selected
                       ? "border-[var(--primary)] bg-[var(--primary)]/10"

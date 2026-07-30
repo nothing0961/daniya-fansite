@@ -94,7 +94,7 @@ export async function Header() {
           )}
 
           {/* 移动端汉堡菜单 */}
-          <MobileNav links={navLinks} />
+          <MobileNav links={navLinks} user={user} />
         </div>
       </div>
     </header>
