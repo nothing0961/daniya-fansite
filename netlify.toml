@@ -10,11 +10,6 @@
 [functions]
   timeout = 60
 
-# 为所有函数设置 60s 超时（特别是 Prisma 相关）
-[[functions]]
-  name = "api"
-  timeout = 60
-
 # Next.js 运行时配置
 [[headers]]
   for = "/*"
