@@ -21,6 +21,12 @@ const nextConfig = {
   outputFileTracingExcludes: {
     "*": ["./next.config.mjs"],
   },
+
+  // ===== 新增：排除 Prisma 依赖，减小函数体积 =====
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+  },
+
   /**
    * HTTP 安全响应头（严格区分生产/开发）
    *  · 生产环境：注入 5 条安全头（HSTS/CSP/X-Frame/X-Content-Type/Referrer）
