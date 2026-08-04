@@ -1,27 +1,20 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-
+/**
+ * SideImage — 首页侧边装饰图（桌面端）
+ * 仅深色主题：始终使用暗色图
+ */
 interface SideImageProps {
-  lightSrc: string;
   darkSrc: string;
+  /** @deprecated 亮色主题已移除，保留接口兼容 */
+  lightSrc?: string;
   side: "left" | "right";
 }
 
-export function SideImage({ lightSrc, darkSrc, side }: SideImageProps) {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const src = mounted && theme === "light" ? lightSrc : darkSrc;
-
+export function SideImage({ darkSrc, side }: SideImageProps) {
   return (
     <img
-      src={src}
+      src={darkSrc}
       alt=""
       className="w-full"
       style={{

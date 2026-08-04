@@ -52,6 +52,8 @@ const nextConfig = {
             value: "strict-origin-when-cross-origin",
           },
           // CSP 防 XSS 核心：白名单逐项对齐项目真实外联
+          // NOTE: 'unsafe-inline' 保留是因 Next.js App Router / Tailwind v4 框架依赖
+          //       'unsafe-eval' 已移除 — 不再允许动态代码执行
           {
             key: "Content-Security-Policy",
             value: [
@@ -60,11 +62,12 @@ const nextConfig = {
               "media-src 'self' https: data: blob:",
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self' data:",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-inline'",
               "connect-src 'self' https://*.imgurl.org",
               "frame-ancestors 'self'",
               "object-src 'none'",
               "base-uri 'self'",
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

@@ -1,214 +1,159 @@
 /**
- * 首页 — 微博式信息流
- * Hero Banner + 从 MDX 加载的作品卡片列表
+ * 首页 — 三栏暗色角色主题
  *
- * 修改方式：
- * - 修改 h1/p 可改变 Banner 文案
- * - 每页作品数：修改 PAGE_SIZE
- * - 数据来源：getAllPosts() 来自 src/lib/posts.ts
+ * 左：俄罗斯方块游戏机（保留所有原代码）
+ * 中：达妮娅主舞台（大标题 + 能力标签 + 文案 + CTA + 统计条）
+ * 右：回声面板（生日倒计时 + 共鸣图鉴 + 站长笔记）
  */
 import Link from "next/link";
-import { getAllPosts } from "@/lib/posts";
-import { FeedList } from "@/components/feed/feed-list";
-import { FeedPagination } from "@/components/feed/feed-pagination";
-import { Separator } from "@/components/ui/separator";
-import { POST_TYPE_LABELS } from "@/types/post";
-import { HeroBanner } from "./hero-banner";
-import { SideImage } from "./side-image";
+import type { Metadata } from "next";
+import { TetrisConsoleHost } from "@/components/game/tetris-console-host";
 import { BirthdayCountdown } from "./birthday-countdown";
+import {
+  HERO_DATA,
+  ABILITY_TAGS,
+  RESONANCE_TAGS,
+  SIDE_NOTES,
+  STAT_ITEMS,
+} from "@/lib/home-mock-data";
+import "./home.css";
 
-/** 每页显示作品数 */
-const PAGE_SIZE = 6;
+export const metadata: Metadata = {
+  title: "达妮娅的瞌睡小屋",
+  description:
+    "共鸣者档案 · 星炬学院在籍 — 关于达妮娅的角色考据、作品与笔记合集",
+};
 
-interface HomePageProps {
-  searchParams: Promise<{ page?: string }>;
-}
-
-export default async function HomePage({ searchParams }: HomePageProps) {
-  // 从 URL 参数获取当前页码
-  const params = await searchParams;
-  const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
-
-  // 从 MDX 内容系统加载数据
-  const allPosts = getAllPosts();
-
-  // 分页计算
-  const totalPages = Math.max(1, Math.ceil(allPosts.length / PAGE_SIZE));
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const pagedPosts = allPosts.slice(startIndex, startIndex + PAGE_SIZE);
-
+export default async function HomePage() {
   return (
-    <div>
-      {/* ===== Hero Banner ===== */}
-      <section className="relative w-full flex items-center justify-center border-b border-[var(--border)] overflow-hidden py-8" style={{ minHeight: '50vh' }}>
-        {/* 背景图片 — 暗色/亮色自动切换 */}
-        <HeroBanner />
-        {/* 暗色叠加层 */}
-        <div className="absolute inset-0 bg-[var(--background)]/25" />
+    <div className="hp-root">
+      {/* ===== 背景装饰层 ===== */}
+      {/* 背景图层已移至 layout.tsx（全站生效，由 BgSwitcher 控制） */}
+      <div className="hp-bg" />
+      <div className="hp-bg-noise" />
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:gap-8">
-          <div className="hidden md:flex flex-shrink-0 rounded-3xl border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md w-[720px] min-h-80 items-stretch overflow-hidden">
-            {/* 左半：结构化角色简介 */}
-            <div className="flex-1 flex flex-col justify-between px-8 py-5 gap-3">
-              {/* 顶部：角色名 + 身份标签 */}
-              <div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <h3 className="text-lg font-bold text-[var(--foreground)]">达妮娅</h3>
-                  <span className="text-[11px] font-medium text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full">Daniya</span>
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">💤 学院瞌睡王</span>
-                  <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">🍰 甜点党</span>
-                  <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">❄️ 泡泡共鸣</span>
-                </div>
-              </div>
-              {/* 中部：角色档案 · 3 段 */}
-              <div className="text-[12.5px] text-[var(--muted-foreground)] dark:text-white leading-relaxed space-y-1.5">
-                <p>
-                  任何时间、任何地点、任何一位讲师的课堂……你都有概率看见她在偷偷睡觉。
-                </p>
-                <br />
-                <p>
-                  课题迷茫时只要带甜点 + 软磨硬泡多说几句好话，她就帮你「蒙对」正确方向；甜点味道不错的话还附赠「来源不明」的测量数据。
-                </p>
-                <blockquote className="border-l-2 border-[var(--credit)] pl-2 italic text-[var(--credit)]">
-                  「至于这些数据来自哪里……她劝你最好别问。」
-                </blockquote>
-              </div>
+      {/* ===== 三栏主舞台 ===== */}
+      <section className="hp-stage">
+        {/* === 左栏：俄罗斯方块 === */}
+        <aside className="hp-col hp-col--left">
+          <div className="hp-tetris-wrap">
+            <TetrisConsoleHost />
+          </div>
+        </aside>
 
-              {/* 底部：分隔线 + 角色自白 */}
-              <div className="space-y-1.5">
-                <Separator className="bg-[var(--border)]/70" />
-                <div className="flex items-start gap-2">
-                  <p className="text-[12.5px] leading-relaxed text-[var(--foreground)]">
-                    「经常有人问我为什么不穿校服……校服是提供虚质防护的对吧？但我在学院登记的共鸣能力就是『制造隔绝虚质、提供防护的泡泡』呀？哈哈哈，是不是很意外。」
-                  </p>
-                </div>
-              </div>
+        {/* === 中栏：主舞台 === */}
+        <div className="hp-col hp-col--center">
+          {/* 主卡片 */}
+          <div className="hp-card hp-hero">
+            <div className="hp-hero-bg">
+              <div className="hp-hero-img" />
             </div>
-            {/* 右半：立绘（圆形 · 保持居中裁剪） */}
-            <div className="flex-shrink-0 w-64 flex items-center justify-center pr-5">
-              <img
-                src="/324E6938CA1A90C930208816149E5FE9.jpg"
-                alt="达妮娅立绘"
-                className="w-64 h-64 object-cover rounded-full ring-4 ring-[var(--primary)]/20"
-              />
+
+            <div className="hp-hero-content">
+              <div className="hp-hero-kicker">
+                <span className="hp-kicker-label">共鸣者档案</span>
+                <span className="hp-kicker-sep">·</span>
+                <span className="hp-kicker-value">星炬学院在籍</span>
+              </div>
+
+              <h1 className="hp-hero-title">
+                <span className="hp-title-zh">{HERO_DATA.titleZh}</span>
+                <span className="hp-title-en">{HERO_DATA.titleEn}</span>
+              </h1>
+
+              <p className="hp-hero-sub">{HERO_DATA.subtitle}</p>
+
+              {/* 能力标签云 */}
+              <div className="hp-ability-cloud">
+                {ABILITY_TAGS.map((tag) => (
+                  <span
+                    key={tag.label}
+                    className={`hp-ability-tag hp-ability-tag--${tag.tone}`}
+                  >
+                    <span className="hp-ability-emoji">{tag.emoji}</span>
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="hp-hero-text">
+                <p>{HERO_DATA.description}</p>
+                <blockquote className="hp-quote">{HERO_DATA.quote}</blockquote>
+              </div>
+
+              <div className="hp-cta-row">
+                <Link href={HERO_DATA.ctaPrimary.href} className="hp-btn hp-btn--primary">
+                  {HERO_DATA.ctaPrimary.label}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link href={HERO_DATA.ctaSecondary.href} className="hp-btn hp-btn--ghost">
+                  {HERO_DATA.ctaSecondary.label}
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* 右侧：现有内容 */}
-          <div className="flex-1 flex flex-col items-center text-center min-w-0">
-            <div className="rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-10 py-5">
+          {/* 统计条 */}
+          <div className="hp-stat-bar">
+            {STAT_ITEMS.map((item) => (
+              <div key={item.label} className="hp-stat-item">
+                <span className="hp-stat-value">{item.value}</span>
+                <span className="hp-stat-label">{item.label}</span>
+                <span className="hp-stat-sub">{item.sub}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* === 右栏：回声面板 === */}
+        <aside className="hp-col hp-col--right">
+          {/* 生日倒计时 */}
+          <div className="hp-card hp-sidebar-card hp-sidebar-birthday">
+            <div className="hp-sidebar-head">
+              <span className="hp-sidebar-icon">🌸</span>
+              <h3 className="hp-sidebar-title">生日倒计时</h3>
+            </div>
+            <div className="hp-birthday">
               <BirthdayCountdown />
             </div>
+          </div>
 
-            {/* 类型筛选标签 */}
-            <div className="mt-7 rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-6 py-3 flex items-center gap-3 flex-wrap justify-center">
-              <span className="text-sm text-[var(--muted-foreground)] dark:text-white">筛选</span>
-              {Object.entries(POST_TYPE_LABELS).map(([key, label]) => (
-                <Link
-                  key={key}
-                  href={`/type/${key}`}
-                  className="rounded-full border border-[var(--border)] bg-[var(--muted)]/40 px-4 py-1 text-sm text-[var(--foreground)] hover:bg-[var(--primary)]/30 hover:border-[var(--primary)] transition-colors"
-                >
-                  {label}
-                </Link>
+          {/* 共鸣图鉴 */}
+          <div className="hp-card hp-sidebar-card">
+            <div className="hp-sidebar-head">
+              <span className="hp-sidebar-icon">🎵</span>
+              <h3 className="hp-sidebar-title">共鸣图鉴</h3>
+            </div>
+            <div className="hp-resonance-grid">
+              {RESONANCE_TAGS.map((tag) => (
+                <div key={tag.label} className="hp-resonance-item">
+                  <span className="hp-resonance-label">{tag.label}</span>
+                  <span className="hp-resonance-value">{tag.value}</span>
+                </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ===== Mobile: 可折叠角色介绍卡 ===== */}
-      <section className="md:hidden mx-4 mt-[-2rem] relative z-20 mb-6">
-        <details className="group rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-xl overflow-hidden">
-          <summary className="flex items-center justify-between px-4 py-3 cursor-pointer list-none select-none">
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/A722CEB5396985A57C541E3CEF95F101.jpg"
-                alt="达妮娅"
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-[var(--primary)]/30"
-              />
-              <div>
-                <span className="text-sm font-bold text-[var(--foreground)]">达妮娅</span>
-                <span className="ml-1.5 text-[10px] font-medium text-[var(--primary)] bg-[var(--primary)]/10 px-1.5 py-0.5 rounded-full">Daniya</span>
-              </div>
+          {/* 站长笔记 */}
+          <div className="hp-card hp-sidebar-card">
+            <div className="hp-sidebar-head">
+              <span className="hp-sidebar-icon">📖</span>
+              <h3 className="hp-sidebar-title">站长笔记</h3>
             </div>
-            <svg className="h-4 w-4 text-[var(--muted-foreground)] transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </summary>
-          <div className="px-4 pb-4 space-y-3 border-t border-[var(--border)] pt-3">
-            {/* 身份标签 */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">💤 学院瞌睡王</span>
-              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">🍰 甜点党</span>
-              <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--muted)]/70 px-2 py-0.5 rounded-full">❄️ 泡泡共鸣</span>
-            </div>
-
-            {/* 角色简介 */}
-            <div className="text-[12.5px] text-[var(--muted-foreground)] leading-relaxed space-y-2">
-              <p>任何时间、任何地点、任何一位讲师的课堂……你都有概率看见她在偷偷睡觉。</p>
-              <p>课题迷茫时只要带甜点 + 软磨硬泡多说几句好话，她就帮你「蒙对」正确方向；甜点味道不错的话还附赠「来源不明」的测量数据。</p>
-              <blockquote className="border-l-2 border-[var(--credit)] pl-2 italic text-[var(--credit)] text-xs">
-                「至于这些数据来自哪里……她劝你最好别问。」
-              </blockquote>
-            </div>
-
-            {/* 立绘 + 角色自白 */}
-            <div className="flex items-start gap-3 pt-2 border-t border-[var(--border)]/50">
-              <img
-                src="/324E6938CA1A90C930208816149E5FE9.jpg"
-                alt="达妮娅立绘"
-                className="w-16 h-16 rounded-full object-cover shrink-0 ring-2 ring-[var(--primary)]/20"
-              />
-              <p className="text-[12px] leading-relaxed text-[var(--foreground)]">
-                「经常有人问我为什么不穿校服……校服是提供虚质防护的对吧？但我在学院登记的共鸣能力就是『制造隔绝虚质、提供防护的泡泡』呀？哈哈哈，是不是很意外。」
-              </p>
+            <div className="hp-note-list">
+              {SIDE_NOTES.map((note) => (
+                <div key={note.id} className="hp-note">
+                  <h4 className="hp-note-title">{note.title}</h4>
+                  <p className="hp-note-excerpt">{note.excerpt}</p>
+                  <span className="hp-note-time">{note.time}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </details>
+        </aside>
       </section>
-
-      {/* ===== 内容区：左图 + 信息流 + 右图 ===== */}
-      <div className="flex justify-center">
-        {/* 左侧装饰图 */}
-        <aside
-          className="hero-side-left hidden md:block flex-shrink-0"
-          style={{ width: 'calc(50vw - 336px)' }}
-        >
-          <SideImage
-            darkSrc="/hero-side-left.jpg"
-            lightSrc="/47e2e589fd58cdf0a12c5f110b0a7c46527235831.jpg"
-            side="left"
-          />
-        </aside>
-
-        {/* 信息流 */}
-        <section className="w-full max-w-2xl px-4 py-8 surface-pink rounded-xl">
-          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-6">
-            最新作品
-          </h2>
-
-          <FeedList posts={pagedPosts} />
-          <FeedPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-          />
-        </section>
-
-        {/* 右侧装饰图 */}
-        <aside
-          className="hero-side-right hidden md:block flex-shrink-0"
-          style={{ width: 'calc(50vw - 336px)' }}
-        >
-          <SideImage
-            darkSrc="/hero-side-right.jpg"
-            lightSrc="/5c4fbffa74c8781ad7c9ad7ba53aa548513549031.jpg"
-            side="right"
-          />
-        </aside>
-      </div>
     </div>
   );
 }

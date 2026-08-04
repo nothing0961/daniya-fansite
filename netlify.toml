@@ -1,0 +1,34 @@
+# Netlify 配置 — Next.js + Prisma (Neon Serverless)
+# 文档: https://docs.netlify.com/frameworks/nextjs/
+
+[build]
+  # 先生成 Prisma Client，再构建 Next.js
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+# 函数超时：Neon 冷启动 + Prisma 连接最多 60s（Netlify 默认 10s）
+[functions]
+  timeout = 60
+
+# 为所有函数设置 60s 超时（特别是 Prisma 相关）
+[[functions]]
+  name = "api"
+  timeout = 60
+
+# Next.js 运行时配置
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+
+# 静态资源缓存优化
+[[headers]]
+  for = "/music/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.ogg"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

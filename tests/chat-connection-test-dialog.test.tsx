@@ -48,14 +48,14 @@ describe("AI 聊天 T-D：新聊天页面结构验证", () => {
     if (!fs.existsSync(CHAT_PAGE_PATH)) return expect(true).toBe(false);
     const { default: ChatPage } = await import("../src/app/chat/page");
     render(<ChatPage />);
-    expect(screen.getByText("达妮娅")).toBeInTheDocument();
+    expect(screen.getByText("达妮娅", { selector: ".chat-topbar-name" })).toBeInTheDocument();
     expect(screen.getByText("新会话")).toBeInTheDocument();
   });
 
-  it("D-3. FAB 按钮在登录态下指向 /chat", async () => {
+  it("D-3. Header 聊天按钮在登录态下指向 /chat", async () => {
     const COMPONENT_PATH = path.join(
       process.cwd(),
-      "src/components/shared/daniya-chat-fab.tsx",
+      "src/components/shared/header-chat-button.tsx",
     );
     if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
     vi.doMock("next-auth/react", () => ({
@@ -71,9 +71,9 @@ describe("AI 聊天 T-D：新聊天页面结构验证", () => {
       }),
     }));
     vi.resetModules();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    const btn = screen.getByTestId("chat-fab-button");
+    const { HeaderChatButton } = await import("../src/components/shared/header-chat-button");
+    render(<HeaderChatButton />);
+    const btn = screen.getByTestId("header-chat-button");
     expect(btn).toHaveAttribute("href", "/chat");
   });
 });

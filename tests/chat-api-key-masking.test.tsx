@@ -60,7 +60,7 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     const user = userEvent.setup();
     const { default: ChatPage } = await import("../src/app/chat/page");
     render(<ChatPage />);
-    await user.click(screen.getByRole("button", { name: /设置/i }));
+    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
     return user;
   };
 
@@ -102,7 +102,7 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     const user = userEvent.setup();
     const { default: ChatPage } = await import("../src/app/chat/page");
     render(<ChatPage />);
-    await user.click(screen.getByRole("button", { name: /设置/i }));
+    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
     
     const baseUrlInput = screen.getByPlaceholderText(/api.deepseek/i) as HTMLInputElement;
     const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
@@ -152,7 +152,7 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     const user = userEvent.setup();
     const { default: ChatPage } = await import("../src/app/chat/page");
     render(<ChatPage />);
-    await user.click(screen.getByRole("button", { name: /设置/i }));
+    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
     
     const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(apiKeyInput, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
@@ -160,8 +160,7 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     await user.click(screen.getByRole("button", { name: /保存并启用/i }));
     await new Promise(r => setTimeout(r, 300));
     expect(saveCount).toBe(0);
-    const errors = screen.getAllByText(/必填|请填|地址|模型/i);
-    const err = errors.find(e => e.classList.contains("bg-red-50") || e.classList.contains("bg-red-950"));
-    expect(err).not.toBeNull();
+    const err = screen.getByText(/必填项不完整/);
+    expect(err).toBeInTheDocument();
   });
 });

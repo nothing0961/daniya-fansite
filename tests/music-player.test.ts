@@ -134,9 +134,9 @@ describe("MusicPlayer 极简音乐播放器（A+A 方案：本地歌单+图标�
       expect(HEADER_SRC).toMatch(/import\s*\{[^}]*\bMusicPlayer\b[^}]*\}\s*from\s*["']@\/components\/shared\/music-player["']/);
     });
 
-    it("17) Header JSX 中必须渲染 <MusicPlayer /> 组件，位置在 <ThemeToggle /> 附近（之前或之后）", () => {
-      // MusicPlayer 出现在 ThemeToggle 的 300 字符范围内
-      expect(HEADER_SRC).toMatch(/(?:<MusicPlayer\s*\/>[\s\S]{0,300}<ThemeToggle\s*\/>|<ThemeToggle\s*\/>[\s\S]{0,300}<MusicPlayer\s*\/>)/);
+    it("17) Header JSX 中必须渲染 <MusicPlayer /> 组件", () => {
+      // ThemeToggle 已移除，只需验证 MusicPlayer 存在
+      expect(HEADER_SRC).toMatch(/<MusicPlayer\s*\/>/);
     });
 
   });

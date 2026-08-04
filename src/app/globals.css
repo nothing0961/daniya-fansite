@@ -76,59 +76,16 @@
   --daniya-star: oklch(0.93 0.08 88);      /* 淡鹅黄星光 - 俏皮点缀/小图标 */
 }
 
-/* ===== 亮色主题 ===== */
-.light {
-  --background: oklch(0.95 0.015 280);
-  /* 淡紫白底，模拟"白日星空" */
-  --foreground: oklch(0.18 0.02 260);
-
-  --card: oklch(1.00 0 0 / 0.7);
-  --card-foreground: oklch(0.18 0.02 260);
-
-  --popover: oklch(1.00 0 0 / 0.85);
-  --popover-foreground: oklch(0.18 0.02 260);
-
-  --primary: oklch(0.62 0.12 340);
-  --primary-foreground: oklch(1.00 0 0);
-
-  --secondary: oklch(0.85 0.04 270);
-  --secondary-foreground: oklch(0.20 0.02 260);
-
-  --muted: oklch(0.90 0.02 280);
-  --muted-foreground: oklch(0.45 0.04 270);
-
-  --accent: oklch(0.55 0.16 290);
-  --accent-foreground: oklch(1.00 0 0);
-
-  --destructive: oklch(0.50 0.20 22);
-  --destructive-foreground: oklch(1.00 0 0);
-
-  --border: oklch(0.80 0.04 300 / 0.3);
-  --input: oklch(0.85 0.03 290 / 0.4);
-  --ring: oklch(0.55 0.12 340);
-
-  --credit: oklch(0.55 0.12 60);
-  --credit-foreground: oklch(0.10 0.02 250);
-
-  --bubble-glow: oklch(0.70 0.08 340 / 0.10);
-  --bubble-glow-strong: oklch(0.75 0.10 330 / 0.15);
-  --stardust: oklch(0.80 0.03 280 / 0.06);
-
-  --hero-opacity: 0.20;
-
-  /* ========== 达妮娅角色专属印象色（亮色版 — 粉色更出挑，星空黑转为描边/阴影用） ========== */
-  --daniya-pink: oklch(0.95 0.06 350);    /* 粉白（带更多粉调）- 卡片底 */
-  --daniya-night: oklch(0.25 0.05 285);    /* 星空黑（亮色下用于文字阴影/描边） */
-  --daniya-accent: oklch(0.68 0.20 345);   /* 亮粉紫（更饱和）- 强调色 */
-  --daniya-star: oklch(0.90 0.12 92);      /* 星光鹅黄（俏皮点缀）- 小图/徽章 */
-}
-
 /* ======================================== */
 /* 星空泡泡 — 背景叠加层（纯 CSS 实现）     */
 /* 无需任何外部图片资源                      */
 /* ======================================== */
 
 /* 在 body 上叠一层星空渐变 + 泡泡光晕 */
+html {
+  height: 100%;
+}
+
 body {
   background-color: var(--background);
   background-image:
@@ -457,12 +414,6 @@ main {
 }
 
 /* 亮色主题 — 粉色毛玻璃表面（更深） */
-.light .surface-pink {
-  background: oklch(0.72 0.12 340 / 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
 /* ===== 桌面端：左右侧装饰图（mask 虚化 + 响应式隐藏）===== */
 .hero-side-left {
   mask-image: linear-gradient(to right, transparent 0%, black 65px);
@@ -480,5 +431,58 @@ main {
   .hero-side-right {
     display: none;
   }
+}
+
+/* ======================================== */
+/* 全局背景图层 — 所有页面通用               */
+/* 由 BgSwitcher 通过 CSS 变量控制           */
+/* ======================================== */
+
+.hp-bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--bg-image-url, none);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+}
+
+.hp-bg-image-blur {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--bg-image-url, none);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: var(--bg-blur-opacity, 0);
+  filter: blur(20px);
+  transform: scale(1.08);
+  will-change: opacity;
+}
+
+/* 确保主内容区域的背景透明，让全局背景图透出来 */
+main {
+  background: transparent !important;
+}
+
+/* 确保作品集、角色档案等页面不覆盖全局背景图 */
+.wp-page,
+.dan-archive {
+  background: transparent !important;
+}
+
+.wp-page::before,
+.wp-page::after {
+  display: none;
+}
+
+.dan-archive::before,
+.dan-archive::after {
+  display: none;
 }
 

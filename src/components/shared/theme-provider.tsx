@@ -16,6 +16,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"       // 默认暗色 — 鸣潮风格
+      forcedTheme="dark"        // 强制暗色，不允许切换
       enableSystem={false}       // 不跟随系统，手动切换
       disableTransitionOnChange  // 切换时禁用过渡动画，避免闪烁
       {...props}

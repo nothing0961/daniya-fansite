@@ -188,3 +188,24 @@ model Comment {
   @@index([postSlug, createdAt])
   @@index([userId])
 }
+
+/**
+ * ChatQuota — AI 聊天日配额持久化
+ *
+ * 解决 Serverless 冷启动导致内存 Map 重置的问题。
+ * 每个用户每天一条记录，count 累计当日已用轮数。
+ * 超过 CHAT_DAILY_QUOTA_PER_USER 后拒绝请求。
+ */
+model ChatQuota {
+  id        String   @id @default(cuid())
+  userId    String
+  /** YYYY-MM-DD 格式日期（东八区） */
+  date      String
+  /** 当日已用轮数 */
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+}

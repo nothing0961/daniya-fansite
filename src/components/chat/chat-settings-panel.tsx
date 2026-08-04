@@ -4,6 +4,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import {
   saveCustomAiConfig,
   loadCustomAiConfig,
@@ -23,11 +34,10 @@ import {
 interface ChatSettingsPanelProps {
   onClose: () => void;
   sessionToken: string;
+  open: boolean;
 }
 
-export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelProps) {
-  const [activeTab, setActiveTab] = React.useState<"model" | "skills" | "mcp">("model");
-  
+export function ChatSettingsPanel({ onClose, sessionToken, open }: ChatSettingsPanelProps) {
   const [baseURL, setBaseURL] = React.useState("");
   const [displayKey, setDisplayKey] = React.useState("");
   const [realApiKey, setRealApiKey] = React.useState("");
@@ -35,14 +45,11 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
   const [model, setModel] = React.useState("");
   const [maxTokens, setMaxTokens] = React.useState(2000);
   const [settingsErrorMsg, setSettingsErrorMsg] = React.useState("");
-  
+
   const [skills, setSkills] = React.useState<SkillDefinition[]>([]);
   const [mcpServers, setMcpServers] = React.useState<McpServerConfig[]>([]);
   const [skillMcpErrorMsg, setSkillMcpErrorMsg] = React.useState("");
-  
-  const [uploadStatus, setUploadStatus] = React.useState<"idle" | "uploading" | "success" | "error">("idle");
-  const [uploadMessage, setUploadMessage] = React.useState("");
-  
+
   const [newSkill, setNewSkill] = React.useState<Omit<SkillDefinition, "id" | "enabled">>({
     name: "",
     description: "",
@@ -123,11 +130,10 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
         maxTokens,
       });
       setSettingsErrorMsg("");
-      setUploadStatus("success");
-      setUploadMessage("模型配置保存成功！");
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.success("模型配置保存成功");
     } catch {
-      setSettingsErrorMsg("保存失败，请稍后重试");
+      setSettingsErrorMsg("");
+      toast.error("保存失败，请稍后重试");
     }
   };
 
@@ -149,11 +155,10 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
     try {
       await saveSkillMcpConfig(sessionToken, { skills, mcpServers });
       setSkillMcpErrorMsg("");
-      setUploadStatus("success");
-      setUploadMessage("配置保存成功！");
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.success("配置保存成功");
     } catch {
-      setSkillMcpErrorMsg("保存失败，请稍后重试");
+      setSkillMcpErrorMsg("");
+      toast.error("保存失败，请稍后重试");
     }
   };
 
@@ -284,28 +289,21 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
     if (!file) return;
 
     if (!file.name.endsWith(".zip")) {
-      setUploadStatus("error");
-      setUploadMessage("请上传 ZIP 格式的压缩包");
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.error("请上传 ZIP 格式的压缩包");
       return;
     }
 
     const MAX_ZIP_SIZE = 1 * 1024 * 1024;
     if (file.size > MAX_ZIP_SIZE) {
-      setUploadStatus("error");
-      setUploadMessage(`压缩包大小不能超过 ${MAX_ZIP_SIZE / 1024 / 1024}MB`);
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.error(`压缩包大小不能超过 ${MAX_ZIP_SIZE / 1024 / 1024}MB`);
       return;
     }
-
-    setUploadStatus("uploading");
-    setUploadMessage("正在解析压缩包...");
 
     try {
       const arrayBuffer = await file.arrayBuffer();
       const zipData = new Uint8Array(arrayBuffer);
       const textDecoder = new TextDecoder("utf-8");
-      
+
       const magicNumber = textDecoder.decode(zipData.slice(0, 4));
       if (magicNumber !== "PK\x03\x04") {
         throw new Error("无效的 ZIP 文件");
@@ -359,13 +357,9 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
 
       await saveSkillMcpConfig(sessionToken, { skills, mcpServers });
 
-      setUploadStatus("success");
-      setUploadMessage("配置导入成功！");
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.success("配置导入成功");
     } catch (err) {
-      setUploadStatus("error");
-      setUploadMessage(`导入失败：${err instanceof Error ? err.message : "未知错误"}`);
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      toast.error(`导入失败：${err instanceof Error ? err.message : "未知错误"}`);
     }
   };
 
@@ -440,122 +434,92 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
     }
   };
 
+  // 保存按钮的渐变样式
+  const saveButtonClassName =
+    "w-full bg-gradient-to-r from-[var(--hp-gold)] to-[var(--hp-gold-deep)] text-[#1a0a14] hover:opacity-90";
+
   return (
-    <div className="w-80 shrink-0 border-l border-[var(--border)] bg-[var(--background)] flex flex-col">
-      <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-        <h2 className="font-semibold text-[var(--foreground)]">设置</h2>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+    <div className={cn("chat-settings", open && "chat-settings--open")}>
+      <div className="chat-settings-header">
+        <h2 className="chat-settings-title">设置</h2>
+        <button type="button" onClick={onClose} className="chat-icon-btn" aria-label="关闭">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
-        </Button>
-      </div>
-
-      <div className="flex border-b border-[var(--border)]">
-        <button
-          type="button"
-          onClick={() => setActiveTab("model")}
-          className={cn(
-            "flex-1 px-3 py-2 text-sm transition-colors",
-            activeTab === "model"
-              ? "bg-[var(--primary)]/20 text-[var(--foreground)] border-b-2 border-[var(--primary)]"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-          )}
-        >
-          模型设置
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("skills")}
-          className={cn(
-            "flex-1 px-3 py-2 text-sm transition-colors",
-            activeTab === "skills"
-              ? "bg-[var(--primary)]/20 text-[var(--foreground)] border-b-2 border-[var(--primary)]"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-          )}
-        >
-          Skill
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("mcp")}
-          className={cn(
-            "flex-1 px-3 py-2 text-sm transition-colors",
-            activeTab === "mcp"
-              ? "bg-[var(--primary)]/20 text-[var(--foreground)] border-b-2 border-[var(--primary)]"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-          )}
-        >
-          MCP
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {(settingsErrorMsg || skillMcpErrorMsg) && (
-          <div className="mb-4 px-3 py-2 text-sm rounded border bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900/60">
-            {settingsErrorMsg || skillMcpErrorMsg}
-          </div>
-        )}
+      <Tabs defaultValue="model" className="flex-1 flex flex-col min-h-0">
+        <div className="px-4 pt-3 pb-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="model">模型设置</TabsTrigger>
+            <TabsTrigger value="skills">Skill</TabsTrigger>
+            <TabsTrigger value="mcp">MCP</TabsTrigger>
+          </TabsList>
+        </div>
 
-        {uploadStatus !== "idle" && (
-          <div className={cn(
-            "mb-4 px-3 py-2 text-sm rounded border",
-            uploadStatus === "success"
-              ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
-              : uploadStatus === "error"
-              ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900/60"
-              : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
-          )}>
-            {uploadStatus === "uploading" && (
-              <span className="inline-block w-3 h-3 rounded-full bg-blue-500 animate-spin mr-2" />
-            )}
-            {uploadMessage}
-          </div>
-        )}
+        <div className="chat-settings-body">
+          {(settingsErrorMsg || skillMcpErrorMsg) && (
+            <div className="mb-4 px-3 py-2 text-sm rounded-md bg-[rgba(212,120,154,0.1)] border border-[rgba(212,120,154,0.3)] text-[var(--hp-pink)]">
+              {settingsErrorMsg || skillMcpErrorMsg}
+            </div>
+          )}
 
-        {activeTab === "model" && (
-          <div className="space-y-4">
+          {/* 模型设置 */}
+          <TabsContent value="model" className="space-y-4 mt-0">
             <div>
-              <label className="text-sm font-medium text-[var(--foreground)] block mb-1.5">API 地址</label>
+              <Label className="chat-form-label">API 地址</Label>
               <Input
                 value={baseURL}
                 onChange={(e) => setBaseURL(e.target.value)}
                 placeholder="https://api.deepseek.com/v1"
+                className={cn("chat-form-input")}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-[var(--foreground)] block mb-1.5">API Key</label>
+              <Label className="chat-form-label">API Key</Label>
               <Input
                 value={displayKey}
                 onChange={handleApiKeyChange}
                 onBlur={handleApiKeyBlur}
                 onFocus={handleApiKeyFocus}
                 placeholder="sk-..."
+                className={cn("chat-form-input")}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-[var(--foreground)] block mb-1.5">模型名</label>
+              <Label className="chat-form-label">模型名</Label>
               <Input
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="deepseek-v4-flash / glm-4.7-flash / ..."
+                className={cn("chat-form-input")}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-[var(--foreground)] block mb-1.5">
-                最大输出 Token <span className="text-[var(--muted-foreground)] font-normal">（默认 2000，最大 4096）</span>
-              </label>
+              <Label className="chat-form-label">
+                最大输出 Token
+                <span style={{ color: "var(--hp-ink-faint)", fontWeight: 400 }}>（默认 2000，最大 4096）</span>
+              </Label>
               <Input
                 type="number"
                 value={maxTokens}
                 onChange={(e) => setMaxTokens(parseInt(e.target.value) || 2000)}
                 placeholder="2000"
+                className={cn("chat-form-input")}
               />
             </div>
 
             {connectionOk && (
-              <div className="px-3 py-2 rounded-md bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-sm">
+              <div
+                className="px-3 py-2 rounded-md text-sm"
+                style={{
+                  background: "rgba(138, 200, 144, 0.1)",
+                  border: "1px solid rgba(138, 200, 144, 0.3)",
+                  color: "#8ac890",
+                }}
+              >
                 ✅ 连接测试成功！模型兼容 OpenAI 协议。
               </div>
             )}
@@ -564,109 +528,113 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
               <Button variant="outline" onClick={handleTestConnection} className="flex-1">连接测试</Button>
               <Button variant="outline" onClick={handleClearModelConfig} className="flex-1">清除配置</Button>
             </div>
-            <Button onClick={handleSaveModelConfig} className="w-full">保存并启用</Button>
-          </div>
-        )}
+            <Button onClick={handleSaveModelConfig} className={saveButtonClassName}>保存并启用</Button>
+          </TabsContent>
 
-        {activeTab === "skills" && (
-          <div className="space-y-4">
-            <div className="border border-[var(--border)] rounded-lg p-3">
-              <h3 className="text-sm font-medium mb-2">添加新 Skill</h3>
+          {/* Skill 设置 */}
+          <TabsContent value="skills" className="space-y-4 mt-0">
+            <div className="chat-card rounded-lg p-3">
+              <h3 className="chat-settings-section-title">添加新 Skill</h3>
               <div className="space-y-2">
                 <Input
                   value={newSkill.name}
                   onChange={(e) => setNewSkill(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Skill 名称"
-                  className="text-sm"
+                  className={cn("chat-form-input")}
                 />
                 <Textarea
                   value={newSkill.description}
                   onChange={(e) => setNewSkill(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Skill 描述"
                   rows={2}
-                  className="text-sm"
+                  className={cn("chat-form-input", "min-h-[60px] resize-none")}
                 />
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-[var(--muted-foreground)]">参数</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleAddParameter} className="h-6 px-2">+ 添加参数</Button>
+                    <span className="chat-form-hint">参数</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={handleAddParameter} className="h-6 px-2 text-xs">+ 添加参数</Button>
                   </div>
                   {newSkill.parameters.map((param, index) => (
-                    <div key={index} className="flex gap-1 mb-1">
+                    <div key={index} className="flex gap-1 mb-1 items-center">
                       <Input
                         value={param.name}
                         onChange={(e) => handleUpdateParameter(index, { name: e.target.value })}
                         placeholder="参数名"
-                        className="text-xs flex-1"
+                        className={cn("chat-form-input", "text-xs flex-1 h-7")}
                       />
-                      <select
+                      <Select
                         value={param.type}
-                        onChange={(e) => handleUpdateParameter(index, { type: e.target.value as SkillParameter["type"] })}
-                        className="px-2 py-1 text-xs border border-[var(--border)] rounded bg-[var(--background)]"
+                        onValueChange={(val) => handleUpdateParameter(index, { type: val as SkillParameter["type"] })}
                       >
-                        <option value="string">string</option>
-                        <option value="number">number</option>
-                        <option value="boolean">boolean</option>
-                        <option value="array">array</option>
-                        <option value="object">object</option>
-                      </select>
-                      <label className="flex items-center gap-1 text-xs">
-                        <input
-                          type="checkbox"
+                        <SelectTrigger className="h-7 w-[90px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="string">string</SelectItem>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="boolean">boolean</SelectItem>
+                          <SelectItem value="array">array</SelectItem>
+                          <SelectItem value="object">object</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="flex items-center gap-1">
+                        <Switch
                           checked={param.required}
-                          onChange={(e) => handleUpdateParameter(index, { required: e.target.checked })}
+                          onCheckedChange={(checked) => handleUpdateParameter(index, { required: checked })}
                         />
-                        必填
-                      </label>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveParameter(index)} className="h-6 w-6">
+                        <span className="text-xs" style={{ color: "var(--hp-ink-soft)" }}>必填</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveParameter(index)}
+                        className="chat-icon-btn"
+                        style={{ width: "1.5rem", height: "1.5rem" }}
+                        aria-label="删除参数"
+                      >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
-                      </Button>
+                      </button>
                     </div>
                   ))}
                 </div>
-                <Button type="button" onClick={handleAddSkill} className="w-full mt-2">添加 Skill</Button>
+                <Button type="button" variant="outline" onClick={handleAddSkill} className="w-full mt-2">添加 Skill</Button>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium mb-2">已添加的 Skill ({skills.length})</h3>
+              <h3 className="chat-settings-section-title">已添加的 Skill ({skills.length})</h3>
               {skills.length === 0 ? (
-                <div className="text-sm text-[var(--muted-foreground)] py-3 text-center">暂无 Skill</div>
+                <div className="chat-form-hint py-3 text-center">暂无 Skill</div>
               ) : (
                 <div className="space-y-2">
                   {skills.map(skill => (
-                    <div key={skill.id} className="flex items-center justify-between p-2 rounded border border-[var(--border)]">
+                    <div key={skill.id} className="flex items-center justify-between p-2 rounded chat-card">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded",
-                            skill.enabled ? "bg-emerald-500/20 text-emerald-600" : "bg-gray-500/20 text-gray-600"
-                          )}>
-                            {skill.enabled ? "启用" : "禁用"}
-                          </span>
-                          <span className="font-medium text-sm truncate">{skill.name}</span>
-                        </div>
-                        <p className="text-xs text-[var(--muted-foreground)] truncate">{skill.description}</p>
+                        <span className="font-medium text-sm truncate block" style={{ color: "var(--hp-ink)" }}>
+                          {skill.name}
+                        </span>
+                        <p className="chat-form-hint truncate">{skill.description}</p>
                       </div>
-                      <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleToggleSkill(skill.id)} className="h-6 w-6">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            {skill.enabled ? (
-                              <path d="M12 2a10 10 0 1 0 10 10H2" />
-                            ) : (
-                              <circle cx="12" cy="12" r="4" />
-                            )}
-                          </svg>
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveSkill(skill.id)} className="h-6 w-6">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Switch
+                          checked={skill.enabled}
+                          onCheckedChange={() => handleToggleSkill(skill.id)}
+                          aria-label="启用/禁用 Skill"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(skill.id)}
+                          className="chat-icon-btn"
+                          style={{ width: "1.5rem", height: "1.5rem" }}
+                          aria-label="删除 Skill"
+                        >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                           </svg>
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -675,8 +643,8 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
             </div>
 
             <div>
-              <h3 className="text-sm font-medium mb-2">导入配置</h3>
-              <p className="text-xs text-[var(--muted-foreground)] mb-2">上传包含 config.json 的 ZIP 压缩包</p>
+              <h3 className="chat-settings-section-title">导入配置</h3>
+              <p className="chat-form-hint mb-2">上传包含 config.json 的 ZIP 压缩包</p>
               <input
                 type="file"
                 accept=".zip"
@@ -684,7 +652,10 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
                 className="hidden"
                 id="skill-settings-upload"
               />
-              <label htmlFor="skill-settings-upload" className="flex items-center justify-center gap-2 px-3 py-2 border border-[var(--border)] rounded-md cursor-pointer hover:bg-[var(--muted)] transition-colors text-sm">
+              <label
+                htmlFor="skill-settings-upload"
+                className="chat-card flex items-center justify-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-opacity hover:opacity-80"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
@@ -694,137 +665,148 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
               </label>
             </div>
 
-            <Button onClick={handleSaveSkillMcpConfig} className="w-full">保存配置</Button>
-          </div>
-        )}
+            <Button onClick={handleSaveSkillMcpConfig} className={saveButtonClassName}>保存配置</Button>
+          </TabsContent>
 
-        {activeTab === "mcp" && (
-          <div className="space-y-4">
-            <div className="border border-[var(--border)] rounded-lg p-3">
-              <h3 className="text-sm font-medium mb-2">添加 MCP 服务器</h3>
+          {/* MCP 设置 */}
+          <TabsContent value="mcp" className="space-y-4 mt-0">
+            <div className="chat-card rounded-lg p-3">
+              <h3 className="chat-settings-section-title">添加 MCP 服务器</h3>
               <div className="space-y-2">
                 <Input
                   value={newMcpServer.name}
                   onChange={(e) => setNewMcpServer(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="服务器名称"
-                  className="text-sm"
+                  className={cn("chat-form-input")}
                 />
                 <Input
                   value={newMcpServer.baseURL}
                   onChange={(e) => setNewMcpServer(prev => ({ ...prev, baseURL: e.target.value }))}
                   placeholder="服务器地址"
-                  className="text-sm"
+                  className={cn("chat-form-input")}
                 />
                 <Input
                   value={newMcpServer.apiKey}
                   onChange={(e) => setNewMcpServer(prev => ({ ...prev, apiKey: e.target.value }))}
                   placeholder="API Key（可选）"
-                  className="text-sm"
+                  className={cn("chat-form-input")}
                 />
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-[var(--muted-foreground)]">工具</span>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleAddTool} className="h-6 px-2">+ 添加工具</Button>
+                    <span className="chat-form-hint">工具</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={handleAddTool} className="h-6 px-2 text-xs">+ 添加工具</Button>
                   </div>
                   {newMcpServer.tools.map((tool, toolIndex) => (
-                    <div key={toolIndex} className="p-2 rounded border border-[var(--border)] mb-1">
-                      <div className="flex gap-1 mb-1">
+                    <div key={toolIndex} className="chat-card rounded p-2 mb-1">
+                      <div className="flex gap-1 mb-1 items-center">
                         <Input
                           value={tool.name}
                           onChange={(e) => handleUpdateTool(toolIndex, { name: e.target.value })}
                           placeholder="工具名称"
-                          className="text-xs flex-1"
+                          className={cn("chat-form-input", "text-xs flex-1 h-7")}
                         />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTool(toolIndex)} className="h-6 w-6">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTool(toolIndex)}
+                          className="chat-icon-btn"
+                          style={{ width: "1.5rem", height: "1.5rem" }}
+                          aria-label="删除工具"
+                        >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                           </svg>
-                        </Button>
+                        </button>
                       </div>
                       <Textarea
                         value={tool.description}
                         onChange={(e) => handleUpdateTool(toolIndex, { description: e.target.value })}
                         placeholder="工具描述"
                         rows={1}
-                        className="text-xs"
+                        className={cn("chat-form-input", "text-xs min-h-[40px] resize-none")}
                       />
                       <div>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-[var(--muted-foreground)]">参数</span>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => handleAddToolParameter(toolIndex)} className="h-5 px-2">+ 参数</Button>
+                          <span className="chat-form-hint">参数</span>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => handleAddToolParameter(toolIndex)} className="h-5 px-2 text-xs">+ 参数</Button>
                         </div>
                         {tool.parameters.map((param, paramIndex) => (
-                          <div key={paramIndex} className="flex gap-1 mt-1">
+                          <div key={paramIndex} className="flex gap-1 mt-1 items-center">
                             <Input
                               value={param.name}
                               onChange={(e) => handleUpdateToolParameter(toolIndex, paramIndex, { name: e.target.value })}
                               placeholder="参数名"
-                              className="text-xs flex-1"
+                              className={cn("chat-form-input", "text-xs flex-1 h-7")}
                             />
-                            <select
+                            <Select
                               value={param.type}
-                              onChange={(e) => handleUpdateToolParameter(toolIndex, paramIndex, { type: e.target.value as SkillParameter["type"] })}
-                              className="px-2 py-0.5 text-xs border border-[var(--border)] rounded bg-[var(--background)]"
+                              onValueChange={(val) => handleUpdateToolParameter(toolIndex, paramIndex, { type: val as SkillParameter["type"] })}
                             >
-                              <option value="string">string</option>
-                              <option value="number">number</option>
-                              <option value="boolean">boolean</option>
-                              <option value="array">array</option>
-                              <option value="object">object</option>
-                            </select>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveToolParameter(toolIndex, paramIndex)} className="h-5 w-5">
+                              <SelectTrigger className="h-7 w-[80px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="string">string</SelectItem>
+                                <SelectItem value="number">number</SelectItem>
+                                <SelectItem value="boolean">boolean</SelectItem>
+                                <SelectItem value="array">array</SelectItem>
+                                <SelectItem value="object">object</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveToolParameter(toolIndex, paramIndex)}
+                              className="chat-icon-btn"
+                              style={{ width: "1.25rem", height: "1.25rem" }}
+                              aria-label="删除参数"
+                            >
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="18" y1="6" x2="6" y2="18" />
                                 <line x1="6" y1="6" x2="18" y2="18" />
                               </svg>
-                            </Button>
+                            </button>
                           </div>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-                <Button type="button" onClick={handleAddMcpServer} className="w-full mt-2">添加服务器</Button>
+                <Button type="button" variant="outline" onClick={handleAddMcpServer} className="w-full mt-2">添加服务器</Button>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium mb-2">已添加的 MCP 服务器 ({mcpServers.length})</h3>
+              <h3 className="chat-settings-section-title">已添加的 MCP 服务器 ({mcpServers.length})</h3>
               {mcpServers.length === 0 ? (
-                <div className="text-sm text-[var(--muted-foreground)] py-3 text-center">暂无 MCP 服务器</div>
+                <div className="chat-form-hint py-3 text-center">暂无 MCP 服务器</div>
               ) : (
                 <div className="space-y-2">
                   {mcpServers.map(server => (
-                    <div key={server.id} className="flex items-center justify-between p-2 rounded border border-[var(--border)]">
+                    <div key={server.id} className="flex items-center justify-between p-2 rounded chat-card">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-xs px-1.5 py-0.5 rounded",
-                            server.enabled ? "bg-emerald-500/20 text-emerald-600" : "bg-gray-500/20 text-gray-600"
-                          )}>
-                            {server.enabled ? "启用" : "禁用"}
-                          </span>
-                          <span className="font-medium text-sm truncate">{server.name}</span>
-                        </div>
-                        <p className="text-xs text-[var(--muted-foreground)] truncate">{server.baseURL}</p>
+                        <span className="font-medium text-sm truncate block" style={{ color: "var(--hp-ink)" }}>
+                          {server.name}
+                        </span>
+                        <p className="chat-form-hint truncate">{server.baseURL}</p>
                       </div>
-                      <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleToggleMcpServer(server.id)} className="h-6 w-6">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            {server.enabled ? (
-                              <path d="M12 2a10 10 0 1 0 10 10H2" />
-                            ) : (
-                              <circle cx="12" cy="12" r="4" />
-                            )}
-                          </svg>
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveMcpServer(server.id)} className="h-6 w-6">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Switch
+                          checked={server.enabled}
+                          onCheckedChange={() => handleToggleMcpServer(server.id)}
+                          aria-label="启用/禁用 MCP 服务器"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMcpServer(server.id)}
+                          className="chat-icon-btn"
+                          style={{ width: "1.5rem", height: "1.5rem" }}
+                          aria-label="删除 MCP 服务器"
+                        >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                           </svg>
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -833,8 +815,8 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
             </div>
 
             <div>
-              <h3 className="text-sm font-medium mb-2">导入配置</h3>
-              <p className="text-xs text-[var(--muted-foreground)] mb-2">上传包含 config.json 的 ZIP 压缩包</p>
+              <h3 className="chat-settings-section-title">导入配置</h3>
+              <p className="chat-form-hint mb-2">上传包含 config.json 的 ZIP 压缩包</p>
               <input
                 type="file"
                 accept=".zip"
@@ -842,7 +824,10 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
                 className="hidden"
                 id="mcp-settings-upload"
               />
-              <label htmlFor="mcp-settings-upload" className="flex items-center justify-center gap-2 px-3 py-2 border border-[var(--border)] rounded-md cursor-pointer hover:bg-[var(--muted)] transition-colors text-sm">
+              <label
+                htmlFor="mcp-settings-upload"
+                className="chat-card flex items-center justify-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-opacity hover:opacity-80"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
@@ -852,10 +837,10 @@ export function ChatSettingsPanel({ onClose, sessionToken }: ChatSettingsPanelPr
               </label>
             </div>
 
-            <Button onClick={handleSaveSkillMcpConfig} className="w-full">保存配置</Button>
-          </div>
-        )}
-      </div>
+            <Button onClick={handleSaveSkillMcpConfig} className={saveButtonClassName}>保存配置</Button>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

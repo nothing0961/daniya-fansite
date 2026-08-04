@@ -103,35 +103,23 @@ describe("birthday-countdown.tsx 俏皮文案暗色主题变白", () => {
   });
 });
 
-describe("首页 page.tsx L98-109 胶囊替换为生日倒计时", () => {
+describe("首页 page.tsx — 三栏布局中保留生日倒计时", () => {
   it("8) 页面 import 了 BirthdayCountdown 组件（本地 ./birthday-countdown）", () => {
     expect(PAGE_SRC).toMatch(
       /import\s*\{[^}]*BirthdayCountdown[^}]*\}\s*from\s*["']\.\/birthday-countdown["']/
     );
   });
 
-  it("9) 原来的站名文案已移除：不再出现『达妮娅的瞌睡小屋』或『curation 站点』或『标注原作者与出处』等原 H1/描述", () => {
-    // 但 "达妮娅" 三个字在左边卡片里还有，所以不能全文件删；只要求在原来的胶囊位置（rounded-full px-10 py-5 附近）没有这些词
-    const idx = PAGE_SRC.indexOf("rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-10 py-5");
-    expect(idx).toBeGreaterThan(0);
-    const nearby = PAGE_SRC.slice(idx, idx + 1200);
-    expect(nearby).not.toMatch(/达妮娅的瞌睡小屋/);
-    expect(nearby).not.toMatch(/curation 站点/);
-    expect(nearby).not.toMatch(/标注原作者与出处/);
-    // 旧的 h1 和 p 结构也不应该在附近
-    expect(nearby).not.toMatch(/<h1\b/);
-    expect(nearby).not.toMatch(/《鸣潮》角色达妮娅的同人/);
+  it("9) BirthdayCountdown 在 hp-birthday 容器中被引用", () => {
+    expect(PAGE_SRC).toMatch(/<BirthdayCountdown\s*\/?>/);
   });
 
-  it("10) 原胶囊容器样式保留：仍然是 rounded-full + border + card 半透明 + backdrop-blur + px-10 py-5（A 方案要求保留外形）", () => {
-    expect(PAGE_SRC).toMatch(
-      /rounded-full\s+border\s+border-\[var\(--border\)\]\s+bg-\[var\(--card\)\]\/50\s+backdrop-blur-md\s+px-10\s+py-5/
-    );
+  it("10) 首页使用了 hp-root 三栏布局容器", () => {
+    expect(PAGE_SRC).toMatch(/hp-root/);
+    expect(PAGE_SRC).toMatch(/hp-stage/);
   });
 
-  it("11) 原胶囊内部换成了 <BirthdayCountdown /> JSX 标签", () => {
-    const idx = PAGE_SRC.indexOf("rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-10 py-5");
-    const nearby = PAGE_SRC.slice(idx, idx + 800);
-    expect(nearby).toMatch(/<BirthdayCountdown\s*\/?>/);
+  it("11) 首页引用了 home.css 样式文件", () => {
+    expect(PAGE_SRC).toMatch(/import\s*["']\.\/home\.css["']/);
   });
 });

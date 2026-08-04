@@ -1,9 +1,9 @@
 /**
- * AI 聊天设置齿轮按钮测试 T-A：聊天页面右上角 ⚙️ 设置按钮 + 配置面板
+ * AI 聊天设置齿轮按钮测试 T-A：聊天页面设置按钮 + Header 聊天入口
  *
  * 断言：
- *   1. 聊天页面存在设置齿轮按钮
- *   2. 点击齿轮打开设置面板
+ *   1. Header 聊天按钮在登录态下指向 /chat
+ *   2. 未登录态：按钮存在但点击弹出登录提示
  *
  * 风格：RTL + userEvent
  */
@@ -11,20 +11,19 @@
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import fs from "node:fs";
 import path from "node:path";
 
 const COMPONENT_PATH = path.join(
   process.cwd(),
-  "src/components/shared/daniya-chat-fab.tsx",
+  "src/components/shared/header-chat-button.tsx",
 );
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
-describe("AI 聊天 T-A：设置齿轮按钮 ⚙️ + 配置面板", () => {
+describe("AI 聊天 T-A：Header 聊天入口按钮", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -34,7 +33,7 @@ describe("AI 聊天 T-A：设置齿轮按钮 ⚙️ + 配置面板", () => {
     localStorage.clear();
   });
 
-  it("A-1. FAB 按钮存在，点击后跳转到 /chat 页面", async () => {
+  it("A-1. Header 聊天按钮存在，登录态下指向 /chat 页面", async () => {
     if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
     vi.doMock("next-auth/react", () => ({
       useSession: () => ({
@@ -49,20 +48,20 @@ describe("AI 聊天 T-A：设置齿轮按钮 ⚙️ + 配置面板", () => {
       }),
     }));
     vi.resetModules();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    const btn = screen.getByTestId("chat-fab-button");
+    const { HeaderChatButton } = await import("../src/components/shared/header-chat-button");
+    render(<HeaderChatButton />);
+    const btn = screen.getByTestId("header-chat-button");
     expect(btn).toHaveAttribute("href", "/chat");
   });
 
-  it("A-2. 未登录态：FAB 按钮存在但点击弹出登录提示", async () => {
+  it("A-2. 未登录态：Header 聊天按钮存在但点击弹出登录提示", async () => {
     if (!fs.existsSync(COMPONENT_PATH)) return expect(true).toBe(false);
     vi.doMock("next-auth/react", () => ({
       useSession: () => ({ data: null, status: "unauthenticated" as const }),
     }));
     vi.resetModules();
-    const { default: Comp } = await import("../src/components/shared/daniya-chat-fab");
-    render(<Comp />);
-    expect(screen.getByTestId("chat-fab-button")).toBeInTheDocument();
+    const { HeaderChatButton } = await import("../src/components/shared/header-chat-button");
+    render(<HeaderChatButton />);
+    expect(screen.getByTestId("header-chat-button")).toBeInTheDocument();
   });
 });

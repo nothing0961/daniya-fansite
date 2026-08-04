@@ -10,8 +10,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { MusicPlayer } from "@/components/shared/music-player";
+import { useChatDrawer } from "@/components/chat/chat-drawer-context";
 
 interface NavLink {
   href: string;
@@ -25,9 +25,20 @@ interface MobileNavProps {
 
 export function MobileNav({ links, user }: MobileNavProps) {
   const [open, setOpen] = useState(false);
+  const { openDrawer } = useChatDrawer();
 
   const close = () => setOpen(false);
   const isLoggedIn = Boolean(user);
+
+  const handleLinkClick = (e: React.MouseEvent, link: NavLink) => {
+    if (link.href === "/chat") {
+      e.preventDefault();
+      close();
+      openDrawer();
+    } else {
+      close();
+    }
+  };
 
   return (
     <div className="md:hidden">
@@ -79,7 +90,7 @@ export function MobileNav({ links, user }: MobileNavProps) {
             <Link
               key={link.href}
               href={link.href}
-              onClick={close}
+              onClick={(e) => handleLinkClick(e, link)}
               className="px-3 py-2.5 text-sm rounded-md hover:bg-[var(--muted)] transition-colors"
             >
               {link.label}
@@ -125,10 +136,6 @@ export function MobileNav({ links, user }: MobileNavProps) {
           <div className="flex items-center gap-1.5">
             <MusicPlayer />
             <span className="text-xs text-[var(--muted-foreground)] select-none">音乐</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <ThemeToggle />
-            <span className="text-xs text-[var(--muted-foreground)] select-none">主题</span>
           </div>
         </div>
       </div>

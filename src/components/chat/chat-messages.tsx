@@ -1,14 +1,25 @@
 "use client";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-interface ChatMessage {
+// 将时间格式化为 HH:MM
+function formatTime(date: Date): string {
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+// 空状态快捷问题
+const SUGGESTIONS = ["今天天气怎么样？", "给我讲个故事", "你最喜欢什么？"];
+
+export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system" | "tool";
   content: string;
+  /** 消息时间戳，可选；存在时在消息底部显示 HH:MM */
+  timestamp?: Date;
 }
 
 interface ChatMessagesProps {
@@ -18,86 +29,149 @@ interface ChatMessagesProps {
   userAvatar?: string;
   userName?: string;
   isLoading: boolean;
+  onRegenerate?: () => void;
+  onSuggestion?: (text: string) => void;
 }
 
-export function ChatMessages({ messages, aiAvatar, aiAvatarAlt, userAvatar, userName, isLoading }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  aiAvatar,
+  aiAvatarAlt,
+  userAvatar,
+  userName,
+  isLoading,
+  onRegenerate,
+  onSuggestion,
+}: ChatMessagesProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  // 记录当前"已复制"的消息 id，用于按钮文字临时切换为"已复制"
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
+  // 查找最后一条 AI 消息的 id，用于在其底部显示"重新生成"按钮
+  let lastAssistantId: string | undefined;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "assistant") {
+      lastAssistantId = messages[i].id;
+      break;
+    }
+  }
+
+  // 复制消息内容到剪贴板，并在 2 秒内将按钮文字切换为"已复制"
+  const handleCopy = async (id: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(id);
+      setTimeout(() => {
+        setCopiedId((cur) => (cur === id ? null : cur));
+      }, 2000);
+    } catch {
+      // 剪贴板不可用时静默失败
+    }
+  };
+
+  // 三点加载动画
+  const renderTyping = () => (
+    <span className="chat-typing">
+      <span className="chat-typing-dot" />
+      <span className="chat-typing-dot" />
+      <span className="chat-typing-dot" />
+    </span>
+  );
+
+  // 用户头像：有图片时显示图片，否则回退为首字母
+  const renderUserAvatar = () => {
+    if (userAvatar) {
+      return (
+        <div className="chat-avatar">
+          <img src={userAvatar} alt={userName ?? "你的头像"} />
+        </div>
+      );
+    }
+    return (
+      <div
+        className="chat-avatar"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(201,169,110,0.15)",
+          color: "var(--hp-gold)",
+        }}
+      >
+        <span style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "0.9rem" }}>
+          {(userName ?? "我").slice(0, 1)}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <div
-      ref={scrollRef}
-      className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 bg-[radial-gradient(ellipse_at_top,rgba(236,72,153,0.06),transparent_60%)]"
-    >
+    <div ref={scrollRef} className="chat-messages">
+      {/* 空状态 */}
       {messages.length === 0 && !isLoading && (
-        <div className="mx-auto max-w-[300px] mt-8 mb-4 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)]/80 text-sm text-[var(--muted-foreground)] text-center">
-          💬 你好呀~ 说一句话和达妮娅打个招呼吧！
-          <br />
-          <span className="text-xs opacity-70">（现在是体验模式，回复为预设短消息）</span>
+        <div className="chat-empty">
+          <div className="chat-empty-avatar">
+            <img src={aiAvatar} alt={aiAvatarAlt} />
+          </div>
+          <div className="chat-empty-title">达妮娅</div>
+          <div className="chat-empty-sub">
+            你好，旅人。愿星辰引路，与达妮娅共话此刻。
+          </div>
+          <div className="chat-empty-suggestions">
+            {SUGGESTIONS.map((text) => (
+              <button
+                key={text}
+                type="button"
+                className="chat-suggestion-btn"
+                onClick={() => onSuggestion?.(text)}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* 消息列表 */}
       {messages.map((message) => {
         const isUser = message.role === "user";
         const isAI = message.role === "assistant";
         if (!isUser && !isAI) return null;
 
+        const hasContent = Boolean(message.content);
+        const isLastAssistant = isAI && message.id === lastAssistantId;
+
         return (
           <div
             key={message.id}
-            className={cn(
-              "flex items-end gap-3",
-              isUser ? "flex-row-reverse" : "flex-row",
-            )}
+            className={cn("chat-message-row", isUser && "chat-message-row--user")}
           >
+            {/* 头像 */}
             {isAI ? (
-              <div className="shrink-0">
-                <Avatar className="w-10 h-10 ring-1 ring-[var(--ring)]">
-                  <AvatarImage src={aiAvatar} alt={aiAvatarAlt} width={40} height={40} />
-                  <AvatarFallback className="bg-gradient-to-br from-pink-300 to-indigo-300 text-white text-sm">
-                    达
-                  </AvatarFallback>
-                </Avatar>
+              <div className="chat-avatar chat-avatar--ai">
+                <img src={aiAvatar} alt={aiAvatarAlt} />
               </div>
             ) : (
-              <div className="shrink-0">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={userAvatar ?? undefined} alt={userName ?? "你的头像"} width={40} height={40} />
-                  <AvatarFallback className="bg-gradient-to-br from-indigo-300 to-emerald-300 text-white text-sm">
-                    {(userName ?? "我").slice(0, 1)}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
+              renderUserAvatar()
             )}
 
+            {/* 气泡 */}
             {isAI ? (
-              <div
-                className={cn(
-                  "max-w-[80%] break-words",
-                  "px-4 py-3 rounded-2xl rounded-bl-sm",
-                  "mr-auto",
-                  "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)]",
-                  "text-sm leading-relaxed shadow-sm",
-                )}
-              >
-                {message.content ? (
+              <div className="chat-bubble-ai">
+                {hasContent ? (
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ node, className, children, ...props }) {
-                        const match = /language-(\w+)/.exec(className || "");
+                      code({ node, children, ...props }) {
                         return (
                           <code
-                            className={cn(
-                              "rounded px-1.5 py-0.5 text-xs font-mono",
-                              "bg-[var(--muted)] text-[var(--foreground)]",
-                              match ? "bg-[var(--primary)]/10" : "",
-                            )}
                             {...props}
+                            className="rounded px-1.5 py-0.5 text-xs font-mono bg-[rgba(201,169,110,0.1)] text-[var(--hp-gold)]"
                           >
                             {children}
                           </code>
@@ -105,7 +179,7 @@ export function ChatMessages({ messages, aiAvatar, aiAvatarAlt, userAvatar, user
                       },
                       pre({ children }) {
                         return (
-                          <pre className="rounded-lg overflow-x-auto bg-[var(--muted)]/50 p-3 my-2 text-xs font-mono">
+                          <pre className="rounded-lg overflow-x-auto bg-[rgba(15,6,16,0.6)] p-3 my-2 text-xs font-mono border border-[rgba(201,169,110,0.1)]">
                             {children}
                           </pre>
                         );
@@ -123,13 +197,13 @@ export function ChatMessages({ messages, aiAvatar, aiAvatarAlt, userAvatar, user
                         return <li className="mb-1">{children}</li>;
                       },
                       strong({ children }) {
-                        return <strong className="font-semibold text-[var(--primary)]">{children}</strong>;
+                        return <strong className="font-semibold text-[var(--hp-gold)]">{children}</strong>;
                       },
                       a({ href, children }) {
                         return (
                           <a
                             href={href}
-                            className="text-[var(--primary)] hover:underline"
+                            className="text-[var(--hp-gold)] hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -142,53 +216,52 @@ export function ChatMessages({ messages, aiAvatar, aiAvatarAlt, userAvatar, user
                     {message.content}
                   </ReactMarkdown>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-[var(--muted-foreground)]">
-                    <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce" />
-                    <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce [animation-delay:120ms]" />
-                    <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce [animation-delay:240ms]" />
-                  </span>
+                  renderTyping()
+                )}
+
+                {/* AI 消息底部操作栏：时间 + 复制 + 重新生成（hover 显示） */}
+                {hasContent && (
+                  <div className="chat-message-footer">
+                    {message.timestamp && (
+                      <span className="chat-message-time">{formatTime(message.timestamp)}</span>
+                    )}
+                    <button
+                      type="button"
+                      className="chat-message-action"
+                      onClick={() => handleCopy(message.id, message.content)}
+                    >
+                      {copiedId === message.id ? "已复制" : "复制"}
+                    </button>
+                    {isLastAssistant && !isLoading && onRegenerate && (
+                      <button type="button" className="chat-message-action" onClick={onRegenerate}>
+                        重新生成
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
-              <div
-                className={cn(
-                  "max-w-[80%] break-words whitespace-pre-wrap",
-                  "px-4 py-3 rounded-2xl rounded-br-sm",
-                  "ml-auto",
-                  "bg-gradient-to-br from-pink-400 via-fuchsia-400 to-indigo-400 text-white",
-                  "text-sm leading-relaxed shadow-sm",
-                )}
-              >
+              <div className="chat-bubble-user">
                 {message.content}
+                {/* 用户消息底部：时间（hover 显示） */}
+                {hasContent && message.timestamp && (
+                  <div className="chat-message-footer">
+                    <span className="chat-message-time">{formatTime(message.timestamp)}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         );
       })}
 
+      {/* 加载指示器：已有消息时显示三点动画 */}
       {isLoading && messages.length > 0 && (
-        <div className="flex items-end gap-3">
-          <div className="shrink-0">
-            <Avatar className="w-10 h-10 ring-1 ring-[var(--ring)]">
-              <AvatarImage src={aiAvatar} alt={aiAvatarAlt} width={40} height={40} />
-              <AvatarFallback className="bg-gradient-to-br from-pink-300 to-indigo-300 text-white text-sm">
-                达
-              </AvatarFallback>
-            </Avatar>
+        <div className="chat-message-row">
+          <div className="chat-avatar chat-avatar--ai">
+            <img src={aiAvatar} alt={aiAvatarAlt} />
           </div>
-          <div
-            className={cn(
-              "px-4 py-3 rounded-2xl rounded-bl-sm",
-              "bg-[var(--card)] border border-[var(--border)]",
-              "text-sm shadow-sm",
-            )}
-          >
-            <span className="inline-flex items-center gap-1.5 text-[var(--muted-foreground)]">
-              <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce" />
-              <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce [animation-delay:120ms]" />
-              <span className="inline-block w-2 h-2 bg-[var(--muted-foreground)] rounded-full animate-bounce [animation-delay:240ms]" />
-            </span>
-          </div>
+          <div className="chat-bubble-ai">{renderTyping()}</div>
         </div>
       )}
     </div>

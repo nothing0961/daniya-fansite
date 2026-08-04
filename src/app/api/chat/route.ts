@@ -2,6 +2,7 @@
  * POST /api/chat — AI 聊天后端代理
  */
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -13,7 +14,7 @@ export const runtime = "edge";
 export const MAX_INPUT_LENGTH = 200 as const;
 
 export const COMPLIANCE_BLOCK_REGEX =
-  /(自杀|自残|轻生|割腕|跳楼|上吊|烧炭|安眠药|想不开)|(毒品|冰毒|海洛因|大麻|K粉|摇头丸|麻古|可卡因|吗啡|吸毒|贩毒)|(赌博|博彩|菠菜|棋牌|网赌|赌球|老虎机|百家乐|彩票代打|快三|时时彩)|(色情|黄片|裸聊|嫖娼|约炮|援交|成人片|AV|岛国片|一夜情)|(手枪|步枪|子弹|炸弹|爆炸|爆炸物|炸药|恐怖|恐怖分子|极端主义|圣战|管制刀具|三棱刮刀|电击枪)|(杀猪盘|刷单|诈骗|传销|非法集资|庞氏骗局|拉人头|五级三阶制|阳光工程|1040|暗网|买卖数据|盗号|钓鱼链接)/i;
+  /(自杀|自残|轻生|割腕|跳楼|上吊|烧炭|安眠药|想不开|zisha|zijian|qingsheng)|(毒品|冰毒|海洛因|大麻|K粉|摇头丸|麻古|可卡因|吗啡|吸毒|贩毒|dupin|bingdu|hailuoyin|dama|kafen|yaotouwan|kekayin)|(赌博|博彩|菠菜|棋牌|网赌|赌球|老虎机|百家乐|彩票代打|快三|时时彩|dubo|boxing|bocai|qipai|wangdu|duqiu|laohuji|baijiale)|(色情|黄片|裸聊|嫖娼|约炮|援交|成人片|AV|岛国片|一夜情|seqing|huangpian|luoliao|piaochang|yuepao|yuanjiao|chengrenpian)|(手枪|步枪|子弹|炸弹|爆炸|爆炸物|炸药|恐怖|恐怖分子|极端主义|圣战|管制刀具|三棱刮刀|电击枪|shouqiang|buqiang|zidan|zhadan|baozha|zhayao|kongbu|kongbufenzi|jidu|guangzhi)|(杀猪盘|刷单|诈骗|传销|非法集资|庞氏骗局|拉人头|五级三阶制|阳光工程|1040|暗网|买卖数据|盗号|钓鱼链接|zhashapan|shuadan|zhapian|chuanxiao|feijizijin|pangshi|laorentou|wujie|anyangongcheng|anwang|dahao|diaoyu)/i;
 
 export const DANIYA_SYSTEM_PROMPT =
   process.env.DANIYA_SYSTEM_PROMPT ??
@@ -35,9 +36,8 @@ export const CHAT_MAX_OUTPUT_TOKENS = Number(
 export const PRESET_REPLIES = ["该功能还在测试中QAQ"];
 
 // ========================================================================
-// 日配额 quota counter
+// 日配额 quota counter（数据库持久化，支持 Serverless 冷启动）
 // ========================================================================
-const quotaCounter = new Map<string, { count: number; date: string }>();
 
 export function formatYYYYMMDD_CN8(): string {
   const now = new Date();
@@ -49,21 +49,28 @@ export function formatYYYYMMDD_CN8(): string {
   return `${yyyy}${pad(mm)}${pad(dd)}`;
 }
 
-export function detectQuotaExceeded(
+/**
+ * 检查并增加用户当日配额。
+ * 持久化到数据库，解决 Serverless 冷启动导致内存 Map 重置的问题。
+ *
+ * @returns true = 已超限，false = 已成功计数
+ */
+export async function detectQuotaExceeded(
   userId: string,
   dateStr = formatYYYYMMDD_CN8(),
-): boolean {
-  const quotaKey = `${userId}_${dateStr}`;
-  const existing = quotaCounter.get(quotaKey);
-  if (!existing || existing.date !== dateStr) {
-    quotaCounter.set(quotaKey, { count: 1, date: dateStr });
-    return false;
-  }
-  if (existing.count >= CHAT_DAILY_QUOTA_PER_USER) {
+): Promise<boolean> {
+  try {
+    const result = await prisma.chatQuota.upsert({
+      where: { userId_date: { userId, date: dateStr } },
+      update: { count: { increment: 1 } },
+      create: { userId, date: dateStr, count: 1 },
+    });
+    return result.count > CHAT_DAILY_QUOTA_PER_USER;
+  } catch {
+    // 数据库异常时降级：阻止请求以保护后端
+    console.error("[ChatQuota] DB error, rejecting request for safety");
     return true;
   }
-  existing.count += 1;
-  return false;
 }
 
 // ========================================================================
@@ -234,9 +241,9 @@ export async function POST(req: Request): Promise<Response> {
     typeof (customAiConfig as any).model === "string" &&
     (customAiConfig as any).model.length > 0;
 
-  // 默认模式限额检查
+  // 默认模式限额检查（数据库持久化，防 Serverless 冷启动重置）
   if (!isCustomMode) {
-    const exceeded = detectQuotaExceeded(userId);
+    const exceeded = await detectQuotaExceeded(userId);
     if (exceeded) {
       return NextResponse.json(
         { error: "今日额度用完，请填自己的 API Key 继续用", code: "QUOTA_EXCEEDED" },

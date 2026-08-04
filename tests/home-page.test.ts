@@ -1,96 +1,184 @@
 /**
  * 首页 (/ 路由) 专项测试
- * 测试范围：page.tsx 中的 Hero Banner / 角色卡片 / 暗色主题颜色联动
+ * 三栏暗色角色主题布局（2026-08-04 改版）
  */
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
-const PAGE_SRC = fs.readFileSync(
-  path.join(process.cwd(), "src/app/page.tsx"),
-  "utf-8"
-);
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:\/)/, "$1")), "..");
+const PAGE_SRC = fs.readFileSync(path.join(ROOT, "src/app/page.tsx"), "utf-8");
+const HOME_CSS = fs.readFileSync(path.join(ROOT, "src/app/home.css"), "utf-8");
+const MOCK_DATA = fs.readFileSync(path.join(ROOT, "src/lib/home-mock-data.ts"), "utf-8");
 
-describe("首页 page.tsx — 角色卡片 L66-72 暗色主题字色覆盖", () => {
-  it("1) 『中部：角色档案 · 3 段』外层 div（L65）在暗色主题下覆盖文字为纯白：className 里同时保留亮色 muted-foreground + dark:text-white", () => {
-    // 定位到区块注释
-    const blockComment = "中部：角色档案 · 3 段";
-    const idx = PAGE_SRC.indexOf(blockComment);
-    expect(idx).toBeGreaterThan(0);
-
-    // 从注释向下抓 800 字符（正好覆盖外层 div 到 blockquote 之前的区域）
-    const nearby = PAGE_SRC.slice(idx, idx + 800);
-
-    // A. 必须保留原有亮色颜色 text-[var(--muted-foreground)]
-    expect(nearby).toMatch(/text-\[var\(--muted-foreground\)\]/);
-
-    // B. 必须新增暗色主题覆盖 dark:text-white（Tailwind class 策略）
-    //    —— 亮色不变，暗色变纯白，符合用户需求
-    expect(nearby).toMatch(/\bdark:text-white\b/);
+describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
+  it("1) 页面导入 home-mock-data 数据（HERO_DATA / ABILITY_TAGS / RESONANCE_TAGS / SIDE_NOTES / STAT_ITEMS）", () => {
+    expect(PAGE_SRC).toMatch(/from\s+"@\/lib\/home-mock-data"/);
+    expect(PAGE_SRC).toMatch(/HERO_DATA/);
+    expect(PAGE_SRC).toMatch(/ABILITY_TAGS/);
+    expect(PAGE_SRC).toMatch(/RESONANCE_TAGS/);
+    expect(PAGE_SRC).toMatch(/SIDE_NOTES/);
+    expect(PAGE_SRC).toMatch(/STAT_ITEMS/);
   });
 
-  it("2) L66-72 两段正文本身不要被硬编码 text-white（亮色要保持原 muted-foreground，颜色覆盖统一由外层 div 驱动）", () => {
-    const idx = PAGE_SRC.indexOf("任何时间、任何地点、任何一位讲师的课堂");
-    expect(idx).toBeGreaterThan(0);
-    const nearby = PAGE_SRC.slice(idx - 200, idx + 600);
-
-    // 两段 <p> 标签内不应出现单独的 text-white 或 style={{color:"white"}}
-    // 颜色统一由外层 div 的 dark:text-white 控制，避免亮色串色
-    const twoParas = nearby.match(/<p>[\s\S]*?<\/p>/g) || [];
-    expect(twoParas.length).toBeGreaterThanOrEqual(2);
-    for (const p of twoParas) {
-      expect(p).not.toMatch(/className="[^"]*\btext-white\b/);
-      expect(p).not.toMatch(/\btext-white\b/);
-      expect(p).not.toMatch(/style=\{[^}]*color.*white/);
-    }
+  it("2) 页面导入 home.css 样式", () => {
+    expect(PAGE_SRC).toMatch(/import\s+"\.\/home\.css"/);
   });
 
-  it("3) 内部 blockquote（L73）颜色不受影响：仍使用 var(--credit) 金色，不被白色覆盖", () => {
-    const idx = PAGE_SRC.indexOf("至于这些数据来自哪里……她劝你最好别问");
-    expect(idx).toBeGreaterThan(0);
-    const nearby = PAGE_SRC.slice(idx - 500, idx + 200);
-    const bqMatch = nearby.match(/<blockquote\s+[^>]*>/);
-    expect(bqMatch).not.toBeNull();
-    const bq = bqMatch![0];
-    expect(bq).toMatch(/var\(--credit\)/);
-    // 不应加 dark:text-white（否则会覆盖掉 credit 金色高亮）
-    expect(bq).not.toMatch(/\bdark:text-white\b/);
+  it("3) 页面包含三栏布局类名（hp-stage / hp-col--left / hp-col--center / hp-col--right）", () => {
+    expect(PAGE_SRC).toMatch(/hp-stage/);
+    expect(PAGE_SRC).toMatch(/hp-col--left/);
+    expect(PAGE_SRC).toMatch(/hp-col--center/);
+    expect(PAGE_SRC).toMatch(/hp-col--right/);
+  });
+
+  it("4) 左栏保留 TetrisConsoleHost 俄罗斯方块", () => {
+    expect(PAGE_SRC).toMatch(/TetrisConsoleHost/);
+    expect(PAGE_SRC).toMatch(/hp-tetris-wrap/);
+  });
+
+  it("5) 中栏主舞台包含 hp-hero 卡片（hp-hero-content / hp-hero-title / hp-ability-cloud / hp-cta-row）", () => {
+    expect(PAGE_SRC).toMatch(/hp-hero-content/);
+    expect(PAGE_SRC).toMatch(/hp-hero-title/);
+    expect(PAGE_SRC).toMatch(/hp-ability-cloud/);
+    expect(PAGE_SRC).toMatch(/hp-cta-row/);
+  });
+
+  it("6) 中栏包含统计条（hp-stat-bar），生日倒计时移至右栏", () => {
+    expect(PAGE_SRC).toMatch(/hp-stat-bar/);
+    expect(PAGE_SRC).toMatch(/hp-sidebar-birthday/);
+    expect(PAGE_SRC).toMatch(/BirthdayCountdown/);
+  });
+
+  it("7) 右栏包含三个面板（生日倒计时 hp-sidebar-birthday / 共鸣图鉴 hp-resonance-grid / 站长笔记 hp-note-list）", () => {
+    expect(PAGE_SRC).toMatch(/hp-sidebar-birthday/);
+    expect(PAGE_SRC).toMatch(/hp-resonance-grid/);
+    expect(PAGE_SRC).toMatch(/hp-note-list/);
+  });
+
+  it("8) 首页不再包含底部信息流（已迁移到 /works 独立页）", () => {
+    expect(PAGE_SRC).not.toMatch(/FeedList/);
+    expect(PAGE_SRC).not.toMatch(/FeedPagination/);
+    expect(PAGE_SRC).not.toMatch(/getAllPosts/);
+    expect(PAGE_SRC).not.toMatch(/hp-feed-section/);
+  });
+
+  it("9) 页面标题 metadata 包含达妮娅", () => {
+    expect(PAGE_SRC).toMatch(/title.*达妮娅/);
   });
 });
 
-describe("首页 page.tsx — 类型筛选胶囊栏的『筛选』二字暗色主题变白", () => {
-  it("4) L107 『筛选』span 亮色保留 muted-foreground，暗色追加 dark:text-white 覆盖为纯白", () => {
-    // 定位"筛选"二字的 span。页面里应该只有一个 text-sm + text-[var(--muted-foreground)] 且内容为"筛选"的 span
-    // 用类型筛选标签胶囊外层容器作锚点
-    const anchor = "rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-6 py-3 flex items-center gap-3 flex-wrap justify-center";
-    const idx = PAGE_SRC.indexOf(anchor);
-    expect(idx).toBeGreaterThan(0);
-    const nearby = PAGE_SRC.slice(idx, idx + 600);
-    // 内部的"筛选"span（紧随其后的第一个 span）
-    const spanMatch = nearby.match(/<span\s+className="([^"]+)"\s*>\s*筛选\s*<\/span>/);
-    expect(spanMatch).not.toBeNull();
-    const cls = spanMatch![1];
-    // A. 必须保留原来的 text-sm + text-[var(--muted-foreground)]（亮色不串色）
-    expect(cls).toMatch(/\btext-sm\b/);
-    expect(cls).toMatch(/text-\[var\(--muted-foreground\)\]/);
-    // B. 必须追加 dark:text-white（暗色主题变白）
-    expect(cls).toMatch(/\bdark:text-white\b/);
+describe("首页 home.css — 暗色角色主题样式", () => {
+  it("10) CSS 定义了主题 CSS 变量（--hp-gold / --hp-ink / --hp-card 等）", () => {
+    expect(HOME_CSS).toMatch(/--hp-gold:/);
+    expect(HOME_CSS).toMatch(/--hp-ink:/);
+    expect(HOME_CSS).toMatch(/--hp-card:/);
+    expect(HOME_CSS).toMatch(/--hp-bg-deep:/);
   });
 
-  it("5) 『筛选』下面的类型 Link 标签不要加 dark:text-white（它们自己有 hover:border-primary 配色，保持原来的 text-[var(--foreground)]）", () => {
-    const anchor = "rounded-full border border-[var(--border)] bg-[var(--card)]/50 backdrop-blur-md px-6 py-3 flex items-center gap-3 flex-wrap justify-center";
-    const idx = PAGE_SRC.indexOf(anchor);
-    expect(idx).toBeGreaterThan(0);
-    const nearby = PAGE_SRC.slice(idx, idx + 3000);
-    const links = nearby.match(/<Link\b[\s\S]*?<\/Link>/g) || [];
-    // 核心语义：命中的每个 Link 都不能被错误地加了 dark:text-white
-    for (const link of links) {
-      expect(link).not.toMatch(/\bdark:text-white\b/);
-    }
-    // 兜底：直接在整个筛选栏范围搜 Link 的 className 字符串常量，那里也不应有 dark:text-white
-    const linkClassName = 'className="rounded-full border border-[var(--border)] bg-[var(--muted)]/40 px-4 py-1 text-sm text-[var(--foreground)] hover:bg-[var(--primary)]/30 hover:border-[var(--primary)] transition-colors"';
-    if (nearby.includes(linkClassName)) {
-      expect(linkClassName).not.toMatch(/\bdark:text-white\b/);
-    }
+  it("11) CSS 定义了三栏网格布局（grid-template-columns: 360px 1fr 240px）", () => {
+    expect(HOME_CSS).toMatch(/grid-template-columns:\s*360px\s+1fr\s+240px/);
+  });
+
+  it("12) CSS 定义了俄罗斯方块容器约束（hp-col--left .hp-tetris-wrap > div 宽度 100%）", () => {
+    expect(HOME_CSS).toMatch(/hp-col--left.*hp-tetris-wrap/);
+    expect(HOME_CSS).toMatch(/width:\s*100%\s*!important/);
+    expect(HOME_CSS).toMatch(/min-width:\s*0\s*!important/);
+  });
+
+  it("13) CSS 定义了能力标签样式（hp-ability-tag--gold/pink/blue/green）", () => {
+    expect(HOME_CSS).toMatch(/hp-ability-tag--gold/);
+    expect(HOME_CSS).toMatch(/hp-ability-tag--pink/);
+    expect(HOME_CSS).toMatch(/hp-ability-tag--blue/);
+    expect(HOME_CSS).toMatch(/hp-ability-tag--green/);
+  });
+
+  it("14) CSS 定义了统计条和 CTA 按钮样式", () => {
+    expect(HOME_CSS).toMatch(/\.hp-stat-bar/);
+    expect(HOME_CSS).toMatch(/\.hp-btn--primary/);
+    expect(HOME_CSS).toMatch(/\.hp-btn--ghost/);
+  });
+
+  it("15) CSS 响应式代码已注释（移动端显示桌面端布局）", () => {
+    expect(HOME_CSS).toMatch(/\/\*\s*\n?\s*@media/);
+  });
+});
+
+describe("首页 home-mock-data.ts — 数据完整性", () => {
+  it("16) mock-data 导出 HERO_DATA 包含 titleZh/titleEn/ctaPrimary/ctaSecondary", () => {
+    expect(MOCK_DATA).toMatch(/titleZh:\s*"达妮娅"/);
+    expect(MOCK_DATA).toMatch(/titleEn:/);
+    expect(MOCK_DATA).toMatch(/ctaPrimary:/);
+    expect(MOCK_DATA).toMatch(/ctaSecondary:/);
+  });
+
+  it("17) mock-data 导出 ABILITY_TAGS（≥ 4 个能力标签）", () => {
+    expect(MOCK_DATA).toMatch(/export\s+const\s+ABILITY_TAGS/);
+    const tags = MOCK_DATA.match(/label:\s*"[^"]+"/g) ?? [];
+    // 至少有 HERO_DATA + ABILITY_TAGS 中的标签
+    expect(tags.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("18) mock-data 导出 ECHO_QUOTES（≥ 3 条对话）", () => {
+    expect(MOCK_DATA).toMatch(/export\s+const\s+ECHO_QUOTES/);
+    const quotes = MOCK_DATA.match(/id:\s*"q\d+"/g) ?? [];
+    expect(quotes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("19) mock-data 导出 RESONANCE_TAGS 和 STAT_ITEMS", () => {
+    expect(MOCK_DATA).toMatch(/export\s+const\s+RESONANCE_TAGS/);
+    expect(MOCK_DATA).toMatch(/export\s+const\s+STAT_ITEMS/);
+  });
+
+  it("20) mock-data 导出 SIDE_NOTES（站长笔记 ≥ 2 条）", () => {
+    expect(MOCK_DATA).toMatch(/export\s+const\s+SIDE_NOTES/);
+    expect(MOCK_DATA).toMatch(/export\s+interface\s+SideNote/);
+  });
+});
+
+describe("作品集页 works/page.tsx", () => {
+  const WORKS_SRC = fs.readFileSync(
+    path.join(ROOT, "src/app/works/page.tsx"),
+    "utf-8"
+  );
+
+  it("21) works 页面使用 getFilteredWorks 获取筛选后作品", () => {
+    expect(WORKS_SRC).toMatch(/getFilteredWorks/);
+  });
+
+  it("22) works 页面使用瀑布流 + Tab + 客户端组件", () => {
+    expect(WORKS_SRC).toMatch(/WorksClient/);
+    expect(WORKS_SRC).toMatch(/WorksTabs/);
+  });
+
+  it("23) works 页面使用 URL 参数同步 Tab 状态", () => {
+    expect(WORKS_SRC).toMatch(/searchParams/);
+    expect(WORKS_SRC).toMatch(/params\.type/);
+    expect(WORKS_SRC).toMatch(/params\.sort/);
+  });
+
+  it("24) works 页面标题为「作品集」", () => {
+    expect(WORKS_SRC).toMatch(/作品集/);
+  });
+});
+
+describe("导航栏 — 新增「作品集」入口", () => {
+  const HEADER_SRC = fs.readFileSync(
+    path.join(ROOT, "src/components/layout/header.tsx"),
+    "utf-8"
+  );
+  const NAV_LINKS_SRC = fs.readFileSync(
+    path.join(ROOT, "src/components/layout/nav-links.tsx"),
+    "utf-8"
+  );
+
+  it("25) header.tsx navLinks 包含 /works 作品集", () => {
+    expect(HEADER_SRC).toMatch(/href:\s*"\/works"/);
+    expect(HEADER_SRC).toMatch(/label:\s*"作品集"/);
+  });
+
+  it("26) nav-links.tsx 包含 /works 作品集", () => {
+    expect(NAV_LINKS_SRC).toMatch(/href:\s*"\/works"/);
+    expect(NAV_LINKS_SRC).toMatch(/label:\s*"作品集"/);
   });
 });

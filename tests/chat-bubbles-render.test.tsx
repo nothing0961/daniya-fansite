@@ -49,7 +49,7 @@ describe("AI 聊天 T-6：聊天页面气泡渲染", () => {
     if (!fs.existsSync(CHAT_PAGE_PATH)) return expect(true).toBe(false);
     const { default: ChatPage } = await import("../src/app/chat/page");
     render(<ChatPage />);
-    expect(screen.getByText("达妮娅")).toBeInTheDocument();
+    expect(screen.getByText("达妮娅", { selector: ".chat-topbar-name" })).toBeInTheDocument();
   });
 
   it("6-3. 聊天页面包含侧边栏和输入区域", async () => {

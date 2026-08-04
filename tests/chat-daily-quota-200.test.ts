@@ -29,7 +29,7 @@ describe("AI 聊天：每日限额 200（CHAT_DAILY_QUOTA_PER_USER）", () => {
     expect(hasEnvQuota || hasDefault200).toBe(true);
   });
 
-  it("case2: 限流 key = ${session.user.id}_${YYYYMMDD}（按自然日 UTC+8）", () => {
+  it("case2: 限流 key = ${session.user.id}_${YYYYMMDD}（按自然日 UTC+8，数据库持久化）", () => {
     if (!fs.existsSync(ROUTE_PATH)) return expect(true).toBe(false);
     const src = fs.readFileSync(ROUTE_PATH, "utf-8");
     const hasUserIdInKey =
@@ -40,11 +40,16 @@ describe("AI 聊天：每日限额 200（CHAT_DAILY_QUOTA_PER_USER）", () => {
       /YYYYMMDD/.test(src) ||
       /toISOString.*slice/.test(src) ||
       /UTC\+8|Asia\/Shanghai|CST|北京/.test(src);
-    const hasKeyFormat =
-      /quotaKey|quota_key|rateKey|limitKey|dailyKey/i.test(src);
+    // 数据库持久化：ChatQuota 模型 + upsert + increment
+    const hasDBPersistence =
+      /chatQuota/i.test(src) ||
+      /ChatQuota/i.test(src) ||
+      /upsert/i.test(src) ||
+      /increment/i.test(src) ||
+      /userId_date/.test(src);
     expect(hasUserIdInKey).toBe(true);
     expect(hasDateInKey).toBe(true);
-    expect(hasKeyFormat).toBe(true);
+    expect(hasDBPersistence).toBe(true);
   });
 
   it("case3: 超限额返回 429，error 含「今日额度用完」或「填自己的 API Key」+ 不触模型 fetch", () => {

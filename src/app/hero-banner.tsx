@@ -1,24 +1,13 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-
+/**
+ * HeroBanner — 首页 Hero 背景图片
+ * 仅深色主题：始终使用暗色背景图
+ */
 export function HeroBanner() {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const src =
-    mounted && theme === "light"
-      ? "/e7cfe70ccb796924fd9ab2346ad26c34456803242.gif"
-      : "/c0a7746e-f2eb-431b-84d6-43e94422f39e.png";
-
   return (
     <img
-      src={src}
+      src="/c0a7746e-f2eb-431b-84d6-43e94422f39e.png"
       alt=""
       className="absolute inset-0 w-full h-full object-cover"
     />

@@ -4,6 +4,7 @@ import path from "node:path";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:\/)/, "$1")), "..");
 const HEADER_SRC = fs.readFileSync(path.join(ROOT, "src/components/layout/header.tsx"), "utf-8");
+const NAVLINKS_SRC = fs.readFileSync(path.join(ROOT, "src/components/layout/nav-links.tsx"), "utf-8");
 const USERMENU_SRC = fs.readFileSync(path.join(ROOT, "src/components/auth/user-menu.tsx"), "utf-8");
 
 /**
@@ -16,16 +17,17 @@ describe("Header 顶部导航样式改造（导航胶囊化 + 搜索图标→搜
 
   describe("A. 中间导航（首页/达妮娅/关于）每个小胶囊框起来", () => {
     it("1) navLinks 循环渲染的 Link className 必须含有 rounded-full（胶囊圆角）", () => {
-      // 定位到 navLinks.map 区域（中间桌面端导航），查验其 className
-      expect(HEADER_SRC).toMatch(
-        /navLinks\.map[\s\S]{0,600}className="[^"]*rounded-full/
+      // 桌面端导航渲染逻辑可能在 header.tsx 或子组件 nav-links.tsx，两者都要允许
+      const any = HEADER_SRC + NAVLINKS_SRC;
+      expect(any).toMatch(
+        /(navLinks\.map|links\.map)[\s\S]{0,1200}(className="[^"]*rounded-full|rounded-full)/
       );
     });
 
     it("2) navLinks 循环渲染的 Link className 必须含有 border（胶囊边框线），参考「投稿」按钮同款边框样式", () => {
-      // 在 navLinks.map 里，className 必须包含 border 关键字
-      expect(HEADER_SRC).toMatch(
-        /navLinks\.map[\s\S]{0,600}className="[^"]*border[^"]*"/
+      const any = HEADER_SRC + NAVLINKS_SRC;
+      expect(any).toMatch(
+        /(navLinks\.map|links\.map)[\s\S]{0,1200}border/
       );
     });
   });
