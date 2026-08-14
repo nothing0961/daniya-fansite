@@ -17,7 +17,6 @@ export type WorksTabKey = (typeof WORKS_TABS)[number]["key"];
 
 export const WORKS_SORTS = [
   { key: "latest", label: "最新上传" },
-  { key: "popular", label: "最多点击" },
   { key: "oldest", label: "最早发布" },
 ] as const;
 

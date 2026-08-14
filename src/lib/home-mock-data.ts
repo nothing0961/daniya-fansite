@@ -11,7 +11,7 @@ export interface EchoQuote {
 export interface AbilityTag {
   label: string;
   emoji: string;
-  tone: "gold" | "pink" | "blue" | "green";
+  tone: "pink" | "blue" | "green";
 }
 
 export interface SideNote {
@@ -19,12 +19,6 @@ export interface SideNote {
   title: string;
   excerpt: string;
   time: string;
-}
-
-export interface StatItem {
-  label: string;
-  value: string;
-  sub: string;
 }
 
 export const HERO_DATA = {
@@ -41,10 +35,10 @@ export const HERO_DATA = {
 
 export const ABILITY_TAGS: AbilityTag[] = [
   { label: "泡泡共鸣", emoji: "🫧", tone: "blue" },
-  { label: "虚质隔绝", emoji: "🛡️", tone: "gold" },
+  { label: "虚质隔绝", emoji: "🛡️", tone: "pink" },
   { label: "甜点狂魔", emoji: "🍰", tone: "pink" },
   { label: "瞌睡少女", emoji: "💤", tone: "green" },
-  { label: "泡泡爆破", emoji: "💥", tone: "gold" },
+  { label: "泡泡爆破", emoji: "💥", tone: "pink" },
 ];
 
 export const ECHO_QUOTES: EchoQuote[] = [
@@ -85,11 +79,4 @@ export const SIDE_NOTES: SideNote[] = [
     excerpt: "本月累计翘课 23 次，但共鸣成绩稳居 A+。讲师们对此表示非常困惑。",
     time: "昨天",
   },
-];
-
-export const STAT_ITEMS: StatItem[] = [
-  { label: "站内访客", value: "23,461", sub: "累计" },
-  { label: "共鸣图鉴", value: "8", sub: "已收录" },
-  { label: "甜点库存", value: "∞", sub: "永远吃不完" },
-  { label: "超频记录", value: "0", sub: "安全" },
 ];

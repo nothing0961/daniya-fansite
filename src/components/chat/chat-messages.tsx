@@ -11,9 +11,6 @@ function formatTime(date: Date): string {
   return `${h}:${m}`;
 }
 
-// 空状态快捷问题
-const SUGGESTIONS = ["今天天气怎么样？", "给我讲个故事", "你最喜欢什么？"];
-
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "system" | "tool";
@@ -30,7 +27,6 @@ interface ChatMessagesProps {
   userName?: string;
   isLoading: boolean;
   onRegenerate?: () => void;
-  onSuggestion?: (text: string) => void;
 }
 
 export function ChatMessages({
@@ -41,7 +37,6 @@ export function ChatMessages({
   userName,
   isLoading,
   onRegenerate,
-  onSuggestion,
 }: ChatMessagesProps) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   // 记录当前"已复制"的消息 id，用于按钮文字临时切换为"已复制"
@@ -99,8 +94,8 @@ export function ChatMessages({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "rgba(201,169,110,0.15)",
-          color: "var(--hp-gold)",
+          background: "rgba(231,155,190,0.15)",
+          color: "var(--hp-pink)",
         }}
       >
         <span style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "0.9rem" }}>
@@ -112,31 +107,6 @@ export function ChatMessages({
 
   return (
     <div ref={scrollRef} className="chat-messages">
-      {/* 空状态 */}
-      {messages.length === 0 && !isLoading && (
-        <div className="chat-empty">
-          <div className="chat-empty-avatar">
-            <img src={aiAvatar} alt={aiAvatarAlt} />
-          </div>
-          <div className="chat-empty-title">达妮娅</div>
-          <div className="chat-empty-sub">
-            你好，旅人。愿星辰引路，与达妮娅共话此刻。
-          </div>
-          <div className="chat-empty-suggestions">
-            {SUGGESTIONS.map((text) => (
-              <button
-                key={text}
-                type="button"
-                className="chat-suggestion-btn"
-                onClick={() => onSuggestion?.(text)}
-              >
-                {text}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* 消息列表 */}
       {messages.map((message) => {
         const isUser = message.role === "user";
@@ -171,7 +141,7 @@ export function ChatMessages({
                         return (
                           <code
                             {...props}
-                            className="rounded px-1.5 py-0.5 text-xs font-mono bg-[rgba(201,169,110,0.1)] text-[var(--hp-gold)]"
+                            className="rounded px-1.5 py-0.5 text-xs font-mono bg-[rgba(231,155,190,0.1)] text-[var(--hp-pink)]"
                           >
                             {children}
                           </code>
@@ -179,7 +149,7 @@ export function ChatMessages({
                       },
                       pre({ children }) {
                         return (
-                          <pre className="rounded-lg overflow-x-auto bg-[rgba(15,6,16,0.6)] p-3 my-2 text-xs font-mono border border-[rgba(201,169,110,0.1)]">
+                          <pre className="rounded-lg overflow-x-auto bg-[rgba(15,6,16,0.6)] p-3 my-2 text-xs font-mono border border-[rgba(231,155,190,0.1)]">
                             {children}
                           </pre>
                         );
@@ -197,13 +167,13 @@ export function ChatMessages({
                         return <li className="mb-1">{children}</li>;
                       },
                       strong({ children }) {
-                        return <strong className="font-semibold text-[var(--hp-gold)]">{children}</strong>;
+                        return <strong className="font-semibold text-[var(--hp-pink)]">{children}</strong>;
                       },
                       a({ href, children }) {
                         return (
                           <a
                             href={href}
-                            className="text-[var(--hp-gold)] hover:underline"
+                            className="text-[var(--hp-pink)] hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >

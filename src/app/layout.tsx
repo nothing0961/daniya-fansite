@@ -16,6 +16,8 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ChatDrawerProvider } from "@/components/chat/chat-drawer-context";
 import { GlobalChatDrawer } from "@/components/chat/global-chat-drawer";
+import { PageTransition } from "@/components/motion/page-transition";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 
 /** 站点全局 SEO 元数据 */
@@ -53,7 +55,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Sans+SC:wght@400;500&family=JetBrains+Mono:wght@400&display=swap"
           rel="stylesheet"
         />
-        {/* 背景图初始化：在首次绘制前从 localStorage 读取，防止闪烁 */}
+        {/* 背景图初始化：在首次绘制前从 localStorage 读取，防止闪烁
+            注意：不要改用 next/script beforeInteractive——其 __next_s 注入机制
+            会破坏 React 19 对 head 的 hydration，导致整页 JS 失效（页面"不动"） */}
         <script dangerouslySetInnerHTML={{
           __html: `(function(){try{var s=localStorage.getItem('daniya-bg-src');var b=parseFloat(localStorage.getItem('daniya-bg-blur')||'0');if(s){document.documentElement.style.setProperty('--bg-image-url','url("'+s+'")')}document.documentElement.style.setProperty('--bg-blur-opacity',Math.min(Math.max(b/30,0),1))}catch(e){}})();`
         }} />
@@ -69,7 +73,12 @@ export default function RootLayout({
               <ChatDrawerProvider>
                 <Header />
                 {/* flex-1 让 main 撑满剩余空间，overflow-y-auto 允许子页面内容滚动 */}
-                <main className="flex-1 overflow-y-auto">{children}</main>
+                {/* id 供 Footer 绑定滚动监听（角色页滚动到底才显示） */}
+                <main id="main-scroll" className="flex-1 overflow-y-auto">
+                  <MotionConfig reducedMotion="user">
+                    <PageTransition>{children}</PageTransition>
+                  </MotionConfig>
+                </main>
                 <Footer />
                 {/* 全局聊天抽屉 — 由导航栏"飞讯"触发 */}
                 <GlobalChatDrawer />

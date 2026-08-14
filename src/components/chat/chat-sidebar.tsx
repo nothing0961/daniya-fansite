@@ -120,7 +120,7 @@ export function ChatSidebar({
             <button
               type="button"
               onClick={onClose}
-              className="chat-icon-btn"
+              className="chat-icon-btn chat-sidebar-dismiss"
               aria-label="关闭侧边栏"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -132,7 +132,7 @@ export function ChatSidebar({
         </div>
         <Button
           onClick={onNewSession}
-          className="w-full bg-gradient-to-r from-[var(--hp-gold)] to-[var(--hp-gold-deep)] text-[#1a0a14] hover:opacity-90"
+          className="w-full bg-gradient-to-r from-[var(--hp-pink)] to-[var(--hp-pink-deep)] text-[#1a0a14] hover:opacity-90"
         >
           新会话
         </Button>

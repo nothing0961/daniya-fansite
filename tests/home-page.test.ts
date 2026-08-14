@@ -9,16 +9,18 @@ import path from "node:path";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:\/)/, "$1")), "..");
 const PAGE_SRC = fs.readFileSync(path.join(ROOT, "src/app/page.tsx"), "utf-8");
 const HOME_CSS = fs.readFileSync(path.join(ROOT, "src/app/home.css"), "utf-8");
+const GLOBALS_CSS = fs.readFileSync(path.join(ROOT, "src/app/globals.css"), "utf-8");
 const MOCK_DATA = fs.readFileSync(path.join(ROOT, "src/lib/home-mock-data.ts"), "utf-8");
 
 describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
-  it("1) 页面导入 home-mock-data 数据（HERO_DATA / ABILITY_TAGS / RESONANCE_TAGS / SIDE_NOTES / STAT_ITEMS）", () => {
+  it("1) 页面导入 home-mock-data 数据（HERO_DATA / ABILITY_TAGS / ECHO_QUOTES / RESONANCE_TAGS / SIDE_NOTES）与 getAllPosts", () => {
     expect(PAGE_SRC).toMatch(/from\s+"@\/lib\/home-mock-data"/);
     expect(PAGE_SRC).toMatch(/HERO_DATA/);
     expect(PAGE_SRC).toMatch(/ABILITY_TAGS/);
+    expect(PAGE_SRC).toMatch(/ECHO_QUOTES/);
     expect(PAGE_SRC).toMatch(/RESONANCE_TAGS/);
     expect(PAGE_SRC).toMatch(/SIDE_NOTES/);
-    expect(PAGE_SRC).toMatch(/STAT_ITEMS/);
+    expect(PAGE_SRC).toMatch(/getAllPosts/);
   });
 
   it("2) 页面导入 home.css 样式", () => {
@@ -32,9 +34,12 @@ describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
     expect(PAGE_SRC).toMatch(/hp-col--right/);
   });
 
-  it("4) 左栏保留 TetrisConsoleHost 俄罗斯方块", () => {
+  it("4) 左栏保留 TetrisConsoleHost 俄罗斯方块，语音回声卡片改为 EchoRotator 轮播（ECHO_QUOTES 台词气泡）", () => {
     expect(PAGE_SRC).toMatch(/TetrisConsoleHost/);
     expect(PAGE_SRC).toMatch(/hp-tetris-wrap/);
+    expect(PAGE_SRC).toMatch(/hp-echo-card/);
+    expect(PAGE_SRC).toMatch(/EchoRotator/);
+    expect(PAGE_SRC).toMatch(/quotes=\{ECHO_QUOTES\}/);
   });
 
   it("5) 中栏主舞台包含 hp-hero 卡片（hp-hero-content / hp-hero-title / hp-ability-cloud / hp-cta-row）", () => {
@@ -44,10 +49,29 @@ describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
     expect(PAGE_SRC).toMatch(/hp-cta-row/);
   });
 
-  it("6) 中栏包含统计条（hp-stat-bar），生日倒计时移至右栏", () => {
+  it("5b) 中栏台词上移为副标题，移除与 kicker 重复的 subtitle 与底部引用块", () => {
+    expect(PAGE_SRC).toMatch(/hp-hero-sub[^>]*>\{HERO_DATA\.quote\}/);
+    expect(PAGE_SRC).not.toMatch(/HERO_DATA\.subtitle/);
+    expect(PAGE_SRC).not.toMatch(/hp-quote">/);
+  });
+
+  it("5c) 中栏 hero 新增立绘海报卡（hp-hero-body / hp-hero-poster，竖图 webp 素材）", () => {
+    expect(PAGE_SRC).toMatch(/hp-hero-body/);
+    expect(PAGE_SRC).toMatch(/hp-hero-poster/);
+    expect(PAGE_SRC).toMatch(/615294f4d0b740f4bf5ce693ddb0b35920260521\.webp/);
+  });
+
+  it("6) 统计条移至右栏「站点速览」卡（hp-stat-card + hp-stat-bar），生日倒计时与共鸣图鉴同栏", () => {
+    expect(PAGE_SRC).toMatch(/hp-stat-card/);
     expect(PAGE_SRC).toMatch(/hp-stat-bar/);
+    expect(PAGE_SRC).toMatch(/站点速览/);
     expect(PAGE_SRC).toMatch(/hp-sidebar-birthday/);
     expect(PAGE_SRC).toMatch(/BirthdayCountdown/);
+    // 统计值来自真实数据源而非编造数字
+    expect(PAGE_SRC).toMatch(/getAllPosts\(\)\.length/);
+    expect(PAGE_SRC).toMatch(/RESONANCE_TAGS\.length/);
+    expect(PAGE_SRC).toMatch(/ECHO_QUOTES\.length/);
+    expect(PAGE_SRC).not.toMatch(/23,461/);
   });
 
   it("7) 右栏包含三个面板（生日倒计时 hp-sidebar-birthday / 共鸣图鉴 hp-resonance-grid / 站长笔记 hp-note-list）", () => {
@@ -59,8 +83,9 @@ describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
   it("8) 首页不再包含底部信息流（已迁移到 /works 独立页）", () => {
     expect(PAGE_SRC).not.toMatch(/FeedList/);
     expect(PAGE_SRC).not.toMatch(/FeedPagination/);
-    expect(PAGE_SRC).not.toMatch(/getAllPosts/);
     expect(PAGE_SRC).not.toMatch(/hp-feed-section/);
+    // getAllPosts 现用于站点速览统计作品数（真实数据），非信息流
+    expect(PAGE_SRC).toMatch(/getAllPosts/);
   });
 
   it("9) 页面标题 metadata 包含达妮娅", () => {
@@ -68,16 +93,38 @@ describe("首页 page.tsx — 三栏暗色角色主题布局", () => {
   });
 });
 
-describe("首页 home.css — 暗色角色主题样式", () => {
-  it("10) CSS 定义了主题 CSS 变量（--hp-gold / --hp-ink / --hp-card 等）", () => {
-    expect(HOME_CSS).toMatch(/--hp-gold:/);
-    expect(HOME_CSS).toMatch(/--hp-ink:/);
-    expect(HOME_CSS).toMatch(/--hp-card:/);
-    expect(HOME_CSS).toMatch(/--hp-bg-deep:/);
+describe("语音回声轮播组件 echo-rotator.tsx", () => {
+  const ROTATOR_SRC = fs.readFileSync(
+    path.join(ROOT, "src/components/home/echo-rotator.tsx"),
+    "utf-8"
+  );
+
+  it("a) 组件为客户端组件，含台词叠层舞台（hp-echo-stage）", () => {
+    expect(ROTATOR_SRC).toMatch(/"use client"/);
+    expect(ROTATOR_SRC).toMatch(/hp-echo-stage/);
+    expect(ROTATOR_SRC).toMatch(/hp-quote-bubble--left/);
+    expect(ROTATOR_SRC).toMatch(/hp-quote--active/);
   });
 
-  it("11) CSS 定义了三栏网格布局（grid-template-columns: 360px 1fr 240px）", () => {
-    expect(HOME_CSS).toMatch(/grid-template-columns:\s*360px\s+1fr\s+240px/);
+  it("b) 轮播带指示点与 hover 暂停，定时切换台词", () => {
+    expect(ROTATOR_SRC).toMatch(/hp-echo-dots/);
+    expect(ROTATOR_SRC).toMatch(/hp-echo-dot--active/);
+    expect(ROTATOR_SRC).toMatch(/onMouseEnter/);
+    expect(ROTATOR_SRC).toMatch(/setTimeout/);
+    expect(ROTATOR_SRC).toMatch(/4000/);
+  });
+});
+
+describe("首页 home.css — 暗色角色主题样式", () => {
+  it("10) 主题 CSS 变量定义在 globals.css 共享块（--hp-pink / --hp-ink / --hp-card 等）", () => {
+    expect(GLOBALS_CSS).toMatch(/--hp-pink:/);
+    expect(GLOBALS_CSS).toMatch(/--hp-ink:/);
+    expect(GLOBALS_CSS).toMatch(/--hp-card:/);
+    expect(GLOBALS_CSS).toMatch(/--hp-bg-deep:/);
+  });
+
+  it("11) CSS 定义了三栏网格布局（grid-template-columns: 280px minmax(0, 1fr) 300px）", () => {
+    expect(HOME_CSS).toMatch(/grid-template-columns:\s*280px\s+minmax\(0,\s*1fr\)\s+300px/);
   });
 
   it("12) CSS 定义了俄罗斯方块容器约束（hp-col--left .hp-tetris-wrap > div 宽度 100%）", () => {
@@ -86,8 +133,7 @@ describe("首页 home.css — 暗色角色主题样式", () => {
     expect(HOME_CSS).toMatch(/min-width:\s*0\s*!important/);
   });
 
-  it("13) CSS 定义了能力标签样式（hp-ability-tag--gold/pink/blue/green）", () => {
-    expect(HOME_CSS).toMatch(/hp-ability-tag--gold/);
+  it("13) CSS 定义了能力标签样式（hp-ability-tag--pink/blue/green）", () => {
     expect(HOME_CSS).toMatch(/hp-ability-tag--pink/);
     expect(HOME_CSS).toMatch(/hp-ability-tag--blue/);
     expect(HOME_CSS).toMatch(/hp-ability-tag--green/);
@@ -99,8 +145,27 @@ describe("首页 home.css — 暗色角色主题样式", () => {
     expect(HOME_CSS).toMatch(/\.hp-btn--ghost/);
   });
 
-  it("15) CSS 响应式代码已注释（移动端显示桌面端布局）", () => {
-    expect(HOME_CSS).toMatch(/\/\*\s*\n?\s*@media/);
+  it("15) CSS 启用了响应式断点（≤1100px 两栏 / ≤760px 单栏）", () => {
+    expect(HOME_CSS).not.toMatch(/\/\*\s*\n?\s*@media/);
+    expect(HOME_CSS).toMatch(/@media\s*\(max-width:\s*1100px\)/);
+    expect(HOME_CSS).toMatch(/@media\s*\(max-width:\s*760px\)/);
+  });
+
+  it("15b) CSS 定义了语音回声卡片（hp-echo-card）与轮播样式（hp-echo-stage 叠层 + 指示点）", () => {
+    expect(HOME_CSS).toMatch(/\.hp-echo-card/);
+    expect(HOME_CSS).toMatch(/\.hp-quote-bubble--left/);
+    expect(HOME_CSS).toMatch(/\.hp-echo-stage/);
+    expect(HOME_CSS).toMatch(/\.hp-echo-dots/);
+    expect(HOME_CSS).toMatch(/\.hp-quote--active/);
+    expect(HOME_CSS).not.toMatch(/\.hp-quote-bubble--right/);
+    expect(HOME_CSS).not.toMatch(/\.hp-quote-list/);
+  });
+
+  it("15c) CSS 定义了立绘海报卡（hp-hero-poster）与竖排统计带（hp-stat-card 内行式）", () => {
+    expect(HOME_CSS).toMatch(/\.hp-hero-body/);
+    expect(HOME_CSS).toMatch(/\.hp-hero-poster/);
+    expect(HOME_CSS).toMatch(/\.hp-stat-card \.hp-stat-bar/);
+    expect(HOME_CSS).toMatch(/aspect-ratio:\s*2\s*\/\s*3/);
   });
 });
 
@@ -125,9 +190,10 @@ describe("首页 home-mock-data.ts — 数据完整性", () => {
     expect(quotes.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("19) mock-data 导出 RESONANCE_TAGS 和 STAT_ITEMS", () => {
+  it("19) mock-data 导出 RESONANCE_TAGS，且已移除编造数字 STAT_ITEMS", () => {
     expect(MOCK_DATA).toMatch(/export\s+const\s+RESONANCE_TAGS/);
-    expect(MOCK_DATA).toMatch(/export\s+const\s+STAT_ITEMS/);
+    expect(MOCK_DATA).not.toMatch(/STAT_ITEMS/);
+    expect(MOCK_DATA).not.toMatch(/23,461/);
   });
 
   it("20) mock-data 导出 SIDE_NOTES（站长笔记 ≥ 2 条）", () => {

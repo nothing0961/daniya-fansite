@@ -52,11 +52,13 @@ export default async function TypePage({ params }: TypePageProps) {
       <div className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--primary)] hover:underline mb-2 inline-block"
+          className="mb-3 inline-flex items-center gap-1 rounded-full border border-[rgba(231,155,190,0.2)]
+                     bg-[rgba(231,155,190,0.06)] px-3 py-1 text-xs text-[var(--primary)]
+                     hover:bg-[rgba(231,155,190,0.15)] transition-colors"
         >
           ← 返回首页
         </Link>
-        <h1 className="text-2xl font-bold text-[var(--foreground)]">
+        <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)]">
           {label}
           <span className="ml-2 text-base font-normal text-[var(--muted-foreground)]">
             ({posts.length} 篇)
@@ -68,6 +70,7 @@ export default async function TypePage({ params }: TypePageProps) {
 
       {posts.length === 0 && (
         <div className="text-center py-16">
+          <p className="mb-2 text-2xl" aria-hidden="true">🫧</p>
           <p className="text-[var(--muted-foreground)]">
             该类型暂无作品，敬请期待
           </p>

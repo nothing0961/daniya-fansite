@@ -92,7 +92,7 @@ export default async function PostPage({ params }: PostPageProps) {
         />
 
         {/* 作品标题 */}
-        <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-[var(--foreground)] leading-tight">
+        <h1 className="mt-3 font-serif text-2xl sm:text-3xl font-bold text-[var(--foreground)] leading-tight">
           {meta.title}
         </h1>
 

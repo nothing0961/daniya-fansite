@@ -37,14 +37,16 @@ export default async function WorksPage({ searchParams }: Props) {
       <header className="wp-header">
         <div className="wp-header-left">
           <Link href="/" className="wp-back">← 返回首页</Link>
-          <h1 className="wp-title">
-            作品集
-            <span className="wp-count-inline">（{allFiltered.length}）</span>
-          </h1>
+          <div className="wp-heading">
+            <p className="wp-eyebrow">星炬学院特"困"生</p>
+            <h1 className="wp-title">
+              作品集
+              <span className="wp-count-badge">{allFiltered.length}</span>
+            </h1>
+          </div>
         </div>
         <div className="wp-header-right">
-          <button className="wp-btn wp-btn--ghost wp-btn-sm">🔄 刷新</button>
-          <button className="wp-btn wp-btn--primary wp-btn-sm">⬆ 上传图片</button>
+          <Link href="/submit" className="wp-btn wp-btn--primary wp-btn-sm">投稿作品</Link>
         </div>
       </header>
 

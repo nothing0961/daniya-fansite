@@ -14,7 +14,7 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">
+      <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)] mb-6">
         账号设置
       </h1>
 

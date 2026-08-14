@@ -34,7 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">
+      <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)] mb-6">
         个人中心
       </h1>
 

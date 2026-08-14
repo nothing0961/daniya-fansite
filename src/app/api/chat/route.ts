@@ -3,9 +3,16 @@
  */
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { buildSiteKnowledgeContext } from "@/lib/site-knowledge";
+import {
+  CHAT_TOOL_RESULT_MAX_LEN,
+  CHAT_TOOLS_SCHEMAS,
+  executeChatTool,
+} from "@/lib/chat-tools";
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
+// 注意：不使用 edge runtime — 每日配额走 Prisma（数据库），Prisma 传统引擎无法在 edge 上运行
+// （f033067 引入 DB 配额时遗留：edge + Prisma = 每次配额检查抛错 → 误报“今日额度用完”）
 
 // ========================================================================
 // 常量区
@@ -31,6 +38,9 @@ export const CHAT_DAILY_QUOTA_PER_USER = Number(
 );
 export const CHAT_MAX_OUTPUT_TOKENS = Number(
   process.env.CHAT_MAX_OUTPUT_TOKENS ?? 500,
+);
+export const CHAT_SUMMARY_MAX_TOKENS = Number(
+  process.env.CHAT_SUMMARY_MAX_TOKENS ?? 300,
 );
 
 export const PRESET_REPLIES = ["该功能还在测试中QAQ"];
@@ -151,11 +161,10 @@ function normUrl(u: string): string {
   return s;
 }
 
+const sseEncoder = new TextEncoder();
+
 function encodeSSE(dataStr: string): Uint8Array {
-  const payload = `data: ${dataStr}\n\n`;
-  const buf = new Uint8Array(payload.length);
-  for (let i = 0; i < payload.length; i++) buf[i] = payload.charCodeAt(i);
-  return buf;
+  return sseEncoder.encode(`data: ${dataStr}\n\n`);
 }
 
 function buildMockSSE(text: string, maxTokens: number): Response {
@@ -197,6 +206,107 @@ function fallbackSSE(maxTokens: number): Response {
 }
 
 // ========================================================================
+// 摘要模式：把「已有摘要 + 新溢出消息」合并为一段新摘要
+// 客户端在消息超窗后触发；失败返回 5xx，客户端保留消息下轮重试
+// ========================================================================
+async function handleSummarize(
+  rawMsgs: any[],
+  body: Record<string, any>,
+): Promise<Response> {
+  const sanitized = sanitizeMessages(rawMsgs).filter((m) => m.role !== "system");
+  if (sanitized.length === 0) {
+    return NextResponse.json({ error: "没有可总结的内容" }, { status: 400 });
+  }
+
+  const existingSummary = body.summary;
+  const sysContent =
+    "你是对话摘要助手。请将「已有摘要」与「新对话片段」合并，输出一份简洁的中文对话摘要（第三人称），" +
+    "保留关键人物、事件、用户偏好与情感脉络。只输出摘要本身，不要解释、不要分段标题。";
+  const chatMsgs: { role: "user" | "system"; content: string }[] = [
+    { role: "system", content: sysContent },
+  ];
+  if (typeof existingSummary === "string" && existingSummary.trim()) {
+    chatMsgs.push({ role: "user", content: `【已有摘要】\n${existingSummary.trim()}` });
+  }
+  const newText = sanitized
+    .map((m) => `${m.role === "user" ? "用户" : "达妮娅"}：${m.content}`)
+    .join("\n");
+  chatMsgs.push({ role: "user", content: `【新对话片段】\n${newText}` });
+
+  const cfg = body.customAiConfig as Record<string, any> | null;
+  const isCustomMode = Boolean(
+    cfg &&
+      typeof cfg.baseURL === "string" &&
+      cfg.baseURL.length > 0 &&
+      typeof cfg.apiKey === "string" &&
+      cfg.apiKey.length > 0 &&
+      typeof cfg.model === "string" &&
+      cfg.model.length > 0,
+  );
+
+  let apiUrl: string;
+  let apiKey: string;
+  let model: string;
+  if (isCustomMode && cfg) {
+    if (isUnsafeHost(cfg.baseURL)) {
+      return NextResponse.json(
+        { error: "SSRF blocked: custom baseURL 指向内网地址，已拒绝", code: "SSRF_FORBIDDEN" },
+        { status: 400 },
+      );
+    }
+    apiUrl = normUrl(cfg.baseURL) + "/chat/completions";
+    apiKey = cfg.apiKey;
+    model = cfg.model;
+  } else {
+    if (!ZHIPU_API_KEY) {
+      return NextResponse.json({ error: "未配置默认模型，无法生成摘要" }, { status: 500 });
+    }
+    apiUrl = normUrl(ZHIPU_BASE_URL) + "/chat/completions";
+    apiKey = ZHIPU_API_KEY;
+    model = ZHIPU_DEFAULT_MODEL;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const reqBody: Record<string, unknown> = {
+    model,
+    messages: chatMsgs,
+    max_tokens: CHAT_SUMMARY_MAX_TOKENS,
+    stream: false,
+  };
+  if (!isCustomMode) {
+    // 智谱推理模型默认思考，摘要只有 300 token 预算，思考会占满导致摘要为空
+    reqBody.thinking = { type: "disabled" };
+  }
+  try {
+    const resp = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(reqBody),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!resp.ok) {
+      return NextResponse.json({ error: "摘要生成失败" }, { status: 502 });
+    }
+    const data = (await resp.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const summary = data?.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!summary) {
+      return NextResponse.json({ error: "摘要为空" }, { status: 502 });
+    }
+    return NextResponse.json({ summary });
+  } catch {
+    clearTimeout(timeoutId);
+    return NextResponse.json({ error: "摘要生成失败，请稍后重试" }, { status: 500 });
+  }
+}
+
+// ========================================================================
 // POST handler
 // ========================================================================
 export async function POST(req: Request): Promise<Response> {
@@ -214,6 +324,12 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const rawMsgs: any[] = Array.isArray(body.messages) ? body.messages : [];
+
+  // 摘要模式：消息超窗后客户端触发，压缩早期对话（内部操作，不占每日配额）
+  if (body.mode === "summarize") {
+    return handleSummarize(rawMsgs, body);
+  }
+
   const message = extractLastUserText(rawMsgs);
   if (typeof message !== "string" || message.length > MAX_INPUT_LENGTH) {
     return NextResponse.json(
@@ -265,15 +381,51 @@ export async function POST(req: Request): Promise<Response> {
   // 人设注入
   const sanitized = sanitizeMessages(rawMsgs);
 
+  // 滑窗摘要注入：客户端折叠的早期对话摘要（时间线早于当前窗口内的消息）
+  if (typeof body.summary === "string" && body.summary.trim().length > 0) {
+    sanitized.push({
+      role: "system",
+      content:
+        `以下是本次对话更早部分的摘要（时间线早于当前窗口内的消息）：\n${body.summary.trim()}\n\n` +
+        "摘要仅作背景参考，用于保持上下文一致；请按角色自然回应，不要在回复中复述摘要内容。",
+    });
+  }
+
+  // 知识库注入：客户端检索后的相关片段，作为附加 system 消息
+  if (
+    typeof body.knowledgeContext === "string" &&
+    body.knowledgeContext.trim().length > 0
+  ) {
+    sanitized.push({
+      role: "system",
+      content:
+        `以下是用户知识库中与当前话题相关的资料片段，仅供考据参考：\n${body.knowledgeContext.trim()}\n\n` +
+        "请优先基于以上资料回答用户的问题；若资料包含角色设定，注意保持达妮娅人设的剧透克制（不主动倒设定，用户明确询问才展开）。" +
+        "若资料与当前话题无关或信息不足，保持人设正常闲聊即可，不要硬扯资料内容。",
+    });
+  }
+
+  // 站内内容库注入：服务端对站内作品/角色档案做 2-gram 检索，命中时注入
+  const siteContext = buildSiteKnowledgeContext(message);
+  if (siteContext) {
+    sanitized.push({
+      role: "system",
+      content:
+        `以下是站内内容库（作品集 / 角色档案）中与当前话题相关的资料片段，仅供考据参考：\n${siteContext}\n\n` +
+        "请优先基于以上资料回答用户的问题；若资料包含角色设定，注意保持达妮娅人设的剧透克制（不主动倒设定，用户明确询问才展开）。" +
+        "若资料与当前话题无关或信息不足，保持人设正常闲聊即可，不要硬扯资料内容。",
+    });
+  }
+
   // 选择 provider
   if (isCustomMode) {
     return handleCustomProvider(customAiConfig, sanitized);
   }
-  return handleDefaultProvider(sanitized);
+  return handleDefaultProvider(sanitized, userId, session.user.name ?? "用户");
 }
 
 // ========================================================================
-// 默认 provider（智谱 AI）
+// 默认 provider（智谱 AI）— 携带站内工具，支持单轮 function calling
 // ========================================================================
 const MAX_DEFAULT_ATTEMPTS = 3; // 1 次初请求 + 2 次重试 = 共 3 次尝试
 
@@ -281,15 +433,105 @@ function sleep(ms: number): Promise<void> {
   return new Promise<void>((res) => setTimeout(res, ms));
 }
 
+interface StreamedToolCall {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
+type ToolRoundMsg =
+  | { role: "system" | "user" | "assistant"; content: string }
+  | { role: "assistant"; content: null; tool_calls: unknown[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+/**
+ * 读取智谱流式响应：
+ * - 模型直接回答 → 逐块透传给客户端流，返回 null
+ * - 模型请求工具 → 缓冲全部帧（不向客户端透传），返回解析出的工具调用
+ */
+async function consumeDefaultStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+): Promise<StreamedToolCall[] | null> {
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let inToolMode = false;
+  const toolCalls = new Map<number, StreamedToolCall>();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!inToolMode) controller.enqueue(value);
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split(/\r?\n\r?\n/);
+    buffer = frames.pop() ?? "";
+    for (const frame of frames) {
+      for (const line of frame.split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t.startsWith("data:")) continue;
+        const raw = t.slice(5).trim();
+        if (!raw || raw === "[DONE]") continue;
+        let json: any = null;
+        try {
+          json = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+        const delta = json?.choices?.[0]?.delta;
+        if (!delta?.tool_calls) continue;
+        inToolMode = true;
+        for (const tc of delta.tool_calls) {
+          const idx = tc.index ?? 0;
+          const cur = toolCalls.get(idx) ?? { id: "", name: "", arguments: "" };
+          if (tc.id) cur.id = tc.id;
+          if (tc.function?.name) cur.name = tc.function.name;
+          if (typeof tc.function?.arguments === "string") {
+            cur.arguments += tc.function.arguments;
+          }
+          toolCalls.set(idx, cur);
+        }
+      }
+    }
+  }
+  if (toolCalls.size === 0) return null;
+  return [...toolCalls.values()].filter((t) => t.name);
+}
+
+function buildToolRoundMessages(
+  messages: { role: "system" | "user" | "assistant"; content: string }[],
+  toolCalls: StreamedToolCall[],
+  results: { id: string; content: string }[],
+): ToolRoundMsg[] {
+  return [
+    ...messages,
+    {
+      role: "assistant",
+      content: null,
+      tool_calls: toolCalls.map((t) => ({
+        id: t.id,
+        type: "function",
+        function: { name: t.name, arguments: t.arguments },
+      })),
+    },
+    ...results.map(
+      (r): { role: "tool"; tool_call_id: string; content: string } => ({
+        role: "tool",
+        tool_call_id: r.id,
+        content: r.content,
+      }),
+    ),
+  ];
+}
+
 async function handleDefaultProvider(
   messages: { role: "system" | "user" | "assistant"; content: string }[],
+  userId: string,
+  username: string,
 ): Promise<Response> {
   if (!ZHIPU_API_KEY) {
     return fallbackSSE(CHAT_MAX_OUTPUT_TOKENS);
   }
 
   const apiUrl = normUrl(ZHIPU_BASE_URL) + "/chat/completions";
-  const maxTokens = CHAT_MAX_OUTPUT_TOKENS;
   let delay = 500; // ms，指数退避初始值
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -308,6 +550,10 @@ async function handleDefaultProvider(
           messages,
           max_tokens: CHAT_MAX_OUTPUT_TOKENS,
           stream: true,
+          // 智谱推理模型默认思考：思考 token 会挤占 max_tokens 预算，导致回复为空，故关闭
+          thinking: { type: "disabled" },
+          // 站内工具（function calling）：模型可请求调用站内事务；自定义模式无此能力，走纯聊天
+          tools: CHAT_TOOLS_SCHEMAS,
         }),
         signal: controller.signal,
       });
@@ -322,23 +568,95 @@ async function handleDefaultProvider(
 
         const reader = resp.body.getReader();
         readerToCancel = reader;
-        const decoder = new TextDecoder();
+        clearTimeout(timeoutId);
         const encoder = new TextEncoder();
 
         const stream = new ReadableStream<Uint8Array>({
-          async pull(ctrl) {
+          async start(ctrl) {
+            let toolCalls: StreamedToolCall[] | null = null;
             try {
-              const { done, value } = await reader.read();
-              if (done) {
-                ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
-                ctrl.close();
-                return;
-              }
-              ctrl.enqueue(value);
+              toolCalls = await consumeDefaultStream(reader, ctrl);
             } catch {
+              // 流读取异常（内容模式可能已透传部分内容）→ 直接结束
+            }
+            if (!toolCalls || toolCalls.length === 0) {
               ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
               ctrl.close();
+              return;
             }
+
+            // —— 工具轮（单轮限制：回传结果时不再携带 tools，模型无法再次调用工具）——
+            ctrl.enqueue(
+              encodeSSE(JSON.stringify({ tool_status: "正在调用站内工具…" })),
+            );
+            const results: { id: string; content: string }[] = [];
+            let navAction: { action: "navigate"; page: string } | null = null;
+            for (const tc of toolCalls) {
+              let args: Record<string, unknown> = {};
+              try {
+                args = tc.arguments ? JSON.parse(tc.arguments) : {};
+              } catch {
+                args = {};
+              }
+              let res;
+              try {
+                res = await executeChatTool(tc.name, args, {
+                  userId,
+                  username,
+                  quotaLimit: CHAT_DAILY_QUOTA_PER_USER,
+                });
+              } catch (err) {
+                res = {
+                  ok: false,
+                  content: `工具执行出错：${String((err as Error)?.message ?? err).slice(0, 200)}`,
+                };
+              }
+              results.push({
+                id: tc.id || `call_${tc.name}`,
+                content: res.content.slice(0, CHAT_TOOL_RESULT_MAX_LEN),
+              });
+              if (tc.name === "navigateTo" && res.ok && typeof res.navPage === "string") {
+                navAction = { action: "navigate", page: res.navPage };
+              }
+            }
+            // 导航：SSE tool_action 事件 → 客户端 router.push
+            if (navAction) {
+              ctrl.enqueue(encodeSSE(JSON.stringify({ tool_action: navAction })));
+            }
+
+            const phase2 = await fetch(apiUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${ZHIPU_API_KEY}`,
+              },
+              body: JSON.stringify({
+                model: ZHIPU_DEFAULT_MODEL,
+                messages: buildToolRoundMessages(messages, toolCalls, results),
+                max_tokens: CHAT_MAX_OUTPUT_TOKENS,
+                stream: true,
+                thinking: { type: "disabled" },
+              }),
+            });
+            if (!phase2.ok || !phase2.body) {
+              const fallbackText = PRESET_REPLIES[0] ?? "该功能还在测试中QAQ";
+              ctrl.enqueue(
+                encodeSSE(
+                  JSON.stringify({ choices: [{ delta: { content: fallbackText } }] }),
+                ),
+              );
+              ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
+              ctrl.close();
+              return;
+            }
+            const reader2 = phase2.body.getReader();
+            while (true) {
+              const { done: d2, value: v2 } = await reader2.read();
+              if (d2) break;
+              ctrl.enqueue(v2);
+            }
+            ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
+            ctrl.close();
           },
           cancel() {
             reader.cancel().catch(() => {});
@@ -346,7 +664,6 @@ async function handleDefaultProvider(
           },
         });
 
-        clearTimeout(timeoutId);
         return new Response(stream, {
           status: 200,
           headers: {

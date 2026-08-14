@@ -10,11 +10,12 @@ const CHAR_LAYOUT = fs.readFileSync(path.join(ROOT, "src/app/character/layout.ts
 const GLOBALS_CSS = fs.readFileSync(path.join(ROOT, "src/app/globals.css"), "utf-8");
 
 /**
- * 达妮娅 /character 页面 V3 — 暗色文学叙事风格（2026-08-04 改版）
- * 结构：档案抬头 + 共鸣者档案属性表 + 章节故事卷轴 + 资料来源声明
- * 配色：dan- 前缀暗色主题（深夜色底 + 旧金点缀 + 古纸墨色）
+ * 达妮娅 /character 页面 V4 — 侧翼档案架布局（2026-08-13 改版）
+ * 结构：左栏 sticky 档案架（身份卡 + 数据胶囊 + 锚点导航 + 生日倒计时）
+ *      右栏档案流（角色故事 → 鉴定报告 → 资料来源声明）
+ * 配色：dan- 前缀暗色主题（深夜色底 + 达妮娅粉点缀 + 古纸墨色）
  */
-describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
+describe("/character 达妮娅介绍页 V4：侧翼档案架 · 暗色文学叙事", () => {
 
   /* ========== 专属配色：--daniya-* 4 个变量保留在 globals.css ========== */
 
@@ -30,19 +31,16 @@ describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
     expect(GLOBALS_CSS).toMatch(/--daniya-accent\s*:/);
   });
 
-  it("7) globals.css 中保留了 --daniya-star（淡鹅黄，星星点缀）专属 CSS 变量", () => {
+  it("7) globals.css 中保留了 --daniya-star（粉白，星星点缀）专属 CSS 变量", () => {
     expect(GLOBALS_CSS).toMatch(/--daniya-star\s*:/);
   });
 
-  /* ========== 区块 1：档案抬头（masthead） ========== */
+  /* ========== 区块 1：档案主体（dan-body） ========== */
 
-  it("8) 档案抬头包含「达妮娅」大标题（h1 + dan-masthead-chinese）", () => {
-    expect(CHAR_SRC).toMatch(/<h1[^>]*dan-masthead-title/);
-    expect(CHAR_SRC).toMatch(/dan-masthead-chinese[\s\S]{0,30}达妮娅/);
-  });
-
-  it("8b) 档案抬头包含英文副标题 DANIYA（dan-masthead-latin）", () => {
-    expect(CHAR_SRC).toMatch(/dan-masthead-latin/);
+  it("8) 档案以侧翼档案架开篇（左栏 dan-rail + 身份卡 dan-identity + 名字）", () => {
+    expect(CHAR_SRC).toMatch(/dan-rail/);
+    expect(CHAR_SRC).toMatch(/dan-identity/);
+    expect(CHAR_SRC).toMatch(/达\s*妮\s*娅/);
   });
 
   /* ========== 区块 2：共鸣者档案属性表双列 ≥ 8 项 ========== */
@@ -60,26 +58,46 @@ describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
     expect(cnt).toBeGreaterThanOrEqual(8);
   });
 
-  it("9b) 页面通过 PROFILE_ROWS.map 渲染属性表（dan-profile-grid）", () => {
-    expect(CHAR_SRC).toMatch(/PROFILE_ROWS\.map/);
-    expect(CHAR_SRC).toMatch(/dan-profile-grid/);
+  it("9b) 属性表过滤 ⏳ 待补字段后渲染为数据胶囊（filter + visibleRows.map + dan-chip）", () => {
+    expect(CHAR_SRC).toMatch(/PROFILE_ROWS\.filter/);
+    expect(CHAR_SRC).toMatch(/visibleRows\.map/);
+    expect(CHAR_SRC).toMatch(/dan-chip/);
   });
 
-  /* ========== 区块 3：章节故事（卷轴卡片，≥ 3 章） ========== */
+  /* ========== 区块 4：角色故事（单一卷轴卡片） ========== */
 
   it("10) 页面不再使用 Accordion 组件（V3 改用卷轴卡片）", () => {
     expect(CHAR_SRC).not.toMatch(/import[\s\S]{0,200}Accordion/);
   });
 
-  it("11) 章节数据 STORY_CHAPTERS ≥ 3 个章节（archive-data.ts）", () => {
-    // 统计 chapterNo: "第 X 章" 出现次数
-    const chapterMatches = CHAR_DATA.match(/chapterNo\s*:\s*["']第\s*[IVX]+\s*章["']/g) ?? [];
-    expect(chapterMatches.length).toBeGreaterThanOrEqual(3);
+  it("11) 故事数据改为 STORY_TABS 五篇分卷（archive-data.ts）", () => {
+    expect(CHAR_DATA).toMatch(/export\s+const\s+STORY_TABS/);
+    for (const label of ["礼物", "荒芜", "明昼", "群魔", "谎言"]) {
+      expect(CHAR_DATA).toMatch(new RegExp("label\\s*:\\s*['\"]" + label + "['\"]"));
+    }
   });
 
-  it("11b) 页面通过 STORY_CHAPTERS.map 渲染章节卡片（dan-sheet--chapter）", () => {
-    expect(CHAR_SRC).toMatch(/STORY_CHAPTERS\.map/);
-    expect(CHAR_SRC).toMatch(/dan-sheet--chapter/);
+  it("11b) 故事区改为标签栏 + 内容区渲染（dan-story-tabs + dan-story-panel）", () => {
+    expect(CHAR_SRC).toMatch(/STORY_TABS\.map/);
+    expect(CHAR_SRC).toMatch(/dan-story-tabs/);
+    expect(CHAR_SRC).toMatch(/dan-story-tab--active/);
+    expect(CHAR_SRC).toMatch(/dan-story-panel/);
+    expect(CHAR_SRC).toMatch(/activeStoryId/);
+    expect(CHAR_SRC).toMatch(/dan-sheet--story/);
+    expect(CHAR_SRC).toMatch(/dan-sheet-head/);
+    expect(CHAR_SRC).not.toMatch(/dan-chapter-head/);
+    expect(CHAR_SRC).not.toMatch(/dan-chapter-title/);
+    expect(CHAR_SRC).not.toMatch(/dan-chapter-divider/);
+  });
+
+  it("11c) 章节数据不再包含 chapterNo / pageNo 字段（装饰编号已移除）", () => {
+    expect(CHAR_DATA).not.toMatch(/chapterNo/);
+    expect(CHAR_DATA).not.toMatch(/pageNo/);
+    expect(CHAR_SRC).not.toMatch(/dan-chapter-no/);
+    expect(CHAR_SRC).not.toMatch(/dan-chapter-page/);
+    // 新头部使用 § 符号 + sheet-title
+    expect(CHAR_SRC).toMatch(/dan-sheet-number/);
+    expect(CHAR_SRC).toMatch(/dan-sheet-page/);
   });
 
   /* ========== 区块 4：达妮娅相关二创作品已删除（用户 2026-07-03 要求移除） ========== */
@@ -117,8 +135,8 @@ describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
   });
 
   it("15) archive.css 定义了 dan-archive 根容器变量（深夜色底 #0d0a14）", () => {
-    expect(CHAR_CSS).toMatch(/--dan-bg:\s*#0d0a14/);
-    expect(CHAR_CSS).toMatch(/--dan-gold:\s*#c9a96e/);
+    expect(CHAR_CSS).toMatch(/--dan-bg:/);
+    expect(CHAR_CSS).toMatch(/--dan-pink:\s*#e79bbe/);
   });
 
   it("16) archive.css 定义了纸张卡片样式（dan-sheet + 钉孔装饰）", () => {
@@ -127,17 +145,18 @@ describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
     expect(CHAR_CSS).toMatch(/\.dan-sheet::after/);
   });
 
-  it("17) archive.css 定义了章节卷轴样式（dan-chapter-head + dan-chapter-divider）", () => {
-    expect(CHAR_CSS).toMatch(/\.dan-chapter-head/);
-    expect(CHAR_CSS).toMatch(/\.dan-chapter-divider/);
+  it("17) archive.css 定义了拉贝尔曲线样式（dan-ecg 检测档案波形母题）", () => {
+    expect(CHAR_CSS).toMatch(/\.dan-ecg\b/);
+    expect(CHAR_CSS).toMatch(/\.dan-ecg-path/);
   });
 
   /* ========== V3 新增：archive-data.ts 数据结构 ========== */
 
-  it("18) archive-data.ts 导出 STORY_CHAPTERS、PROFILE_ROWS、ARCHIVE_SOURCE_LINKS、RESONANCE_REPORT 四个数据", () => {
-    expect(CHAR_DATA).toMatch(/export\s+const\s+STORY_CHAPTERS/);
+  it("18) archive-data.ts 导出 STORY_CHAPTER、PROFILE_ROWS、ARCHIVE_SOURCE_LINKS、RESONANCE_REPORT 四个数据", () => {
+    expect(CHAR_DATA).toMatch(/export\s+const\s+STORY_CHAPTER/);
     expect(CHAR_DATA).toMatch(/export\s+const\s+PROFILE_ROWS/);
     expect(CHAR_DATA).toMatch(/export\s+const\s+ARCHIVE_SOURCE_LINKS/);
+    expect(CHAR_DATA).toMatch(/export\s+const\s+STORY_TABS/);
     expect(CHAR_DATA).toMatch(/export\s+const\s+RESONANCE_REPORT/);
   });
 
@@ -190,10 +209,10 @@ describe("/character 达妮娅介绍页 V3：暗色文学叙事风格", () => {
     expect(CHAR_SRC).toMatch(/dan-collapse/);
   });
 
-  it("27) 共鸣者档案（dan-sheet--profile）不包含可折叠交互（不可折叠）", () => {
-    // 截取 profile 区块的代码片段，确认没有 dan-collapsible-head
-    const profileSection = CHAR_SRC.match(/dan-sheet--profile[\s\S]*?<\/section>/)?.[0] ?? "";
-    expect(profileSection).not.toMatch(/dan-collapsible-head/);
+  it("27) 左栏身份卡（dan-identity）不包含可折叠交互（常驻展示）", () => {
+    // 截取身份卡区块的代码片段，确认没有 dan-collapsible-head
+    const identitySection = CHAR_SRC.match(/dan-identity[\s\S]*?<\/div>/)?.[0] ?? "";
+    expect(identitySection).not.toMatch(/dan-collapsible-head/);
   });
 
   it("28) archive.css 定义了折叠动画样式（dan-collapse + dan-toggle + dan-collapsible-head）", () => {

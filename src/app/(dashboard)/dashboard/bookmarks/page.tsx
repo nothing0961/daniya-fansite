@@ -26,7 +26,7 @@ export default async function BookmarksPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">
+      <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)] mb-2">
         我的收藏
       </h1>
       <p className="text-sm text-[var(--muted-foreground)] mb-6">

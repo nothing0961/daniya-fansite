@@ -73,6 +73,15 @@ export default async function SubmitPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
+      <header className="mb-6">
+        <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)]">
+          投稿作品
+        </h1>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+          审核通过后将在小屋首页展出
+        </p>
+      </header>
+
       <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--card)]/50 p-4 text-sm text-[var(--muted-foreground)]">
         <p className="font-medium text-[var(--foreground)] mb-1">
           投稿须知

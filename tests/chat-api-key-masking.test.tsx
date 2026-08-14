@@ -14,8 +14,6 @@ import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import fs from "node:fs";
-import path from "node:path";
 
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -58,9 +56,8 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: ChatPage } = await import("../src/app/chat/page");
-    render(<ChatPage />);
-    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
+    const { ChatSettingsPanel } = await import("../src/components/chat/chat-settings-panel");
+    render(<ChatSettingsPanel onClose={() => {}} sessionToken="dev-token" open />);
     return user;
   };
 
@@ -100,10 +97,9 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: ChatPage } = await import("../src/app/chat/page");
-    render(<ChatPage />);
-    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
-    
+    const { ChatSettingsPanel } = await import("../src/components/chat/chat-settings-panel");
+    render(<ChatSettingsPanel onClose={() => {}} sessionToken="dev-token" open />);
+
     const baseUrlInput = screen.getByPlaceholderText(/api.deepseek/i) as HTMLInputElement;
     const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     const modelInput = screen.getByPlaceholderText(/deepseek-v4-flash/i) as HTMLInputElement;
@@ -150,10 +146,9 @@ describe("AI 聊天 T-B：API Key 掩码输入框", () => {
     }));
     vi.resetModules();
     const user = userEvent.setup();
-    const { default: ChatPage } = await import("../src/app/chat/page");
-    render(<ChatPage />);
-    await user.click(screen.getAllByRole("button", { name: /设置/i })[0]);
-    
+    const { ChatSettingsPanel } = await import("../src/components/chat/chat-settings-panel");
+    render(<ChatSettingsPanel onClose={() => {}} sessionToken="dev-token" open />);
+
     const apiKeyInput = screen.getByPlaceholderText(/sk-/i) as HTMLInputElement;
     fireEvent.change(apiKeyInput, { target: { value: "sk-abcdefgh1234567890uvwxyzIJKL" } });
     fireEvent.blur(apiKeyInput);

@@ -17,8 +17,6 @@ export function getFilteredWorks(
       return [...filtered].sort(
         (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
       );
-    case "popular":
-      return [...filtered].sort((a, b) => (b.tags.length - a.tags.length));
     case "latest":
     default:
       return filtered;

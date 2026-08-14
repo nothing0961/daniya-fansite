@@ -27,7 +27,7 @@ export default async function PostsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[var(--foreground)]">作品管理</h1>
+        <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)]">作品管理</h1>
         <Link
           href="/dashboard/posts/new"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"

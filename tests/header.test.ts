@@ -15,20 +15,25 @@ const USERMENU_SRC = fs.readFileSync(path.join(ROOT, "src/components/auth/user-m
  */
 describe("Header 顶部导航样式改造（导航胶囊化 + 搜索图标→搜索栏）", () => {
 
-  describe("A. 中间导航（首页/达妮娅/关于）每个小胶囊框起来", () => {
-    it("1) navLinks 循环渲染的 Link className 必须含有 rounded-full（胶囊圆角）", () => {
-      // 桌面端导航渲染逻辑可能在 header.tsx 或子组件 nav-links.tsx，两者都要允许
-      const any = HEADER_SRC + NAVLINKS_SRC;
-      expect(any).toMatch(
-        /(navLinks\.map|links\.map)[\s\S]{0,1200}(className="[^"]*rounded-full|rounded-full)/
-      );
+  describe("A. 中间导航（首页/达妮娅/飞讯）每个小胶囊框起来", () => {
+    // 胶囊类已提为 activeClass / inactiveClass 变量，由 navItems.map 循环引用
+    const capsuleClasses = () => {
+      const re = /(?:activeClass|inactiveClass)\s*=\s*"([^"]*)"/g;
+      return [...NAVLINKS_SRC.matchAll(re)].map((m) => m[1]);
+    };
+
+    it("1) navItems 循环渲染的 Link 使用含 rounded-full 的胶囊类（activeClass/inactiveClass）", () => {
+      expect(NAVLINKS_SRC).toMatch(/navItems\.map/);
+      expect(NAVLINKS_SRC).toMatch(/activeClass|inactiveClass/);
+      const classes = capsuleClasses();
+      expect(classes.length).toBeGreaterThanOrEqual(2);
+      expect(classes.every((c) => c.includes("rounded-full"))).toBe(true);
     });
 
-    it("2) navLinks 循环渲染的 Link className 必须含有 border（胶囊边框线），参考「投稿」按钮同款边框样式", () => {
-      const any = HEADER_SRC + NAVLINKS_SRC;
-      expect(any).toMatch(
-        /(navLinks\.map|links\.map)[\s\S]{0,1200}border/
-      );
+    it("2) 胶囊类必须含 border（胶囊边框线），参考「投稿」按钮同款边框样式", () => {
+      const classes = capsuleClasses();
+      expect(classes.length).toBeGreaterThanOrEqual(2);
+      expect(classes.every((c) => c.includes("border"))).toBe(true);
     });
   });
 

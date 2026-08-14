@@ -30,6 +30,14 @@ import {
   type SkillParameter,
   type McpServerTool,
 } from "@/lib/skill-mcp-config";
+import {
+  loadKnowledgeDocs,
+  saveKnowledgeDocs,
+  createKnowledgeDoc,
+  isKnowledgeEnabled,
+  setKnowledgeEnabled,
+  type KnowledgeDoc,
+} from "@/lib/knowledge-base";
 
 interface ChatSettingsPanelProps {
   onClose: () => void;
@@ -63,6 +71,16 @@ export function ChatSettingsPanel({ onClose, sessionToken, open }: ChatSettingsP
   });
 
   const [connectionOk, setConnectionOk] = React.useState(false);
+
+  const [knowledgeDocs, setKnowledgeDocs] = React.useState<KnowledgeDoc[]>([]);
+  const [knowledgeEnabled, setKnowledgeEnabledState] = React.useState(true);
+  const [newDocName, setNewDocName] = React.useState("");
+  const [newDocContent, setNewDocContent] = React.useState("");
+
+  React.useEffect(() => {
+    setKnowledgeDocs(loadKnowledgeDocs());
+    setKnowledgeEnabledState(isKnowledgeEnabled());
+  }, []);
 
   React.useEffect(() => {
     (async () => {
@@ -436,7 +454,68 @@ export function ChatSettingsPanel({ onClose, sessionToken, open }: ChatSettingsP
 
   // 保存按钮的渐变样式
   const saveButtonClassName =
-    "w-full bg-gradient-to-r from-[var(--hp-gold)] to-[var(--hp-gold-deep)] text-[#1a0a14] hover:opacity-90";
+    "w-full bg-gradient-to-r from-[var(--hp-pink)] to-[var(--hp-pink-deep)] text-[#1a0a14] hover:opacity-90";
+
+  // ===== 知识库处理 =====
+  const handleKnowledgeGlobalToggle = (checked: boolean) => {
+    setKnowledgeEnabledState(checked);
+    setKnowledgeEnabled(checked);
+  };
+
+  const handleAddKnowledgeDoc = () => {
+    const content = newDocContent.trim();
+    if (!content) {
+      toast.error("请先粘贴资料内容或上传文件");
+      return;
+    }
+    const doc = createKnowledgeDoc(newDocName.trim() || "未命名资料", content);
+    const next = [...knowledgeDocs, doc];
+    setKnowledgeDocs(next);
+    saveKnowledgeDocs(next);
+    setNewDocName("");
+    setNewDocContent("");
+    toast.success(`已导入《${doc.name}》（${content.length} 字）`);
+  };
+
+  const handleKnowledgeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const MAX_KB_SIZE = 1 * 1024 * 1024;
+    if (file.size > MAX_KB_SIZE) {
+      toast.error("文件超过 1MB 上限");
+      return;
+    }
+    try {
+      const text = await file.text();
+      if (!text.trim()) {
+        toast.error("文件内容为空");
+        return;
+      }
+      const name = file.name.replace(/\.(txt|md|markdown)$/i, "");
+      const doc = createKnowledgeDoc(name, text);
+      const next = [...knowledgeDocs, doc];
+      setKnowledgeDocs(next);
+      saveKnowledgeDocs(next);
+      toast.success(`已导入《${doc.name}》（${text.length} 字）`);
+    } catch {
+      toast.error("文件读取失败，请重试");
+    }
+  };
+
+  const handleToggleKnowledgeDoc = (id: string) => {
+    const next = knowledgeDocs.map((d) =>
+      d.id === id ? { ...d, enabled: !d.enabled } : d,
+    );
+    setKnowledgeDocs(next);
+    saveKnowledgeDocs(next);
+  };
+
+  const handleRemoveKnowledgeDoc = (id: string) => {
+    const next = knowledgeDocs.filter((d) => d.id !== id);
+    setKnowledgeDocs(next);
+    saveKnowledgeDocs(next);
+  };
 
   return (
     <div className={cn("chat-settings", open && "chat-settings--open")}>
@@ -452,10 +531,11 @@ export function ChatSettingsPanel({ onClose, sessionToken, open }: ChatSettingsP
 
       <Tabs defaultValue="model" className="flex-1 flex flex-col min-h-0">
         <div className="px-4 pt-3 pb-2">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="model">模型设置</TabsTrigger>
             <TabsTrigger value="skills">Skill</TabsTrigger>
             <TabsTrigger value="mcp">MCP</TabsTrigger>
+            <TabsTrigger value="knowledge">知识库</TabsTrigger>
           </TabsList>
         </div>
 
@@ -838,6 +918,117 @@ export function ChatSettingsPanel({ onClose, sessionToken, open }: ChatSettingsP
             </div>
 
             <Button onClick={handleSaveSkillMcpConfig} className={saveButtonClassName}>保存配置</Button>
+          </TabsContent>
+
+          {/* 知识库 */}
+          <TabsContent value="knowledge" className="space-y-4 mt-0">
+            <div className="chat-card rounded-lg p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="chat-settings-section-title" style={{ marginBottom: "0.25rem" }}>
+                    知识库总开关
+                  </h3>
+                  <p className="chat-form-hint">
+                    开启后每次发送消息自动检索知识库相关片段（本地检索，资料不上传服务器）
+                  </p>
+                </div>
+                <Switch
+                  checked={knowledgeEnabled}
+                  onCheckedChange={handleKnowledgeGlobalToggle}
+                  aria-label="知识库总开关"
+                />
+              </div>
+            </div>
+
+            <div className="chat-card rounded-lg p-3">
+              <h3 className="chat-settings-section-title">导入资料（.txt / .md，单文件 ≤ 1MB）</h3>
+              <input
+                type="file"
+                accept=".txt,.md,.markdown,text/plain,text/markdown"
+                onChange={handleKnowledgeUpload}
+                className="hidden"
+                id="knowledge-upload"
+              />
+              <label
+                htmlFor="knowledge-upload"
+                className="chat-card flex items-center justify-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-opacity hover:opacity-80 mb-3"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                上传文件
+              </label>
+              <div className="space-y-2">
+                <Input
+                  value={newDocName}
+                  onChange={(e) => setNewDocName(e.target.value)}
+                  placeholder="资料名称（可选）"
+                  className={cn("chat-form-input")}
+                />
+                <Textarea
+                  value={newDocContent}
+                  onChange={(e) => setNewDocContent(e.target.value)}
+                  placeholder="或直接粘贴文本内容…"
+                  rows={4}
+                  className={cn("chat-form-input", "min-h-[80px] resize-none")}
+                />
+                <Button
+                  onClick={handleAddKnowledgeDoc}
+                  disabled={!newDocContent.trim()}
+                  className={saveButtonClassName}
+                >
+                  添加资料
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="chat-settings-section-title">已导入的资料 ({knowledgeDocs.length})</h3>
+              {knowledgeDocs.length === 0 ? (
+                <div className="chat-form-hint py-3 text-center">
+                  暂无资料，上传文件或粘贴文本导入
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {knowledgeDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-2 rounded chat-card">
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className="font-medium text-sm truncate block"
+                          style={{ color: "var(--hp-ink)" }}
+                        >
+                          {doc.name}
+                        </span>
+                        <p className="chat-form-hint truncate">
+                          {doc.content.length} 字 · {new Date(doc.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Switch
+                          checked={doc.enabled}
+                          onCheckedChange={() => handleToggleKnowledgeDoc(doc.id)}
+                          aria-label="启用/停用资料"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveKnowledgeDoc(doc.id)}
+                          className="chat-icon-btn"
+                          style={{ width: "1.5rem", height: "1.5rem" }}
+                          aria-label="删除资料"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
         </div>
       </Tabs>

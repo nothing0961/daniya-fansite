@@ -94,7 +94,7 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
       {/* 标题 */}
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)] mb-1">我的投稿</h1>
+          <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)] mb-1">我的投稿</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
             查看您向站长提交过的所有作品及审核状态 · 共 <span className="text-[var(--foreground)] font-medium">{totalAll}</span> 篇
           </p>

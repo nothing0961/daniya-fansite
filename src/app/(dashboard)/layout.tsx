@@ -5,7 +5,7 @@
  */
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import Link from "next/link";
+import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -37,20 +37,19 @@ export default async function DashboardLayout({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="flex flex-col sm:flex-row gap-8">
-        {/* 侧边栏 */}
+      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
+        {/* 侧边栏 — 玻璃面板 */}
         <aside className="w-full sm:w-48 shrink-0">
-          <nav className="flex sm:flex-col gap-1 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0 sm:whitespace-normal">
-            {sidebarLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-2 text-sm rounded-md text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <div
+            className="rounded-2xl p-3
+                       border border-[rgba(231,155,190,0.12)]
+                       bg-[color-mix(in_oklch,var(--card)_60%,transparent)]
+                       backdrop-blur-xl
+                       shadow-[0_0_0_1px_rgba(231,155,190,0.04)_inset,
+                               0_8px_24px_-8px_rgba(0,0,0,0.4)]"
+          >
+            <DashboardSidebar links={sidebarLinks} />
+          </div>
         </aside>
 
         {/* 内容区 */}

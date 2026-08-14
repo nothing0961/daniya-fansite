@@ -40,7 +40,7 @@ export async function Header() {
                    border border-[rgba(255,255,255,0.08)]
                    bg-[color-mix(in_oklch,var(--background)_90%,transparent)]
                    backdrop-blur-xl
-                   shadow-[0_0_0_1px_rgba(201,169,110,0.06)_inset,
+                   shadow-[0_0_0_1px_rgba(231,155,190,0.06)_inset,
                            0_1px_0_rgba(255,255,255,0.05)_inset,
                            0_10px_30px_-10px_rgba(0,0,0,0.5),
                            0_4px_16px_rgba(0,0,0,0.3)]
@@ -51,7 +51,7 @@ export async function Header() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 -top-px h-px
                      bg-gradient-to-r
-                     from-transparent via-[rgba(201,169,110,0.5)] to-transparent"
+                     from-transparent via-[rgba(231,155,190,0.5)] to-transparent"
         />
         {/* 左右两侧轻微外发光 */}
         <div
@@ -77,7 +77,7 @@ export async function Header() {
             {/* 头像：方形圆角，带金边，hover 微亮 */}
             <div
               className="relative w-9 h-9 shrink-0 rounded-md overflow-hidden
-                         ring-1 ring-[rgba(201,169,110,0.5)]
+                         ring-1 ring-[rgba(231,155,190,0.5)]
                          shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]
                          transition-transform group-hover:scale-105"
             >
@@ -115,7 +115,7 @@ export async function Header() {
                        bg-[rgba(255,255,255,0.06)]
                        pl-3 pr-1.5 h-9 w-52
                        focus-within:w-64
-                       focus-within:border-[rgba(201,169,110,0.5)]
+                       focus-within:border-[rgba(231,155,190,0.5)]
                        focus-within:bg-[rgba(255,255,255,0.1)]
                        transition-all"
             role="search"
@@ -151,11 +151,11 @@ export async function Header() {
               href="/submit"
               className="hidden sm:inline-flex h-9 items-center px-3.5 rounded-full
                          text-xs font-semibold
-                         border border-[rgba(201,169,110,0.5)]
+                         border border-[rgba(231,155,190,0.5)]
                          text-[color-mix(in_oklch,var(--daniya-star,var(--foreground))_85%,var(--foreground))]
-                         bg-[rgba(201,169,110,0.15)]
-                         hover:bg-[rgba(201,169,110,0.25)]
-                         hover:border-[rgba(201,169,110,0.75)]
+                         bg-[rgba(231,155,190,0.15)]
+                         hover:bg-[rgba(231,155,190,0.25)]
+                         hover:border-[rgba(231,155,190,0.75)]
                          transition-colors shrink-0"
               style={{ textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
             >

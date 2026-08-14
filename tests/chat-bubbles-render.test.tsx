@@ -1,9 +1,11 @@
 /**
- * UI Mock 组件测试 T-6：聊天页面气泡渲染测试
+ * UI Mock 组件测试 T-6：聊天抽屉渲染测试
+ *
+ * 聊天功能已从独立 /chat 页面迁移为全局抽屉（GlobalChatDrawer）
  *
  * 断言：
- *   1. 聊天页面文件存在
- *   2. 聊天页面包含消息区域
+ *   1. 抽屉渲染达妮娅 topbar（.chat-topbar-name）
+ *   2. 抽屉包含会话列表（新会话）与聊天输入区
  *
  * 风格：RTL
  */
@@ -11,16 +13,9 @@
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import fs from "node:fs";
-import path from "node:path";
-
-const CHAT_PAGE_PATH = path.join(
-  process.cwd(),
-  "src/app/chat/page.tsx",
-);
 
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -36,26 +31,31 @@ vi.mock("next-auth/react", () => ({
   }),
 }));
 
-describe("AI 聊天 T-6：聊天页面气泡渲染", () => {
+vi.mock("../src/components/chat/chat-drawer-context", () => ({
+  useChatDrawer: () => ({
+    open: true,
+    openDrawer: vi.fn(),
+    closeDrawer: vi.fn(),
+    toggleDrawer: vi.fn(),
+  }),
+}));
+
+describe("AI 聊天 T-6：聊天抽屉渲染", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
-  it("6-1. 聊天页面文件存在", () => {
-    expect(fs.existsSync(CHAT_PAGE_PATH)).toBe(true);
-  });
-
-  it("6-2. 聊天页面包含达妮娅标题和消息区域", async () => {
-    if (!fs.existsSync(CHAT_PAGE_PATH)) return expect(true).toBe(false);
-    const { default: ChatPage } = await import("../src/app/chat/page");
-    render(<ChatPage />);
+  it("6-1. 抽屉渲染达妮娅 topbar 标题", async () => {
+    const { GlobalChatDrawer } = await import("../src/components/chat/global-chat-drawer");
+    render(<GlobalChatDrawer />);
     expect(screen.getByText("达妮娅", { selector: ".chat-topbar-name" })).toBeInTheDocument();
   });
 
-  it("6-3. 聊天页面包含侧边栏和输入区域", async () => {
-    if (!fs.existsSync(CHAT_PAGE_PATH)) return expect(true).toBe(false);
-    const { default: ChatPage } = await import("../src/app/chat/page");
-    render(<ChatPage />);
+  it("6-2. 抽屉包含会话列表与输入区域", async () => {
+    const { GlobalChatDrawer } = await import("../src/components/chat/global-chat-drawer");
+    render(<GlobalChatDrawer />);
     expect(screen.getByText("新会话")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "设置" })).toBeInTheDocument();
   });
 });
