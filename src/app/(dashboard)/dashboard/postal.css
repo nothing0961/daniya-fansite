@@ -1,0 +1,206 @@
+/**
+ * 小屋的邮路 — 共享邮戳 / 信封 / 信纸样式
+ * 我的投稿（寄出的信）、投稿审核（分拣台）、我的收藏（收藏匣）三页共用
+ */
+:root {
+  --postmark-gold: #cfa86b; /* 香槟金 — 已抵达 */
+  --postmark-pink: #e79bbe; /* 粉金 — 待投递 */
+  --postmark-rust: #c97a6e; /* 红棕（褪色印泥）— 已退回 */
+}
+
+/* ============ 邮戳（圆形盖章） ============ */
+.postmark {
+  --pm-color: var(--postmark-pink);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 2px dashed var(--pm-color);
+  /* inset 细环 = 内圈；外光晕模拟印泥渗开 */
+  box-shadow:
+    inset 0 0 0 1px var(--pm-color),
+    0 0 14px -4px color-mix(in oklch, var(--pm-color) 45%, transparent);
+  color: var(--pm-color);
+  font-family: "Noto Serif SC", serif;
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  opacity: 0.92; /* 印泥 ink 感，不追求 100% 饱和 */
+  transform: rotate(-6deg);
+  background: color-mix(in oklch, var(--pm-color) 7%, transparent);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.postmark:hover {
+  animation: postmarkWiggle 0.6s ease;
+}
+
+.postmark--pending {
+  --pm-color: var(--postmark-pink);
+  border-style: dashed;
+}
+.postmark--approved {
+  --pm-color: var(--postmark-gold);
+  border-style: solid;
+}
+.postmark--rejected {
+  --pm-color: var(--postmark-rust);
+  border-style: solid;
+}
+
+.postmark-label {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.postmark-sub {
+  font-size: 9px;
+  opacity: 0.8;
+  letter-spacing: 0.22em;
+  margin-top: 2px;
+}
+
+@keyframes postmarkWiggle {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(-2deg) translateY(-1px);
+  }
+}
+
+/* 小号邮戳（审核列表等紧凑场景，单字） */
+.postmark-mini {
+  width: 38px;
+  height: 38px;
+  border-width: 1.5px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Noto Serif SC", serif;
+  letter-spacing: 0.05em;
+}
+.postmark-mini .postmark-label {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+/* ============ 信封卡片（我的投稿列表） ============ */
+.letter-card {
+  position: relative;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(40, 20, 34, 0.82) 0%,
+    rgba(24, 11, 20, 0.92) 100%
+  );
+  overflow: hidden;
+  box-shadow: 0 6px 22px -10px rgba(0, 0, 0, 0.55);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.letter-card:hover {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.65);
+  transform: translateY(-1px);
+}
+/* 纸纹噪点（feTurbulence，与角色档案页同源） */
+.letter-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* 信头细线（信封卡片内标题下方） */
+.letter-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--postmark-pink) 0%,
+    rgba(231, 155, 190, 0.25) 40%,
+    transparent 100%
+  );
+}
+
+/* ============ 信纸（审核详情面板） ============ */
+.letter-sheet {
+  background: linear-gradient(
+    180deg,
+    rgba(40, 20, 34, 0.45) 0%,
+    rgba(22, 10, 18, 0.72) 100%
+  );
+}
+
+/* ============ 退回批注（驳回理由） ============ */
+.return-note {
+  border: 1.5px dashed var(--postmark-rust);
+  background: rgba(201, 122, 110, 0.08);
+  border-radius: 0.6rem;
+}
+.return-note-title {
+  color: var(--postmark-rust);
+  font-weight: 600;
+}
+
+/* ============ 盖章按钮（审核操作） ============ */
+.stamp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border-radius: 0.55rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1.5px solid;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+.stamp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.stamp-btn--approve {
+  border-color: var(--postmark-gold);
+  color: #ecd9ad;
+  background: rgba(207, 168, 107, 0.12);
+}
+.stamp-btn--approve:hover:not(:disabled) {
+  background: rgba(207, 168, 107, 0.24);
+}
+.stamp-btn--reject {
+  border-color: var(--postmark-rust);
+  color: #dfa796;
+  background: rgba(201, 122, 110, 0.12);
+}
+.stamp-btn--reject:hover:not(:disabled) {
+  background: rgba(201, 122, 110, 0.24);
+}
+
+/* ============ 收藏匣眉题装饰（我的收藏） ============ */
+.chest-arch {
+  width: 46px;
+  height: 23px;
+  border: 1.5px solid var(--postmark-gold);
+  border-bottom: none;
+  border-radius: 46px 46px 0 0;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .postmark,
+  .letter-card {
+    animation: none;
+    transition: none;
+  }
+  .letter-card:hover {
+    transform: none;
+  }
+}

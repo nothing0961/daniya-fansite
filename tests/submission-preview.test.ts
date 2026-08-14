@@ -93,12 +93,11 @@ describe(fs.existsSync(PREVIEW_PAGE) ? "投稿预览页：代码结构断言" : 
     expect(CODE).toMatch(/暂不开放(点赞|收藏|评论|互动)|(点赞|收藏|评论|互动).*暂不开放|审核中.*(不开放|关闭)|驳回.*(不开放|关闭)/);
   });
 
-  it("12) 内容复刻正式详情页：必须引用 PostMeta + PostCredit + PostGallery + BilibiliEmbed + MDX/正文渲染", () => {
+  it("12) 内容复刻正式详情页：必须引用 PostMeta + PostCredit + PostGallery + MDX/正文渲染", () => {
     // 组件名要出现：正式详情页里这几个组件 import 过来，这里也要复用
     expect(CODE).toMatch(/\bPostMeta\b/);
     expect(CODE).toMatch(/\bPostCredit\b/);
     expect(CODE).toMatch(/\bPostGallery\b/);
-    expect(CODE).toMatch(/\bBilibiliEmbed\b/);
     // 正文渲染：MDXRemote 或 renderMarkdown / markdown 相关，只要有任意一个就行
     expect(CODE).toMatch(/MDXRemote|markdown|content|body|renderMarkdown/);
   });

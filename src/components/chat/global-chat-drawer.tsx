@@ -35,7 +35,7 @@ interface ChatMessage {
   timestamp?: Date;
 }
 
-const DANIYA_AVATAR_SRC = "/A722CEB5396985A57C541E3CEF95F101.jpg";
+const DANIYA_AVATAR_SRC = "/625294f4d0b740f4bf5ce693ddb0b35920260521.png";
 const DANIYA_AVATAR_ALT = "达妮娅头像";
 
 /* 工具层导航：SSE tool_action 事件 → 站内页面 */

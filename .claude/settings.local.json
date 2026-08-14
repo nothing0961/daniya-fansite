@@ -115,7 +115,28 @@
       "Bash(export AGENT_BROWSER_SESSION=blankcheck)",
       "Bash(echo \"tsc: $?\")",
       "Bash(git config *)",
-      "Bash(git ls-remote *)"
+      "Bash(git ls-remote *)",
+      "Bash(git push *)",
+      "Bash(git -c http.proxy=http://127.0.0.1:7890 push origin master)",
+      "Bash(git -c http.proxy=http://127.0.0.1:7890 -c http.sslBackend=openssl ls-remote origin HEAD)",
+      "Bash(git -c http.proxy=socks5h://127.0.0.1:7891 push origin master)",
+      "Bash(ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T -p 443 git@ssh.github.com)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(export AGENT_BROWSER_SESSION=\"submit-beautify-check\")",
+      "Bash(export AGENT_BROWSER_SESSION=\"submit-check\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(tasklist //FI \"IMAGENAME eq agent-browser.exe\")",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --screenshot=\"C:/Users/29942/Desktop/daniya-fansite/.claude/submit-check.png\" --window-size=1440,1000 --virtual-time-budget=6000 --hide-scrollbars http://localhost:3000/submit)",
+      "Bash(python -c \"from PIL import Image; im=Image.open\\('.claude/submit-check.png'\\); print\\(im.size, im.mode\\)\")",
+      "Bash(python *)",
+      "Bash(export AGENT_BROWSER_SESSION=\"submit-vp\")",
+      "Bash(taskkill //PID 6932 //F)",
+      "Bash(taskkill //PID 35888 //F)",
+      "Bash(git check-ignore *)",
+      "Bash(git lfs *)",
+      "Bash(git add *)"
     ]
   }
 }

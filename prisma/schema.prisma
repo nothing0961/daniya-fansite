@@ -54,11 +54,12 @@ model User {
   accounts     Account[]
 
   // 自定义关联
-  bookmarks    Bookmark[]
-  postLikes    PostLike[]
-  pendingPosts PendingPost[]
-  comments     Comment[]
-  chatSessions ChatSession[]
+  bookmarks     Bookmark[]
+  postLikes     PostLike[]
+  pendingPosts  PendingPost[]
+  comments      Comment[]
+  chatSessions  ChatSession[]
+  notifications Notification[]
 
   @@index([email])
 }
@@ -126,13 +127,11 @@ model PendingPost {
   slug           String            @unique
   title          String
   description    String            @db.VarChar(2000)
-  type           String // "illustration" | "screenshot" | "video"
+  type           String // "illustration" | "screenshot"
   /** 关联角色（方案 A：可空，无默认值；前端 PostForm 默认选 DANIYA） */
   character      Character?
   /** 关联图片 URL 数组（ImgURL CDN 外链）*/
   images         String[]
-  /** BV 号，video 类型必填 */
-  videoId        String?
   tags           String[]
   originalCreator String?
   sourcePlatform  String?
@@ -189,6 +188,33 @@ model Comment {
 
   @@index([postSlug, createdAt])
   @@index([userId])
+}
+
+/**
+ * Notification — 站内通知
+ *
+ * 触发场景（目前两种方向）：
+ *  - 用户投稿成功 → 通知站长（type=SUBMISSION，link=/dashboard/moderation）
+ *  - 站长审核通过/驳回 → 通知投稿人（type=APPROVED / REJECTED）
+ * 收件人 = userId；readAt 为空表示未读。
+ */
+model Notification {
+  id        String   @id @default(cuid())
+  /** 收件人 userId */
+  userId    String
+  /** "SUBMISSION" | "APPROVED" | "REJECTED" */
+  type      String
+  title     String
+  body      String?
+  /** 点击跳转链接（审核页 / 作品页 / 重提页） */
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 /**

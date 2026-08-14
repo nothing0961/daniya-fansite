@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save, Loader2, ArrowLeft } from "lucide-react";
 import { postMetaSchema } from "@/lib/validators/post-schema";
 import { submitPostSchema } from "@/lib/validators/submit-post-schema";
 import { POST_TYPE_LABELS, PLATFORM_LABELS, CHARACTERS, CHARACTER_LABELS, type PostType, type SourcePlatform, type Character } from "@/types/post";
 import { ImageUploader } from "@/components/admin/image-uploader";
-import { BvInput } from "@/components/admin/bv-input";
 import { MdxEditor } from "@/components/admin/mdx-editor";
 import { useStatusModal } from "@/components/ui/status-modal";
 import { classifySubmitError } from "@/lib/submit-error-classifier";
@@ -21,7 +20,6 @@ interface PostFormProps {
   /** 预填数据（用于"驳回后修改重提"场景）—— 仅用于表单初始值填充，不切换为编辑模式
    *  与 initialData 的区别：initialData 会把 isEdit 设为 true，走 PUT 编辑接口；
    *  prefill 只是简单填默认值，isEdit 仍为 false，走 POST 新建投稿接口。
-   *  注意：prefill.meta.slug 通常应为空字符串（''），让 PostForm 根据 title 自动重新生成新 slug，避免撞库。
    */
   prefill?: {
     meta: Partial<PostMetaInput> & { slug?: string };
@@ -45,7 +43,7 @@ interface PostFormProps {
   pageTitle?: { new?: string; edit?: string };
   /** 隐藏部分字段（投稿页面不需要管理员专用字段，如 draft、publishedAt、originalCreator、sourcePlatform、sourceUrl）*/
   hiddenFields?: Array<"draft" | "publishedAt" | "originalCreator" | "sourcePlatform" | "sourceUrl">;
-  /** 构造提交给后端的 payload，入参是表单字段；默认原封不动打包（{ ...fields, slug, body }）*/
+  /** 构造提交给后端的 payload，入参是表单字段；默认原封不动打包（{ ...fields, body }）*/
   buildPayload?: (fields: Record<string, unknown>) => unknown;
   /** 成功回调（默认跳转 successRedirect）*/
   onSubmitSuccess?: (res: any) => void;
@@ -58,14 +56,6 @@ const PLATFORMS = Object.keys(PLATFORM_LABELS) as SourcePlatform[];
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function slugFromTitle(title: string): string {
-  return title
-    .replace(/[^\w一-鿿-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase() || "untitled";
 }
 
 export function PostForm({
@@ -100,7 +90,6 @@ export function PostForm({
   const $body = initialData?.body ?? prefill?.body ?? "";
 
   const [title, setTitle] = useState($meta.title || "");
-  const [slug, setSlug] = useState($meta.slug || "");
   const [description, setDescription] = useState($meta.description || "");
   const [type, setType] = useState<PostType>(($meta.type as PostType) || "illustration");
   /** 关联角色（方案 A：前端默认 DANIYA；投稿/编辑都可改，但 schema 是可选） */
@@ -120,23 +109,11 @@ export function PostForm({
   );
   const [draft, setDraft] = useState($meta.draft ?? false);
   const [images, setImages] = useState<string[]>(($meta.images as string[] | undefined) || []);
-  const [videoId, setVideoId] = useState($meta.videoId || "");
   const [body, setBody] = useState($body);
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { showSuccess, showError } = useStatusModal();
-
-  const computedSlug = useMemo(() => slugFromTitle(title), [title]);
-  const displaySlug = slug || computedSlug;
-
-  function handleTitleChange(value: string) {
-    setTitle(value);
-    // Auto-fill slug from title if slug is empty or matches the old computed slug
-    if (!slug || slug === slugFromTitle(title)) {
-      setSlug(slugFromTitle(value));
-    }
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -148,8 +125,6 @@ export function PostForm({
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const finalSlug = slug || computedSlug;
-
     // 构造校验对象：根据隐藏字段，把隐藏的用默认值补全（防止 schema 报错）
     const data: any = {
       title,
@@ -159,7 +134,7 @@ export function PostForm({
         ? "匿名投稿"
         : originalCreator,
       sourceUrl: HIDDEN.has("sourceUrl")
-        ? `https://example.com/submission/${finalSlug || "pending"}`
+        ? `https://example.com/submission/pending`
         : sourceUrl,
       sourcePlatform: HIDDEN.has("sourcePlatform")
         ? "other"
@@ -170,7 +145,6 @@ export function PostForm({
         : publishedAt,
       draft: HIDDEN.has("draft") ? false : draft,
       images,
-      videoId: videoId || undefined,
     };
 
     const parsed = validationSchema.safeParse(data);
@@ -187,7 +161,9 @@ export function PostForm({
 
     setSubmitting(true);
 
-    const rawPayload: any = { ...data, slug: finalSlug, body };
+    const rawPayload: any = { ...data, body };
+    // 编辑已有作品时固定用原 slug（URL 不变），新建由服务端自动生成
+    if (isEdit) rawPayload.slug = initialData!.meta.slug;
     const payload = buildPayload ? buildPayload(rawPayload) : rawPayload;
 
     const url = isEdit
@@ -211,24 +187,35 @@ export function PostForm({
         if (onSubmitSuccess) {
           onSubmitSuccess(json);
         } else if (mode === "submit" && !isEdit) {
-          // 用户点击「提交审核」的新建投稿成功：弹「提交成功，等待审核」→ 必须手动关
-          // 关了之后跳「用户投稿预览页」/dashboard/submissions/<slug>，右上状态胶囊可见（方案 A）
-          const slug = (json as Record<string, unknown>)?.slug as
-            | string
-            | undefined;
-          showSuccess("提交成功，等待审核", {
-            autoClose: false,
-            message:
-              "您的作品已提交站长人工审核，通过后将出现在首页 ✨。" +
-              "关闭提示后可查看作品预览，随时关注审核进度。",
-            onDismiss: () => {
-              router.push(
-                slug
-                  ? `/dashboard/submissions/${slug}`
-                  : "/dashboard/submissions",
-              );
-            },
-          });
+          const rec = json as Record<string, unknown>;
+          const publishedSlug = rec?.publishedSlug as string | undefined;
+          if (!publishedSlug) {
+            // 用户点击「提交审核」的新建投稿成功：弹「提交成功，等待审核」→ 必须手动关
+            // 关了之后跳「用户投稿预览页」/dashboard/submissions/<slug>，右上状态胶囊可见（方案 A）
+            const slug = rec?.slug as string | undefined;
+            showSuccess("提交成功，等待审核", {
+              autoClose: false,
+              message:
+                "您的作品已提交站长人工审核，通过后将出现在首页 ✨。" +
+                "关闭提示后可查看作品预览，随时关注审核进度。",
+              onDismiss: () => {
+                router.push(
+                  slug
+                    ? `/dashboard/submissions/${slug}`
+                    : "/dashboard/submissions",
+                );
+              },
+            });
+          } else {
+            // 站长直发：响应带 publishedSlug → 已直接发布，跳作品页
+            showSuccess("发布成功", {
+              autoClose: false,
+              message: "站长投稿已直接发布到小屋首页 ✨",
+              onDismiss: () => {
+                router.push(`/post/${publishedSlug}`);
+              },
+            });
+          }
         } else {
           // 管理后台「发布作品 / 保存修改」：保持原行为直接跳转
           router.push(successRedirect);
@@ -303,25 +290,11 @@ export function PostForm({
           <input
             type="text"
             value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="作品标题"
             className={inputClass}
           />
           {errors.title && <p className={errorClass}>{errors.title}</p>}
-        </div>
-
-        <div>
-          <label className={labelClass}>标识 (slug)</label>
-          <input
-            type="text"
-            value={displaySlug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder="article-slug"
-            className={inputClass}
-          />
-          <p className="text-xs text-[var(--muted-foreground)] mt-1">
-            URL 中的唯一标识，由标题自动生成，也可手动修改
-          </p>
         </div>
 
         <div>
@@ -487,14 +460,6 @@ export function PostForm({
           onUploadSuccess={onUploadSuccess}
         />
       </fieldset>
-
-      {/* Bilibili Video */}
-      {type === "video" && (
-        <fieldset>
-          <label className={labelClass}>B站视频 BV 号</label>
-          <BvInput value={videoId} onChange={setVideoId} />
-        </fieldset>
-      )}
 
       {/* MDX Body */}
       <fieldset>

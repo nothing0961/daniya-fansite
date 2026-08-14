@@ -10,7 +10,7 @@
 
 **技术选型**：Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma + Neon PostgreSQL · Auth.js v5 · MDX
 
-**核心功能**：首页三栏暗色文学主题（左：俄罗斯方块游戏机 / 中：达妮娅主舞台 / 右：回声面板）+ 作品集独立路由 /works（Tab 筛选 + 排序）+ 作品详情页（图片网格 / B站 iframe / MDX / 自建评论）+ 角色页 V4 侧翼档案架（左栏 sticky 档案 + 右栏故事五卷 tabs + 拉贝尔曲线 SVG + scroll-spy）+ 投稿审核工作流（PendingPost 三态 + 限流 + 预览独立路由）+ 音乐播放器（HoverCard 悬停面板 · openDelay=80ms）+ 🤖 AI 聊天双轨（A: 智谱 GLM-4.7-Flash / B: 用户自定义 AES-GCM 零托管）+ 飞讯全屏通讯器终端（会话 localStorage 持久化）+ 📚 知识库检索注入（本地 2-gram 检索 + 上下文注入）+ 全站粉化设计系统（--hp-* 令牌）+ framer-motion 动效体系（路由过渡/滚动显现/数字滚动）+ 背景切换器 + 移动端响应式适配
+**核心功能**：首页三栏暗色文学主题（左：俄罗斯方块游戏机 / 中：达妮娅主舞台——档案卷宗卡 NO.0521 + 寄往5/21生日贺卡 / 右：回声面板）+ 作品集独立路由 /works（Tab 筛选 + 排序）+ 作品详情页（图片网格 / MDX / 自建评论）+ 角色页 V4 侧翼档案架（左栏 sticky 档案 + 右栏故事五卷 tabs + 拉贝尔曲线 SVG + scroll-spy）+ 投稿审核工作流（小屋信箱 → 邮戳化三页「寄出的信 / 分拣台 / 收藏匣」+ PendingPost 三态 + 限流 + 预览独立路由 + 站长直发 + 站内通知铃铛）+ 音乐播放器（HoverCard 悬停面板 · openDelay=80ms）+ 🤖 AI 聊天双轨（A: 智谱 GLM-4.7-Flash / B: 用户自定义 AES-GCM 零托管）+ 飞讯全屏通讯器终端（会话 localStorage 持久化）+ 📚 知识库检索注入（本地 2-gram 检索 + 上下文注入）+ 全站粉化设计系统（--hp-* 令牌）+ framer-motion 动效体系（路由过渡/滚动显现/数字滚动）+ 背景系统（18 张预设两段式加载 window 秒显→4K 静默升级 + 月光纱可读性旋钮）+ 移动端响应式适配
 
 **角色归属说明**：`enum Character { DANIYA }` — 目前 DANIYA 单值，OTHER 占位预留给后续扩角色。
 
@@ -20,22 +20,25 @@
 
 ## 更新历史
 
-### 当前项目进度总览（截止 8月13日）
+### 当前项目进度总览（截止 8月15日）
 
-> **阶段结论**：项目核心功能 + 体验优化**全链路打通并完成 26 波增量升级**（核心功能 1→13 波 · 功能增强 14→26 波）。
+> **阶段结论**：项目核心功能 + 体验优化**全链路打通并完成 34 波增量升级**（核心功能 1→13 波 · 功能增强 14→34 波）。
 >
 > **待完成仅剩 1 项低优**：🎵 音乐 track-2/3 封面+音频真实化。
 >
-> **最新关键里程碑（6 波置顶）**：
+> **最新关键里程碑（26→34 波置顶）**：
 >
+> - 🎂 **第三十四波 · 首页两卡重设计（8月15日）**：生日倒计时 → 「寄往 5/21 的贺卡」（暗卡纸底 + 香槟金邮戳 -6° 盖章感 + 虚线信封折线 + 手写体收件行，独立卡面无外层头框）+ 共鸣者档案 → 「档案卷宗卡」（NO.0521 铭牌 + 斜贴立绘照片带图钉折角 + 「已归档」虚线圆章 + 坠入虚无 4K webp 衬底渐变重构）；删除俏皮文案（用户决策）
+> - ⚡ **第三十三波 · 个人中心切换迟滞修复（8月15日）**：列表查询 select 瘦身去 content（50/100 行）+ dashboard 路由 loading 骨架屏 + PageTransition 纯 opacity 0.2s（去 y 位移）+ 全局卡片 backdrop-filter 收敛（Windows 每层独立 blur 是首号卡顿源）
+> - 🖼️ **第三十二波 · 背景切换两段式加载（8月15日）**：window 1600px webp 秒显 → desktop 4K webp 静默升级（applyBgToken 防串图）+ 空闲预加载全部 window 版；18 张共 957MB 的 10K PNG 不再被浏览器同步解码
+> - ✉️ **第三十一波 · 「小屋的邮路」三页邮戳化（8月15日）**：我的投稿=寄出的信 / 投稿审核=分拣台 / 我的收藏=收藏匣；postal.css 邮戳签名语言（香槟金·已抵达 / 粉金·待投递 / 红棕·已退回）+ letter-card feTurbulence 纸纹 + 「盖邮戳」盖章按钮 + 收藏匣弧线
+> - 🌙 **第三十波 · 背景可读性（8月15日）**：背景三层 z-index 0→-1 根治图蒙字 + 月光纱 hp-bg-scrim + 可读性旋钮三轴联动（模糊/清晰层/纱）+ 全局文字暗影（globals/home/layout 内联脚本三处必须同源）
+> - 🔔 **第二十九波 · 个人中心「小屋一角」+ 站内通知（8月14日）**：访客名牌（Zzz 上浮）+ 收藏匣/星星罐实物化统计（CountUp + hover 开盖）+ Notification 模型三态通知（SUBMISSION/APPROVED/REJECTED）+ 铃铛 30s 轮询红点 + 通知页自动已读 + 站长投稿直发（跳过 PendingPost 直接发布）
+> - 💌 **第二十八波 · submit 粉金美化 + 聊天分级字数（8月14日）**：信件投递台 Hero + 金色邮戳章「投稿 SUBMIT」+ 今日额度卡片 + 入场动画；gen-bg-window.mjs 压 18 张 1600px webp 窗口版；达妮娅回复分级字数（日常 100-150 / 深度 300-450 token），CHAT_MAX_OUTPUT_TOKENS 500→800
+> - 🎬 **第二十七波 · 全站移除视频功能（8月14日）**：用户决策放弃视频投稿 — BilibiliEmbed/bv-input 整文件删除、PostType "video"/videoId 字段/校验器/API/UI 视频分支全删（26 源 + 2 测试）；submit 仅接受 illustration/screenshot 且必须 ≥1 张图
 > - 🌸 **第二十六波 · 全站美化收官 + 飞讯知识库（8月13日）**：四期美化全部完成 — 全面粉色设计系统（137 处金色→粉色，--hp-* 令牌收敛 globals.css）+ framer-motion 动效体系（PageTransition 路由过渡 / Reveal 滚动显现 / CountUp 数字滚动 / loading 骨架屏 / 气泡动画）+ 角色页 V4 侧翼档案架（sticky 档案 + 故事五卷 tabs + 拉贝尔曲线 SVG + scroll-spy + 生日倒计时）+ 飞讯全屏通讯器终端（双栏 + 会话 localStorage 持久化 + 窄屏两页推入）+ 📚 知识库检索注入（本地 2-gram 检索 + top5 块 ≤2000 字上下文注入 + 设置面板「知识库」tab）+ 修复全站 500（getSessionToken SSR 访问 document）+ 修复页面卡死（chat-drawer-overlay 无条件渲染吞点击 / .chat-root 抢 flex 空间）
-> - 🎨 **第二十五波 · 站点重构（8月5日）**：首页三栏暗色文学主题（俄罗斯方块 + 达妮娅主舞台 + 回声面板）+ 作品集独立路由 /works（Tab 筛选+排序）+ 角色页 V3 卷轴卡片（5 区块折叠 · Client Component）+ 8 个 shadcn/ui 新组件（dropdown-menu/hover-card/label/scroll-area/select/sonner/switch/tabs/textarea/tooltip）+ HTTP 安全响应头（HSTS/CSP/X-Frame-Options 等 5 条）+ Git LFS + Prisma 配置优化；61 文件 +6708/-644 行
-> - 📱 **第二十四波 · 移动端聊天适配（7月30日）**：聊天页面响应式改造 — 侧边栏和设置面板在移动端（<768px）变为滑入抽屉式（固定定位 + 遮罩层），顶部新增 Hamburger 菜单按钮；聊天区域在小屏幕全屏展示
-> - 🚀 **第二十三波 · Netlify 部署优化（7月30日）**：netlify.toml 新增（60s 函数超时 + Prisma generate 构建步骤 + 音乐 Cache-Control + 安全响应头）；prisma.ts 懒加载重写（getPrisma() + 3s 超时 + executeWithWakeUp 自动唤醒 + 指数退避重试）；auth.ts trustHost: true；authorize() 故障返回 null
-> - 🤖 **第二十二波 · AI 聊天双轨方案（7月12日 · 核心）**：轨道 A 智谱 GLM-4.7-Flash 永久免费 + 轨道 B 用户自定义 AES-GCM 零托管；5 层拦截铁序 + SSRF + 人设注入 + 重试/fallback + B1 协议识别 6 类；21 文件 75 cases 全绿
-> - 🧹 **第二十一波 · 注释清扫方案 B（7月10日）**：13 文件受影响；净减 54 行注释（296→242，-18%）；TEMP/安全/决策/JSDoc 100% 保留
 
-**构建验证**：TypeScript 6 errors（3 个 chat `.tsx` 测试引用已移除的 `src/app/chat/page`，非业务代码问题）· **48 files / 374 passed / 2 failed / 1 todo（377）**（2 failed = header.test.ts 导航胶囊 `navItems` vs `navLinks` 变量名不匹配）
+**构建验证**：TypeScript 0 errors · **57 files / 473 passed / 1 todo（474）**（测试基线随功能演进同步，删除俏皮文案测试后 474→473）
 
 ### 历次迭代速览（1→13 波合并）
 
@@ -57,7 +60,7 @@
 | 第十二波     | 7月5日 下午    | 投稿预览独立路由 `/dashboard/submissions/[slug]`（方案 A） | 三层守卫（未登录 redirect / 不存在 notFound / 非本人非管理员 notFound 防枚举）；三态状态胶囊；状态横幅（APPROVED 绿边/其他锁互动）；REJECTED 驳回理由 + 重提链接；PostForm 成功 onDismiss 真实跳转 + 列表卡片预览胶囊；13 cases TDD                                                                      |
 | 第十三波     | 7月5日 15:40 | 受控 select 冲突修复                                 | PostForm「关联角色」下拉删除 defaultValue="DANIYA"，state 初始化已保证默认选中；7 cases TDD                                                                                                                                                                |
 
-### 历次迭代速查表（26 波 · 详细版）
+### 历次迭代速查表（34 波 · 详细版）
 
 | 波次  | 日期        | 主题                                | 核心产出                                                                                                                                                                            | 受影响文件量                            | 测试             |
 | --- | --------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------- |
@@ -89,3 +92,11 @@
 | 24  | 7月30      | 移动端聊天适配                    | chat/page.tsx 响应式（抽屉+汉堡菜单+全屏聊天区）+ chat-sidebar h-full + chat-settings-panel max-md:w-full                                                                          | 3 改                               | 335 passed     |
 | 25  | 8月5       | 站点重构（首页+作品集+角色页 V3） | 首页三栏暗色主题（俄罗斯方块+主舞台+回声面板）+ /works 作品集独立路由（Tab 筛选+排序）+ 角色页 V3 卷轴卡片（5 区块折叠）+ 8 shadcn/ui 新组件 + HTTP 安全响应头 5 条 + Git LFS + Prisma 配置优化 + next.config serverComponentsExternalPackages | 61 文件 +6708/-644                  | 357 passed     |
 | 26  | 8月13      | 全站美化收官 + 飞讯知识库        | 四期美化（137 处粉化 + framer-motion 动效体系 + 页面补齐）+ 角色页 V4 侧翼档案架 + 飞讯全屏终端（会话持久化）+ 知识库检索注入（2-gram + top5 块）+ 修复 500/页面卡死（SSR document 访问 / overlay 吞点击 / chat-root 抢 flex） | 14 改 + 2 新 + 2 tests 新           | 374 passed     |
+| 27  | 8月14      | 全站移除视频功能               | 用户决策放弃视频投稿：BilibiliEmbed/bv-input 删除、PostType "video"/videoId/校验器/API/UI 视频分支全删；submit 仅 illustration/screenshot 且必 ≥1 图；顺手同步 chat 测试债务（MAX_OUTPUT 500→800） | 26 源 + 2 tests                   | 449 passed     |
+| 28  | 8月14      | submit 粉金美化 + 聊天分级字数     | 信件投递台 Hero + 金色邮戳章 + 额度卡片 + 入场动画；gen-bg-window.mjs 压 18 张 1600px webp 窗口版；系统提示词分级字数（100-150/300-450），CHAT_MAX_OUTPUT_TOKENS 500→800 | 3 改 + 2 新 + 1 脚本                | 449 passed     |
+| 29  | 8月14 晚    | 小屋一角 + 站长直发 + 站内通知     | 访客名牌 Zzz + 收藏匣/星星罐统计实物化；站长投稿直接发布（跳过 PendingPost 返 publishedSlug）；Notification 模型三态通知 + 铃铛 30s 轮询 + 通知页自动已读 | 4 改 + 5 新 + 1 模型                | 460 passed     |
+| 30  | 8月15      | 背景可读性（月光纱+旋钮）          | 背景层 z→-1 根治图蒙字 + hp-bg-scrim 月光纱 + 可读性三轴联动滑块（模糊/清晰层/纱）+ 全局文字暗影；globals/home/layout 内联三处同源 | 4 改                              | 460 passed     |
+| 31  | 8月15      | 小屋的邮路三页邮戳化             | 我的投稿=寄出的信 / 审核=分拣台 / 收藏=收藏匣；postal.css 邮戳签名（香槟金/粉金/红棕三态）+ letter-card feTurbulence 纸纹 + 盖章按钮 + 退回批注 | 4 改 + 2 新 + 1 test               | 474 passed     |
+| 32  | 8月15      | 背景两段式加载                 | window 1600px 秒显→desktop 4K webp 静默升级（applyBgToken 防串图）+ 空闲预加载；gen-bg-desktop.mjs 18 张 4K webp（0.18-0.97MB）| 2 改 + 1 脚本 + 36 资源              | 474 passed     |
+| 33  | 8月15      | 个人中心切换迟滞修复             | 列表 select 去 content + dashboard loading 骨架屏 + 过渡纯 opacity 0.2s + 全局 backdrop-filter 收敛（Windows 卡顿源） | 4 改 + 1 新                        | 474 passed     |
+| 34  | 8月15      | 首页两卡重设计                 | 倒计时→「寄往5/21贺卡」（香槟金邮戳+虚线信封折线+独立卡面）；档案→「档案卷宗卡」（NO.0521 铭牌+斜贴照片图钉折角+已归档章+坠入虚无 4K 衬底）；删除俏皮文案（用户决策） | 3 改                              | 473 passed + 1 todo |

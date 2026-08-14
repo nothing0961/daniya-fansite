@@ -16,6 +16,7 @@ import { MusicPlayer } from "@/components/shared/music-player";
 import { BgSwitcher } from "@/components/shared/bg-switcher";
 import { UserMenu } from "@/components/auth/user-menu";
 import { SignInButton } from "@/components/auth/sign-in-button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NavLinks } from "./nav-links";
 import { MobileNav } from "./mobile-nav";
 
@@ -82,7 +83,7 @@ export async function Header() {
                          transition-transform group-hover:scale-105"
             >
               <img
-                src="/A722CEB5396985A57C541E3CEF95F101.jpg"
+                src="/625294f4d0b740f4bf5ce693ddb0b35920260521.png"
                 alt="达妮娅的瞌睡小屋"
                 className="w-full h-full object-cover"
               />
@@ -162,6 +163,9 @@ export async function Header() {
               投稿
             </Link>
           )}
+
+          {/* 站内通知铃铛（仅站长） */}
+          {user && user.id === process.env.ADMIN_USER_ID && <NotificationBell />}
 
           {/* 根据登录状态显示不同组件 */}
           <div className="shrink-0">

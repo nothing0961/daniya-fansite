@@ -24,26 +24,28 @@
 .hp-bg-image {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-image: var(--bg-image-url, none);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  opacity: 0.8;
+  opacity: var(--bg-image-opacity, 0.8);
+  will-change: opacity;
 }
 
 .hp-bg-image-blur {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-image: var(--bg-image-url, none);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   opacity: var(--bg-blur-opacity, 0);
-  filter: blur(20px);
+  /* brightness(0.78)：模糊同时压暗（与 globals.css 一致） */
+  filter: blur(20px) brightness(0.78);
   /* 模糊时扩展边缘避免出现透明边框 */
   transform: scale(1.08);
   will-change: opacity;
@@ -184,11 +186,11 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(135deg, rgba(212, 120, 154, 0.15) 0%, transparent 60%),
-    radial-gradient(circle at 80% 20%, rgba(231, 155, 190,0.1) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(30, 15, 25, 0.3) 0%, rgba(15, 6, 16, 0.8) 100%),
-    url("/324E6938CA1A90C930208816149E5FE9.jpg") center/cover;
-  filter: saturate(0.85);
+    /* 档案卷宗氛围：左上粉光 + 左侧压暗（信息区可读）+ 右侧留亮（照片区） */
+    radial-gradient(circle at 72% 22%, rgba(212, 120, 154, 0.13) 0%, transparent 52%),
+    linear-gradient(100deg, rgba(13, 7, 15, 0.9) 0%, rgba(22, 11, 20, 0.72) 42%, rgba(30, 13, 26, 0.45) 100%),
+    url("/背景图片/desktop/达妮娅EP 坠入虚无 封面-10k.webp") center/cover;
+  filter: saturate(0.8) brightness(0.95);
 }
 
 .hp-hero-body {
@@ -231,6 +233,107 @@
   display: block;
 }
 
+/* ==== 共鸣者档案 — 档案卷宗卡 ==== */
+/* 档案编号铭牌：NO.0521（0521 = 5月21日生日档案号，香槟金，轻微盖章旋转） */
+.hp-file-no {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  color: #cfa86b;
+  border: 1px solid rgba(207, 168, 107, 0.4);
+  border-radius: 0.25rem;
+  padding: 0.12rem 0.4rem;
+  transform: rotate(-2deg);
+  background: rgba(207, 168, 107, 0.06);
+  white-space: nowrap;
+}
+
+/* 档案纸信息区：暗卡纸底 + 纸纹噪点（feTurbulence，与邮路信封纸纹同源手法） */
+.hp-file-sheet {
+  position: relative;
+  background: linear-gradient(160deg, rgba(28, 17, 26, 0.74) 0%, rgba(17, 10, 18, 0.86) 100%);
+  border: 1px solid rgba(231, 155, 190, 0.12);
+  border-radius: 0.9rem;
+  padding: 1.1rem 1.3rem 1rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(231, 155, 190, 0.04),
+    0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.hp-file-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.05'/></svg>");
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+/* 已归档章：香槟金虚线圆章（盖章语言第三处，低调放置） */
+.hp-file-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(207, 168, 107, 0.55);
+  color: rgba(207, 168, 107, 0.75);
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  transform: rotate(-8deg);
+  flex-shrink: 0;
+}
+
+.hp-cta-row .hp-file-stamp {
+  margin-left: auto;
+}
+
+/* 斜贴照片 — 叠加在 hp-hero-poster 上（档案照片：旋转 + 图钉 + 折角） */
+.hp-photo {
+  transform: rotate(-2.5deg);
+  border-radius: 0.4rem;
+  border-color: rgba(231, 155, 190, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(231, 155, 190, 0.1) inset,
+    0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+.hp-photo:hover {
+  transform: rotate(-2.5deg) translateY(-2px);
+}
+
+/* 图钉 — 顶部中央 */
+.hp-photo-pin {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(240, 208, 160, 0.95), rgba(160, 118, 74, 0.95) 60%, rgba(84, 58, 38, 0.95));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  z-index: 2;
+}
+
+/* 折角 — 右上角向后折 */
+.hp-photo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 16px 16px 0;
+  border-color: transparent #1c1019 transparent transparent;
+  filter: drop-shadow(-1px 1px 1px rgba(0, 0, 0, 0.4));
+  z-index: 1;
+}
+
 .hp-hero-kicker {
   display: flex;
   align-items: center;
@@ -263,7 +366,10 @@
   font-weight: 700;
   color: var(--hp-ink);
   letter-spacing: 0.15em;
-  text-shadow: 0 2px 30px rgba(212, 120, 154, 0.25);
+  /* 暗影保证背景图上的可读性 + 粉光晕装饰 */
+  text-shadow:
+    0 1px 2px rgba(10, 4, 14, 0.55),
+    0 2px 30px rgba(212, 120, 154, 0.25);
 }
 
 .hp-title-en {
@@ -392,10 +498,15 @@
   flex-direction: column;
   gap: 0.4rem;
   flex: 1;
+  min-height: 0;
   border: none;
   background: transparent;
   backdrop-filter: none;
-  overflow: visible;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(231, 155, 190,0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.25rem;
   box-shadow: none;
 }
 
@@ -438,13 +549,20 @@
   color: var(--hp-ink-faint);
 }
 
-/* ==== 生日倒计时（位于右侧 sidebar 卡片内） ==== */
-.hp-sidebar-birthday {
+/* ==== 生日贺卡 — 独立卡面（无头，剥掉外层卡框，避免双层框嵌套） ==== */
+.hp-sidebar-card.hp-sidebar-birthday {
   flex: 1 1 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
 }
 
-.hp-sidebar-birthday .hp-birthday {
-  padding: 0.5rem 0;
+.hp-sidebar-card.hp-sidebar-birthday .hp-birthday {
+  padding: 0;
   border-radius: 0;
   border: none;
   background: transparent;
@@ -457,8 +575,100 @@
   justify-content: center;
 }
 
-.hp-sidebar-birthday .hp-birthday > div {
+.hp-sidebar-card.hp-sidebar-birthday .hp-birthday > div {
   width: 100%;
+}
+
+/* ==== 生日贺卡 — 寄往 5/21（贺卡 + 邮戳语言，与邮路同源） ==== */
+.hp-birthday-card {
+  position: relative;
+  width: 100%;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(207, 168, 107, 0.26);
+  background: linear-gradient(155deg, rgba(46, 29, 40, 0.82) 0%, rgba(24, 15, 23, 0.92) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 168, 107, 0.05),
+    0 6px 18px rgba(0, 0, 0, 0.28);
+  padding: 0.9rem 1.1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+/* 贺卡内框 — 虚线信封折线 */
+.hp-birthday-card::before {
+  content: "";
+  position: absolute;
+  inset: 0.32rem;
+  border: 1px dashed rgba(207, 168, 107, 0.15);
+  border-radius: 0.45rem;
+  pointer-events: none;
+}
+
+/* 收件行 — To：5月21日 · 达妮娅（手写体，左上角） */
+.hp-birthday-to {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  font-family: "Cormorant Garamond", "Noto Sans SC", sans-serif;
+  font-style: italic;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  color: var(--hp-pink);
+  margin-left: 0.1rem;
+}
+
+/* 邮戳 — 香槟金圆章，右上角邮票位，-6° 盖章感（与邮路 .postmark 同源语言） */
+.hp-postmark {
+  position: absolute;
+  top: 0.62rem;
+  right: 0.68rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(207, 168, 107, 0.85);
+  background: rgba(207, 168, 107, 0.05);
+  color: #cfa86b;
+  text-align: center;
+  box-shadow:
+    inset 0 0 0 4px rgba(26, 16, 24, 0.6),
+    inset 0 0 0 5px rgba(207, 168, 107, 0.28);
+  transform: rotate(-6deg);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.hp-postmark-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
+.hp-postmark-sub {
+  font-size: 0.5rem;
+  letter-spacing: 0.22em;
+  line-height: 1.1;
+  opacity: 0.75;
+  margin-top: 0.1rem;
+}
+
+/* 贺卡大数字 — 居中，给右上角邮戳让位 */
+.hp-birthday-card .hp-birthday-days {
+  margin-top: 0.15rem;
+  margin-right: 2.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-postmark {
+    transform: rotate(-6deg);
+  }
 }
 
 /* ==== 右侧边栏卡片 — flex: 1 均分高度 ==== */
@@ -597,6 +807,12 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 0.375rem;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(231, 155, 190,0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.25rem;
 }
 
 .hp-resonance-item {
@@ -650,6 +866,30 @@
   background: rgba(231, 155, 190,0.3);
 }
 .hp-note-list:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(231, 155, 190,0.5);
+}
+
+/* 共鸣图鉴 / 站点速览：与站长笔记一致的细滚动条 */
+.hp-resonance-grid::-webkit-scrollbar,
+.hp-stat-card .hp-stat-bar::-webkit-scrollbar {
+  width: 4px;
+}
+.hp-resonance-grid::-webkit-scrollbar-track,
+.hp-stat-card .hp-stat-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hp-resonance-grid::-webkit-scrollbar-thumb,
+.hp-stat-card .hp-stat-bar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+.hp-resonance-grid:hover::-webkit-scrollbar-thumb,
+.hp-stat-card .hp-stat-bar:hover::-webkit-scrollbar-thumb {
+  background: rgba(231, 155, 190,0.3);
+}
+.hp-resonance-grid:hover::-webkit-scrollbar-thumb:hover,
+.hp-stat-card .hp-stat-bar:hover::-webkit-scrollbar-thumb:hover {
   background: rgba(231, 155, 190,0.5);
 }
 

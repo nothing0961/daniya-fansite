@@ -1,6 +1,8 @@
 /**
  * PageTransition — 路由切换时的页面入场过渡
- * 按 pathname 重挂载，每次导航淡入上移
+ * 按 pathname 重挂载，每次导航淡入
+ * 注意：只做 opacity 动画、时长 0.2s——页面里满是 backdrop-filter 毛玻璃层，
+ * 位移/长动画会让每帧重新采样背景，在 Windows 上产生明显迟滞感
  */
 "use client";
 
@@ -13,9 +15,9 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       key={pathname}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className="h-full"
     >
       {children}

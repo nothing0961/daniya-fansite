@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, XCircle, Clock, Eye, X, ChevronRight, AlertTriangle } from "lucide-react";
 import type { PendingPostStatus } from "@prisma/client";
 import { POST_TYPE_LABELS, PLATFORM_LABELS } from "@/types/post";
-import { BilibiliEmbed } from "@/components/media/bilibili-embed";
+import "./../postal.css";
 
 const STATUS_TABS: Array<{ key: PendingPostStatus | "ALL"; label: string; color: string }> = [
   { key: "ALL", label: "全部", color: "text-[var(--muted-foreground)]" },
@@ -33,6 +33,20 @@ const STATUS_LABEL: Record<PendingPostStatus, string> = {
   REJECTED: "已驳回",
 };
 
+/** 邮戳映射 — 分拣台：待投递 / 已抵达 / 已退回 */
+const POSTMARK: Record<PendingPostStatus, { cls: string; label: string; sub: string }> = {
+  PENDING: { cls: "postmark--pending", label: "待投递", sub: "分拣中" },
+  APPROVED: { cls: "postmark--approved", label: "已抵达", sub: "已寄达" },
+  REJECTED: { cls: "postmark--rejected", label: "已退回", sub: "可重提" },
+};
+
+/** 小邮戳（左侧列表单字） */
+const POSTMARK_MINI: Record<PendingPostStatus, { cls: string; word: string }> = {
+  PENDING: { cls: "postmark--pending", word: "待" },
+  APPROVED: { cls: "postmark--approved", word: "达" },
+  REJECTED: { cls: "postmark--rejected", word: "退" },
+};
+
 interface PendingPostListItem {
   id: string;
   userId: string;
@@ -41,7 +55,6 @@ interface PendingPostListItem {
   description: string;
   type: string;
   images: string[];
-  videoId: string | null;
   tags: string[];
   originalCreator: string | null;
   sourcePlatform: string | null;
@@ -253,9 +266,12 @@ export function ModerationPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+          <p className="text-[11px] tracking-[0.3em] uppercase text-[var(--muted-foreground)] mb-1">
+            ✦ 分拣台
+          </p>
           <h1 className="text-xl font-bold text-[var(--foreground)]">投稿审核</h1>
           <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-            仅站长可访问 · 通过后将自动生成 MDX 并发布到首页
+            仅站长可访问 · 通过后盖章投递，自动生成 MDX 并发布到首页
           </p>
         </div>
         <button
@@ -300,11 +316,11 @@ export function ModerationPanel() {
             </div>
           ) : list.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center text-sm text-[var(--muted-foreground)]">
-              当前筛选下无投稿
+              当前筛选下没有待分拣的信
             </div>
           ) : (
             list.map((item) => {
-              const StatusIcon = STATUS_ICON[item.status];
+              const pmMini = POSTMARK_MINI[item.status];
               const selected = selectedId === item.id;
               return (
                 <button
@@ -320,15 +336,12 @@ export function ModerationPanel() {
                     <h3 className="text-sm font-medium text-[var(--foreground)] line-clamp-1 flex-1">
                       {item.title}
                     </h3>
-                    <StatusIcon
-                      className={`h-4 w-4 shrink-0 mt-0.5 ${
-                        item.status === "PENDING"
-                          ? "text-amber-400"
-                          : item.status === "APPROVED"
-                          ? "text-emerald-400"
-                          : "text-red-400"
-                      }`}
-                    />
+                    <span
+                      className={`postmark postmark-mini ${pmMini.cls}`}
+                      aria-label={`状态：${pmMini.word}`}
+                    >
+                      <span className="postmark-label">{pmMini.word}</span>
+                    </span>
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mb-2">
                     {item.description}
@@ -346,39 +359,31 @@ export function ModerationPanel() {
           )}
         </div>
 
-        {/* 右侧：详情抽屉 */}
-        <div className="lg:col-span-3 rounded-xl border border-[var(--border)] bg-[var(--card)]/30 overflow-hidden">
+        {/* 右侧：详情抽屉（信纸展开） */}
+        <div className="letter-sheet lg:col-span-3 rounded-xl border border-[var(--border)] bg-[var(--card)]/30 overflow-hidden">
           {!selectedId ? (
             <div className="h-full flex items-center justify-center p-8 text-center text-sm text-[var(--muted-foreground)]">
               <div>
                 <Eye className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                点击左侧任意投稿查看详情
+                点击左侧任意一封信查看详情
               </div>
             </div>
           ) : detailLoading ? (
             <div className="h-full flex items-center justify-center py-20 text-[var(--muted-foreground)]">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" /> 加载详情...
+              <Loader2 className="h-5 w-5 animate-spin mr-2" /> 展开信件中...
             </div>
           ) : detail ? (
             <div className="flex flex-col h-[75vh]">
               {/* 详情 header */}
               <div className="p-4 border-b border-[var(--border)] flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-1">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                        detail.status === "PENDING"
-                          ? "bg-amber-500/15 text-amber-400"
-                          : detail.status === "APPROVED"
-                          ? "bg-emerald-500/15 text-emerald-400"
-                          : "bg-red-500/15 text-red-400"
-                      }`}
+                      className={`postmark ${POSTMARK[detail.status].cls}`}
+                      aria-label={POSTMARK[detail.status].label}
                     >
-                      {(() => {
-                        const I = STATUS_ICON[detail.status];
-                        return <I className="h-3 w-3" />;
-                      })()}
-                      {STATUS_LABEL[detail.status]}
+                      <span className="postmark-label">{POSTMARK[detail.status].label}</span>
+                      <span className="postmark-sub">{POSTMARK[detail.status].sub}</span>
                     </span>
                     <span className="text-xs text-[var(--muted-foreground)]">
                       {new Date(detail.createdAt).toLocaleString("zh-CN")}
@@ -407,10 +412,10 @@ export function ModerationPanel() {
 
               {/* 详情内容 可滚动 */}
               <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                {/* 状态信息：驳回理由 / 已发布 slug */}
+                {/* 状态信息：退回批注 / 已发布 slug */}
                 {detail.status === "REJECTED" && detail.rejectReason && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs">
-                    <p className="font-medium text-red-400 mb-0.5">驳回理由：</p>
+                  <div className="return-note p-3 text-xs">
+                    <p className="return-note-title mb-0.5">退回批注：</p>
                     <p className="text-[var(--foreground)]">{detail.rejectReason}</p>
                   </div>
                 )}
@@ -485,13 +490,8 @@ export function ModerationPanel() {
                   </section>
                 )}
 
-                {/* 图片 / 视频 */}
-                {detail.type === "video" && detail.videoId ? (
-                  <section>
-                    <h4 className="text-xs font-medium text-[var(--muted-foreground)] mb-2">视频预览</h4>
-                    <BilibiliEmbed bvId={detail.videoId!} />
-                  </section>
-                ) : detail.images.length > 0 ? (
+                {/* 图片 */}
+                {detail.images.length > 0 ? (
                   <section>
                     <h4 className="text-xs font-medium text-[var(--muted-foreground)] mb-2">
                       配图（{detail.images.length} 张）
@@ -625,10 +625,10 @@ export function ModerationPanel() {
                         type="button"
                         onClick={handleApprove}
                         disabled={approving}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                        className="stamp-btn stamp-btn--approve"
                       >
                         {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                        {approving ? "正在生成 MDX 并发布..." : "✅ 通过并发布到首页"}
+                        {approving ? "正在盖章投递..." : "盖邮戳 · 通过并投递到首页"}
                       </button>
                     </div>
 
@@ -652,10 +652,10 @@ export function ModerationPanel() {
                         type="button"
                         onClick={handleReject}
                         disabled={rejecting}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        className="stamp-btn stamp-btn--reject"
                       >
                         {rejecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                        {rejecting ? "提交中..." : "❌ 驳回此投稿"}
+                        {rejecting ? "正在盖章退回..." : "盖邮戳 · 退回这封信"}
                       </button>
                     </div>
                   </section>

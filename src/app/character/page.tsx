@@ -66,6 +66,13 @@ export default function CharacterPage() {
     return () => observer.disconnect();
   }, []);
 
+  // 档案页背景：与全站同步的背景图，但固定模糊（切换器换图自动跟随）
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("dan-bg-blur");
+    return () => root.classList.remove("dan-bg-blur");
+  }, []);
+
   const jumpTo = useCallback((id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);

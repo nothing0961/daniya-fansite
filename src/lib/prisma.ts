@@ -45,18 +45,33 @@ async function tryWakeUpDatabase(): Promise<boolean> {
 }
 
 async function executeWithWakeUp<T>(fn: () => Promise<T>): Promise<T> {
-  for (let retry = 0; retry <= 1; retry++) {
+  for (let retry = 0; retry <= 2; retry++) {
     try {
       return await fn();
     } catch (e) {
       const error = e as { code?: string; message?: string };
-      if (retry === 0 && (error.code === "P1001" || (error.message && error.message.includes("Can't reach database server")))) {
+      const isConnError =
+        error.code === "P1001" ||
+        (error.message && error.message.includes("Can't reach database server"));
+
+      if (retry === 0 && isConnError) {
         console.log("[Prisma] Connection failed, trying to wake up DB...");
         if (await tryWakeUpDatabase()) {
-          console.log("[Prisma] DB woken up, retrying query...");
+          // Neon 唤醒的是直连端点；PgBouncer（pooler）还需几秒才接受新连接，
+          // 立即重试会拿到和刚才一样的连接错误，先等 pooler 就绪
+          console.log("[Prisma] DB woken up, waiting for pooler to accept connections...");
+          await new Promise((resolve) => setTimeout(resolve, 2500));
           continue;
         }
       }
+
+      if (retry > 0 && retry < 2 && isConnError) {
+        // 唤醒后 pooler 仍未就绪：退避后再次尝试，冷启动偶尔需要更久
+        console.log("[Prisma] Pooler still unreachable, backing off and retrying...");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
       throw e;
     }
   }

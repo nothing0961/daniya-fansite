@@ -45,12 +45,6 @@ export function FeedCard({ post }: FeedCardProps) {
               loading="lazy"
             />
           </div>
-        ) : post.videoId ? (
-          <div className="w-full aspect-video bg-black flex items-center justify-center relative">
-            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:bg-[var(--primary)]/80 transition-colors">
-              <Play className="h-6 w-6 text-white fill-white ml-0.5" />
-            </div>
-          </div>
         ) : (
           <div className="w-full aspect-video bg-[var(--muted)] flex items-center justify-center">
             <span className="text-[var(--muted-foreground)] text-sm">

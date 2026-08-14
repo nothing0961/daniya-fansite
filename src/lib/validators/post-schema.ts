@@ -13,7 +13,6 @@ const postTypeEnum = z.enum([
   "illustration",
   "screenshot",
   "comic",
-  "video",
   "article",
   "cosplay",
   "other",
@@ -83,9 +82,6 @@ export const postMetaSchema = z.object({
 
   /** 配图列表 — SM.MS 图床完整 URL */
   images: z.array(z.string().url()).optional().default([]),
-
-  /** B站视频 BV 号 — 仅 video 类型 */
-  videoId: z.string().min(1).optional(),
 });
 
 /** 从 Frontmatter 解析出的元数据类型 */

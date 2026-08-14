@@ -19,7 +19,6 @@ import { Separator } from "@/components/ui/separator";
 import { LikeButton } from "@/components/interaction/like-button";
 import { BookmarkButton } from "@/components/interaction/bookmark-button";
 import { UserComments } from "@/components/comments/user-comments";
-import { BilibiliEmbed } from "@/components/media/bilibili-embed";
 import { PostGallery } from "@/components/media/post-gallery";
 
 // ===== 类型定义 =====
@@ -113,11 +112,7 @@ export default async function PostPage({ params }: PostPageProps) {
       </div>
 
       {/* ===== 媒体展示区 ===== */}
-      {meta.type === "video" && meta.videoId ? (
-        <div className="mb-8">
-          <BilibiliEmbed bvId={meta.videoId} />
-        </div>
-      ) : meta.images.length > 0 ? (
+      {meta.images.length > 0 ? (
         <div className="mb-8">
           <PostGallery images={meta.images} />
         </div>

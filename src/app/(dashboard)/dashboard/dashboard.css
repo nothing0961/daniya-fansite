@@ -1,0 +1,223 @@
+/* ======================================== */
+/* 个人中心「小屋一角」— 名牌 Zzz + 收藏匣 + 星星罐 */
+/* ======================================== */
+
+.cs-serif {
+  font-family: Georgia, "Songti SC", "Noto Serif SC", "STSong", serif;
+}
+
+/* ---- 名牌头像旁浮起的 Zzz（与 404 梦乡同源） ---- */
+.cs-zzz {
+  position: absolute;
+  top: -14px;
+  left: 78%;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--primary);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.cs-zzz--2 {
+  top: -24px;
+  left: 96%;
+  font-size: 16px;
+  opacity: 0.55;
+}
+
+/* ---- 统计区：匣 + 罐 ---- */
+.cs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cs-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cs-object {
+  position: relative;
+  display: block;
+  height: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(231, 155, 190, 0.08) 0%, transparent 70%),
+    var(--card);
+  padding: 1.6rem 1rem 1.25rem;
+  transition: border-color 0.3s ease;
+}
+
+.cs-object--link:hover {
+  border-color: color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+.cs-object-label {
+  margin-top: 1.1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.cs-object-hint {
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+}
+
+/* ---- 收藏匣 ---- */
+.cs-chest {
+  position: relative;
+  width: 92px;
+  height: 66px;
+  margin: 0 auto;
+}
+
+.cs-chest-lid {
+  position: absolute;
+  top: 0;
+  left: -7px;
+  right: -7px;
+  height: 24px;
+  border-radius: 9px 9px 2px 2px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--primary) 85%, white) 0%,
+    var(--primary) 100%
+  );
+  border: 1px solid color-mix(in oklch, var(--pink-deep, #c9688f) 55%, transparent);
+  box-shadow: 0 3px 8px -2px rgba(0, 0, 0, 0.4);
+  transform-origin: top center;
+  transition: transform 0.3s ease;
+  z-index: 2;
+}
+
+.cs-object:hover .cs-chest-lid {
+  transform: rotate(-5deg) translateY(-4px);
+}
+
+.cs-chest-body {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px 5px 10px 10px;
+  background: linear-gradient(
+    180deg,
+    var(--primary) 0%,
+    color-mix(in oklch, var(--primary) 62%, black) 100%
+  );
+  border: 1px solid color-mix(in oklch, var(--pink-deep, #c9688f) 60%, transparent);
+  box-shadow:
+    inset 0 4px 10px rgba(0, 0, 0, 0.22),
+    0 8px 16px -8px rgba(231, 155, 190, 0.55);
+}
+
+.cs-chest-key {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+
+.cs-chest-count {
+  font-family: Georgia, "Songti SC", "Noto Serif SC", serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- 星星罐 ---- */
+.cs-jar {
+  position: relative;
+  width: 98px;
+  height: 90px;
+  margin: 0 auto;
+  border: 1px solid rgba(231, 155, 190, 0.35);
+  border-radius: 18px 18px 30px 30px;
+  background: rgba(231, 155, 190, 0.05);
+  box-shadow:
+    inset 0 0 20px rgba(231, 155, 190, 0.08),
+    0 8px 16px -10px rgba(0, 0, 0, 0.5);
+}
+
+.cs-jar-star {
+  position: absolute;
+  color: var(--daniya-star, var(--foreground));
+  animation: cs-twinkle 3s ease-in-out infinite;
+  user-select: none;
+}
+
+.cs-jar-star--1 {
+  top: 16px;
+  left: 20px;
+  font-size: 15px;
+}
+
+.cs-jar-star--2 {
+  top: 40px;
+  left: 54px;
+  font-size: 11px;
+  animation-delay: 0.9s;
+}
+
+.cs-jar-star--3 {
+  top: 22px;
+  left: 60px;
+  font-size: 9px;
+  animation-delay: 1.6s;
+}
+
+.cs-jar-count {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: Georgia, "Songti SC", "Noto Serif SC", serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+@keyframes cs-twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* ---- 尊重系统减弱动效 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .cs-jar-star {
+    animation: none;
+    opacity: 0.9;
+  }
+  .cs-chest-lid {
+    transition: none;
+  }
+  .cs-object:hover .cs-chest-lid {
+    transform: none;
+  }
+}

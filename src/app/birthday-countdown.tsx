@@ -1,28 +1,18 @@
 "use client";
 
 /**
- * 首页 Hero 右侧生日倒计时胶囊内容组件
+ * 首页 Hero 右侧生日倒计时 — 「寄往 5/21 的贺卡」
  * 规则：
  *  · 生日固定为每年 5 月 21 日（按每年循环 rollover）
  *  · 每秒刷新（setInterval 1000ms）
- *  · 今天是生日 → 庆祝态：🎉 大号「今天是达妮娅生日！生日快乐 🎂」
- *  · 不是生日 → A 方案：顶部标识 + 大号天数 + 时分秒副行 + 俏皮文案
+ *  · 今天是生日 → 庆祝态：贺卡 + 邮戳「5·21 庆典」+ 大号祝福
+ *  · 不是生日 → 贺卡：收件行「✉ To：5月21日 · 达妮娅」+ 大号天数 + 右上角香槟金邮戳 + 时分秒 + 俏皮文案
  */
 import { useEffect, useMemo, useState } from "react";
 
 /** 生日常量：每年 5 月 21 日循环（月份 JS Date 从 0 开始，所以 5 月 = 4） */
 const BIRTHDAY_MONTH_IDX = 4; // 5 月
 const BIRTHDAY_DAY = 21;
-
-/** 俏皮文案池（距离天数变化时随机选一句，或者按区间匹配） */
-function pickTagline(daysLeft: number): string {
-  if (daysLeft === 0) return "🎉 就在今天啦！";
-  if (daysLeft <= 7) return "🍰 快准备甜点呀！倒计时一周内～";
-  if (daysLeft <= 30) return "🫧 学院里偷偷准备惊喜哟～";
-  if (daysLeft <= 90) return "💫 还差一个季度左右，先屯好蛋糕券～";
-  if (daysLeft <= 180) return "🌸 半年之内，瞌睡王的生日越来越近啦";
-  return "⭐ 虽然还有点早，但先把 5/21 记在日程本上吧";
-}
 
 /** 计算下一个生日目标时间戳（今天过了就 rollover 到明年 5/21） */
 function calcNextBirthdayTarget(now: Date): Date {
@@ -89,19 +79,25 @@ export function BirthdayCountdown() {
   }, []);
 
   const parts = useMemo(() => (now ? diffToParts(now) : null), [now]);
-  const tagline = parts ? pickTagline(parts.isBirthdayToday ? 0 : parts.days) : "";
 
   // SSR / hydration 阶段：展示占位骨架，与客户端首次渲染完全一致，避免水合不匹配
   if (!parts) {
     return (
-      <div className="flex flex-col items-center text-center gap-1.5 min-w-0">
-        <div className="flex items-center gap-1.5 text-[11px] tracking-widest font-medium text-[var(--primary)]">
-          <span>🌸</span>
-          <span>达妮娅 · 生日倒计时</span>
+      <div className="hp-birthday-card text-center">
+        {/* 收件行 */}
+        <div className="hp-birthday-to">
+          <span aria-hidden="true">✉</span>
+          <span>To：5月21日 · 达妮娅</span>
         </div>
-        <div className="flex items-baseline justify-center gap-2 flex-wrap">
+        {/* 右上角邮戳 */}
+        <span className="hp-postmark" aria-hidden="true">
+          <span className="hp-postmark-label">5·21 生日</span>
+          <span className="hp-postmark-sub">倒计时</span>
+        </span>
+        {/* 大号天数 */}
+        <div className="flex items-baseline justify-center gap-2 flex-wrap hp-birthday-days">
           <span
-            className="text-5xl sm:text-6xl font-black leading-none"
+            className="text-5xl sm:text-6xl font-black leading-none tabular-nums"
             style={{
               color: "var(--daniya-accent)",
               textShadow: "0 2px 10px color-mix(in oklab, var(--daniya-accent) 35%, transparent)",
@@ -111,6 +107,7 @@ export function BirthdayCountdown() {
           </span>
           <span className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">天</span>
         </div>
+        {/* 时分秒副行 */}
         <div className="flex items-center justify-center gap-1.5 text-[var(--foreground)] mt-1">
           <span className="font-mono text-sm sm:text-base rounded bg-[var(--muted)]/40 border border-[var(--border)] px-2 py-0.5 tabular-nums">--</span>
           <span className="text-[var(--muted-foreground)] text-xs">时</span>
@@ -119,25 +116,28 @@ export function BirthdayCountdown() {
           <span className="font-mono text-sm sm:text-base rounded bg-[var(--muted)]/40 border border-[var(--border)] px-2 py-0.5 tabular-nums">--</span>
           <span className="text-[var(--muted-foreground)] text-xs">秒</span>
         </div>
-        <p className="text-[11px] sm:text-xs text-[var(--muted-foreground)] dark:text-white mt-1.5">&nbsp;</p>
       </div>
     );
   }
 
-  const { days, hours, minutes, seconds, isBirthdayToday, targetYear } = parts;
+  const { days, hours, minutes, seconds, isBirthdayToday } = parts;
 
   // ===== 今天是生日：庆祝态 =====
   if (isBirthdayToday) {
     return (
-      <div className="flex flex-col items-center text-center gap-2 min-w-0">
-        {/* 顶部小号标识 */}
-        <div className="flex items-center gap-1.5 text-[11px] tracking-widest font-medium text-[var(--primary)]">
-          <span>🌸</span>
-          <span>达妮娅 · 生日庆典 · 5/21</span>
-          <span>🎂</span>
+      <div className="hp-birthday-card text-center">
+        {/* 收件行 */}
+        <div className="hp-birthday-to">
+          <span aria-hidden="true">✉</span>
+          <span>To：达妮娅 · 5/21</span>
         </div>
+        {/* 右上角邮戳 — 庆典版 */}
+        <span className="hp-postmark" title="5·21 庆典">
+          <span className="hp-postmark-label">5·21 庆典</span>
+          <span className="hp-postmark-sub">生日快乐</span>
+        </span>
         {/* 主标题大号 */}
-        <h2 className="text-2xl sm:text-3xl font-black text-[var(--foreground)] leading-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-[var(--foreground)] leading-tight mt-2 hp-birthday-days">
           🎉 今天是达妮娅生日！生日快乐 🎂
         </h2>
         {/* 副文案 */}
@@ -148,20 +148,22 @@ export function BirthdayCountdown() {
     );
   }
 
-  // ===== 不是生日：倒计时态（A 方案） =====
+  // ===== 不是生日：倒计时态（贺卡） =====
   return (
-    <div className="flex flex-col items-center text-center gap-1.5 min-w-0">
-      {/* 顶部小号标识 */}
-      <div className="flex items-center gap-1.5 text-[11px] tracking-widest font-medium text-[var(--primary)]">
-        <span>🌸</span>
-        <span>达妮娅 · 生日倒计时</span>
-        <span className="text-[var(--muted-foreground)] font-normal">
-          {targetYear}/5/21
-        </span>
+    <div className="hp-birthday-card text-center">
+      {/* 收件行 */}
+      <div className="hp-birthday-to">
+        <span aria-hidden="true">✉</span>
+        <span>To：5月21日 · 达妮娅</span>
       </div>
+      {/* 右上角邮戳 — 盖在信封邮票位 */}
+      <span className="hp-postmark" title="5·21 生日倒计时">
+        <span className="hp-postmark-label">5·21 生日</span>
+        <span className="hp-postmark-sub">倒计时</span>
+      </span>
 
       {/* 大号天数 */}
-      <div className="flex items-baseline justify-center gap-2 flex-wrap">
+      <div className="flex items-baseline justify-center gap-2 flex-wrap hp-birthday-days">
         <span
           className="text-5xl sm:text-6xl font-black leading-none"
           style={{
@@ -191,11 +193,6 @@ export function BirthdayCountdown() {
         </span>
         <span className="text-[var(--muted-foreground)] text-xs">秒</span>
       </div>
-
-      {/* 俏皮文案 */}
-      <p className="text-[11px] sm:text-xs text-[var(--muted-foreground)] dark:text-white mt-1.5">
-        {tagline}
-      </p>
     </div>
   );
 }

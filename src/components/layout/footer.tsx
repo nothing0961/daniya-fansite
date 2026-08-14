@@ -53,7 +53,7 @@ export function Footer() {
 
   return (
     <footer
-      className={`relative z-10 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 pt-1
+      className={`relative z-10 px-3 sm:px-4 md:px-6 pb-2 sm:pb-3 pt-1
                  transition-all duration-500 ease-out
                  ${hidden ? "opacity-0 translate-y-3 invisible pointer-events-none" : "opacity-100 translate-y-0 visible"}`}
     >
@@ -74,7 +74,7 @@ export function Footer() {
                            0_1px_0_rgba(255,255,255,0.04)_inset,
                            0_10px_30px_-10px_rgba(0,0,0,0.4)]"
       >
-        <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
           {/* 品牌区 */}
           <div className="flex items-center gap-3 min-w-0">
             <div
@@ -82,7 +82,7 @@ export function Footer() {
                          ring-1 ring-[rgba(231,155,190,0.4)]"
             >
               <img
-                src="/A722CEB5396985A57C541E3CEF95F101.jpg"
+                src="/625294f4d0b740f4bf5ce693ddb0b35920260521.png"
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -126,7 +126,7 @@ export function Footer() {
 
         {/* 底部声明行 */}
         <div
-          className="px-6 pb-4 pt-0 text-[11px] leading-relaxed
+          className="px-6 pb-2.5 pt-0 text-[11px] leading-relaxed
                      text-[var(--muted-foreground)]/80"
         >
           <p>

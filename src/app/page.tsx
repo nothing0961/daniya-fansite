@@ -71,8 +71,10 @@ export default async function HomePage() {
             </div>
 
             <div className="hp-hero-body">
-              <div className="hp-hero-content">
+              {/* 档案纸信息区 — 档案卷宗卡（NO.0521 编号 = 5月21日生日档案号） */}
+              <div className="hp-hero-content hp-file-sheet">
                 <div className="hp-hero-kicker">
+                  <span className="hp-file-no">NO.0521</span>
                   <span className="hp-kicker-label">共鸣者档案</span>
                   <span className="hp-kicker-sep">·</span>
                   <span className="hp-kicker-value">星炬学院在籍</span>
@@ -113,11 +115,16 @@ export default async function HomePage() {
                   <Link href={HERO_DATA.ctaSecondary.href} className="hp-btn hp-btn--ghost">
                     {HERO_DATA.ctaSecondary.label}
                   </Link>
+                  {/* 已归档章 — 档案语言 */}
+                  <span className="hp-file-stamp" aria-hidden="true">
+                    已归档
+                  </span>
                 </div>
               </div>
 
-              {/* 立绘海报卡 — 视觉锚点 */}
-              <div className="hp-hero-poster">
+              {/* 立绘海报卡 — 档案照片（斜贴 + 图钉 + 折角） */}
+              <div className="hp-hero-poster hp-photo">
+                <span className="hp-photo-pin" aria-hidden="true" />
                 <img
                   src="/615294f4d0b740f4bf5ce693ddb0b35920260521.webp"
                   alt="达妮娅 · 心之诞生"
@@ -130,12 +137,8 @@ export default async function HomePage() {
 
         {/* === 右栏：回声面板 === */}
         <Reveal delay={0.2} className="hp-col hp-col--right">
-          {/* 生日倒计时 */}
+          {/* 生日倒计时 — 寄往 5/21 的贺卡（独立卡面，无需头部标题） */}
           <div className="hp-card hp-sidebar-card hp-sidebar-birthday">
-            <div className="hp-sidebar-head">
-              <span className="hp-sidebar-icon">🌸</span>
-              <h3 className="hp-sidebar-title">生日倒计时</h3>
-            </div>
             <div className="hp-birthday">
               <BirthdayCountdown />
             </div>

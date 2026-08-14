@@ -59,7 +59,7 @@ export default function RootLayout({
             注意：不要改用 next/script beforeInteractive——其 __next_s 注入机制
             会破坏 React 19 对 head 的 hydration，导致整页 JS 失效（页面"不动"） */}
         <script dangerouslySetInnerHTML={{
-          __html: `(function(){try{var s=localStorage.getItem('daniya-bg-src');var b=parseFloat(localStorage.getItem('daniya-bg-blur')||'0');if(s){document.documentElement.style.setProperty('--bg-image-url','url("'+s+'")')}document.documentElement.style.setProperty('--bg-blur-opacity',Math.min(Math.max(b/30,0),1))}catch(e){}})();`
+          __html: `(function(){try{var s=localStorage.getItem('daniya-bg-src');var b=parseFloat(localStorage.getItem('daniya-bg-blur')||'0');var o=Math.min(Math.max(b/30,0),1);if(s){var w=s.indexOf('/背景图片/')===0?s.replace('/背景图片/','/背景图片/window/').replace(/\\.(png|jpg|jpeg)$/i,'.webp'):s;document.documentElement.style.setProperty('--bg-image-url','url("'+w+'")');if(w!==s){document.documentElement.style.setProperty('--bg-image-chat','url("'+w+'")')}}document.documentElement.style.setProperty('--bg-blur-opacity',String(o));document.documentElement.style.setProperty('--bg-image-opacity',String(0.8-o*0.45));document.documentElement.style.setProperty('--bg-scrim-opacity',String(0.35+o*0.25));if(location.pathname.indexOf('/character')===0){document.documentElement.classList.add('dan-bg-blur')}}catch(e){}})();`
         }} />
       </head>
       <body className="h-screen flex flex-col overflow-hidden">
@@ -67,6 +67,8 @@ export default function RootLayout({
         {/* 双层：清晰层 + 模糊层（交叉淡入淡出，避免实时 blur 计算卡顿） */}
         <div className="hp-bg-image" aria-hidden="true" />
         <div className="hp-bg-image-blur" aria-hidden="true" />
+        {/* 月光纱 — 固定深色渐变，保证背景图上的文字可读（三轴联动的可读性旋钮之一） */}
+        <div className="hp-bg-scrim" aria-hidden="true" />
         <SessionProvider>
           <ThemeProvider>
             <StatusModalProvider>

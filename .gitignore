@@ -16,3 +16,9 @@ Thumbs.db
 .idea/
 # 调试
 npm-debug.log*
+# Claude Code 本地调试产物（含会话截图/令牌，勿提交）
+.claude/csrf.json
+.claude/jar.txt
+.claude/submit-check.*
+.claude/submit-logged.html
+.claude/submit-raw.html

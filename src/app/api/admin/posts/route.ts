@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
 import { postMetaSchema } from "@/lib/validators/post-schema";
+import { slugifyWithSuffix } from "@/lib/slugify";
 import { NextResponse } from "next/server";
 import { createPostMdx } from "@/lib/posts-io";
 
@@ -18,11 +19,12 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { slug, body: mdxBody, ...frontmatter } = body;
+    const { slug: customSlug, body: mdxBody, ...frontmatter } = body;
 
-    if (!slug || typeof slug !== "string") {
-      return NextResponse.json({ error: "缺少文章标识 (slug)" }, { status: 400 });
-    }
+    // slug 可选：未传则由标题自动生成（带随机后缀防冲突）
+    const slug = typeof customSlug === "string" && customSlug.trim()
+      ? customSlug.trim()
+      : slugifyWithSuffix(frontmatter.title ?? "untitled");
 
     // 防止路径遍历和非法字符
     const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/;
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
     const existing = getPostBySlug(slug);
     if (existing) {
       return NextResponse.json(
-        { error: "此标识已存在，请修改 slug" },
+        { error: "此标识已存在，请修改标题后重试" },
         { status: 409 }
       );
     }

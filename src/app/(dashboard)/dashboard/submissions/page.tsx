@@ -16,6 +16,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import type { PendingPostStatus } from "@prisma/client";
 import { POST_TYPE_LABELS } from "@/types/post";
+import "./../postal.css";
 
 type TabKey = "ALL" | PendingPostStatus;
 
@@ -30,6 +31,13 @@ const STATUS_LABEL_ZH: Record<PendingPostStatus, string> = {
   PENDING: "待审核",
   APPROVED: "已通过",
   REJECTED: "已驳回",
+};
+
+/** 邮戳映射 — 小屋的邮路：待投递 / 已抵达 / 已退回 */
+const POSTMARK: Record<PendingPostStatus, { cls: string; label: string; sub: string }> = {
+  PENDING: { cls: "postmark--pending", label: "待投递", sub: "分拣中" },
+  APPROVED: { cls: "postmark--approved", label: "已抵达", sub: "已寄达" },
+  REJECTED: { cls: "postmark--rejected", label: "已退回", sub: "可重提" },
 };
 
 interface PageProps {
@@ -82,10 +90,24 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
   const totalAll = (counts.PENDING || 0) + (counts.APPROVED || 0) + (counts.REJECTED || 0);
 
   // --- 按过滤条件查询列表 ---
+  // select 精简：列表卡片不渲染正文 content（MDX 可能很大），避免切换页面时传输上百 KB 冗余 payload
   const list = await prisma.pendingPost.findMany({
     where: tab === "ALL" ? { userId } : { userId, status: tab as PendingPostStatus },
     orderBy: { createdAt: "desc" },
     take: 100,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      type: true,
+      images: true,
+      tags: true,
+      status: true,
+      rejectReason: true,
+      publishedSlug: true,
+      createdAt: true,
+    },
   });
 
   // ---------- 渲染 ----------
@@ -94,9 +116,12 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
       {/* 标题 */}
       <div className="flex items-end justify-between mb-5">
         <div>
+          <p className="text-[11px] tracking-[0.3em] uppercase text-[var(--muted-foreground)] mb-1">
+            ✦ 寄出的信
+          </p>
           <h1 className="font-serif text-2xl font-bold tracking-wide text-[var(--foreground)] mb-1">我的投稿</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            查看您向站长提交过的所有作品及审核状态 · 共 <span className="text-[var(--foreground)] font-medium">{totalAll}</span> 篇
+            每一封都是寄往小屋里屋的信 · 共 <span className="text-[var(--foreground)] font-medium">{totalAll}</span> 封
           </p>
         </div>
         <Link
@@ -135,9 +160,9 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
       {/* 列表 */}
       {list.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--border)] p-12 text-center">
-          <p className="text-[var(--muted-foreground)] mb-4">当前筛选下还没有投稿</p>
+          <p className="text-[var(--muted-foreground)] mb-4">当前筛选下信箱还空着</p>
           <Link href="/submit" className="text-sm text-[var(--primary)] hover:underline">
-            去提交第一篇作品 →
+            去小屋投递第一封信 →
           </Link>
         </div>
       ) : (
@@ -146,33 +171,18 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
             const typeLabel = POST_TYPE_LABELS[
               (item.type as keyof typeof POST_TYPE_LABELS) ?? "illustration"
             ] ?? item.type;
-            const borderClass =
-              item.status === "PENDING"
-                ? "border-l-4 border-l-amber-400"
-                : item.status === "APPROVED"
-                ? "border-l-4 border-l-emerald-400"
-                : "border-l-4 border-l-red-400";
-            const badgeClass =
-              item.status === "PENDING"
-                ? "bg-amber-500/15 text-amber-400"
-                : item.status === "APPROVED"
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-red-500/15 text-red-400";
             const thumb = item.images?.[0] ?? null;
+            const pm = POSTMARK[item.status];
             return (
               <article
                 key={item.id}
-                className={`rounded-xl border border-[var(--border)] bg-[var(--card)]/30 overflow-hidden ${borderClass}`}
+                className="letter-card"
               >
                 <div className="flex gap-4 p-4">
                   {/* 缩略图 / 视频占位 */}
                   <div className="w-28 h-24 shrink-0 rounded-md bg-[var(--muted)]/40 border border-[var(--border)] overflow-hidden">
                     {thumb ? (
                       <img src={thumb} alt="" className="w-full h-full object-cover" />
-                    ) : item.videoId ? (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-[var(--muted-foreground)] bg-[var(--muted)]/50">
-                        🎬 视频
-                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-[var(--muted-foreground)]">
                         无图
@@ -182,17 +192,20 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
 
                   {/* 主体 */}
                   <div className="flex-1 min-w-0 flex flex-col">
-                    {/* 第一行：标题 + 状态徽章 + 时间 */}
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                    {/* 第一行：标题 + 状态邮戳 */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <h3 className="text-base font-semibold text-[var(--foreground)] line-clamp-1 flex-1">
                         {item.title}
                       </h3>
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium shrink-0 ${badgeClass}`}
+                        className={`postmark ${pm.cls}`}
+                        aria-label={`${pm.label}：${item.status === "PENDING" ? "分拣中" : item.status === "APPROVED" ? "已寄达" : "可重新提交"}`}
                       >
-                        {STATUS_LABEL_ZH[item.status]}
+                        <span className="postmark-label">{pm.label}</span>
+                        <span className="postmark-sub">{pm.sub}</span>
                       </span>
                     </div>
+                    <div className="letter-rule mb-3" aria-hidden="true" />
 
                     {/* 简介 */}
                     <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-2">
@@ -236,7 +249,7 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
                       {item.status === "PENDING" && (
                         <>
                           <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-400">
-                            💡 站长审核中，通常 24 小时内处理，通过后会自动发布
+                            💡 信件正在分拣中——站长通常 24 小时内处理，通过后会直接投递到小屋首页
                           </div>
                           <div className="flex justify-end">
                             {/* Server Action 表单：取消投稿（仅本人 + status===PENDING 双重守卫） */}
@@ -264,7 +277,7 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
                       {/* APPROVED：已发布 + 跳前台 */}
                       {item.status === "APPROVED" && item.publishedSlug && (
                         <div className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-xs flex items-center justify-between gap-3">
-                          <span className="text-emerald-400">✅ 已发布，感谢您的投稿！</span>
+                          <span className="text-emerald-400">✅ 已寄达，作品已经投递到小屋首页！</span>
                           <Link
                             href={`/post/${item.publishedSlug}`}
                             target="_blank"
@@ -282,13 +295,13 @@ export default async function MySubmissionsPage({ searchParams }: PageProps) {
                         </div>
                       )}
 
-                      {/* REJECTED：驳回理由（红框） + 修改后重新提交按钮 */}
+                      {/* REJECTED：退回批注 + 修改后重新提交按钮 */}
                       {item.status === "REJECTED" && (
                         <>
-                          <div className="rounded-md bg-red-500/10 border border-red-500/30 p-3 text-xs">
-                            <p className="font-medium text-red-400 mb-1">🚫 驳回理由：</p>
+                          <div className="return-note p-3 text-xs">
+                            <p className="return-note-title mb-1">🚫 退回批注：</p>
                             <p className="text-[var(--foreground)] whitespace-pre-wrap">
-                              {item.rejectReason ?? "未填写驳回理由"}
+                              {item.rejectReason ?? "未填写退回理由"}
                             </p>
                           </div>
                           <div className="flex justify-end gap-2">

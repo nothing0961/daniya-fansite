@@ -1,10 +1,10 @@
 /**
- * 需求：max_output_tokens = 50 默认模式 + 自定义模式 Math.min(userVal, 4096)
+ * 需求：max_output_tokens = 800 默认模式 + 自定义模式 Math.min(userVal, 4096)
  *
  * 断言：
- *   1. 默认模式下 fetch zhipu body.max_tokens === 50 或 env 解析默认 50
+ *   1. 默认模式下 fetch zhipu body.max_tokens === 800 或 env 解析默认 800
  *   2. 自定义模式下用户即使传 max_tokens>4096，也被截断（Math.min(userVal, 4096)）
- *   3. X-Max-Tokens Response header =50 默认模式
+ *   3. X-Max-Tokens Response header 存在（引用 CHAT_MAX_OUTPUT_TOKENS）
  *
  * 风格：源码字符串正则断言
  */
@@ -15,8 +15,8 @@ import path from "node:path";
 const ROOT = process.cwd();
 const ROUTE_PATH = path.join(ROOT, "src/app/api/chat/route.ts");
 
-describe("AI 聊天：max_output_tokens 默认 50 + 自定义 ≤150 截断", () => {
-  it("case1: 默认模式 max_tokens 使用 CHAT_MAX_OUTPUT_TOKENS（默认 50）", () => {
+describe("AI 聊天：max_output_tokens 默认 800 + 自定义 ≤4096 截断", () => {
+  it("case1: 默认模式 max_tokens 使用 CHAT_MAX_OUTPUT_TOKENS（默认 800）", () => {
     if (!fs.existsSync(ROUTE_PATH)) return expect(true).toBe(false);
     const src = fs.readFileSync(ROUTE_PATH, "utf-8");
     // handleDefaultProvider 内用 max_tokens: CHAT_MAX_OUTPUT_TOKENS
@@ -25,11 +25,11 @@ describe("AI 聊天：max_output_tokens 默认 50 + 自定义 ≤150 截断", ()
     const hdpBody = src.slice(hdpStart, hdpStart + 2000);
     const usesVar = /max_tokens\s*:\s*CHAT_MAX_OUTPUT_TOKENS/.test(hdpBody);
     expect(usesVar).toBe(true);
-    // CHAT_MAX_OUTPUT_TOKENS 默认值 = 50
-    const hasDefault50 =
-      /CHAT_MAX_OUTPUT_TOKENS[\s\S]{0,50}\?\?\s*50/.test(src) ||
-      /\|\|\s*50/.test(src);
-    expect(hasDefault50).toBe(true);
+    // CHAT_MAX_OUTPUT_TOKENS 默认值 = 800
+    const hasDefault800 =
+      /CHAT_MAX_OUTPUT_TOKENS[\s\S]{0,50}\?\?\s*800/.test(src) ||
+      /\|\|\s*800/.test(src);
+    expect(hasDefault800).toBe(true);
   });
 
   it("case2: 自定义模式下 max_tokens>4096 被截断（handleCustomProvider 内 Math.min(..., 4096)）", () => {

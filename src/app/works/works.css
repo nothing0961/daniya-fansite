@@ -311,11 +311,6 @@
   font-size: 0.85rem;
 }
 
-.wp-card-video {
-  background: #1a0a14;
-  font-size: 2rem;
-}
-
 .wp-card-badge {
   position: absolute;
   top: 0.5rem;
@@ -331,7 +326,6 @@
 
 .wp-badge--illustration { background: rgba(122, 200, 216, 0.8); color: #0a1a20; }
 .wp-badge--comic { background: rgba(212, 120, 154, 0.8); color: #2a0a14; }
-.wp-badge--video { background: rgba(231, 155, 190,0.8); color: #1a0a14; }
 .wp-badge--article { background: rgba(138, 200, 144, 0.8); color: #0a1a10; }
 .wp-badge--cosplay { background: rgba(232, 180, 192, 0.8); color: #2a1420; }
 .wp-badge--screenshot { background: rgba(160, 140, 180, 0.8); color: #1a1420; }
@@ -510,35 +504,6 @@
   object-fit: contain;
   border-radius: 0.5rem;
 }
-
-.wl-video-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 3rem 1rem;
-  color: var(--hp-ink-faint);
-}
-
-.wl-video-icon {
-  font-size: 2.5rem;
-  opacity: 0.6;
-}
-
-.wl-video-text {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.wl-source-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: #e79bbe;
-  font-size: 0.85rem;
-  text-decoration: none;
-}
-.wl-source-link:hover { opacity: 0.8; }
 
 .wl-no-image {
   padding: 3rem;

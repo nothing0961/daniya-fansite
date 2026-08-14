@@ -7,7 +7,6 @@ export const WORKS_TABS = [
   { key: "all", label: "全部", type: undefined as string | undefined },
   { key: "illustration", label: "插画", type: "illustration" },
   { key: "comic", label: "漫画", type: "comic" },
-  { key: "video", label: "视频", type: "video" },
   { key: "article", label: "文章", type: "article" },
   { key: "cosplay", label: "COS", type: "cosplay" },
   { key: "screenshot", label: "截图", type: "screenshot" },
@@ -25,7 +24,6 @@ export type WorksSortKey = (typeof WORKS_SORTS)[number]["key"];
 export const POST_TYPE_LABELS: Record<string, string> = {
   illustration: "插画",
   comic: "漫画",
-  video: "视频",
   article: "文章",
   cosplay: "COS",
   screenshot: "截图",

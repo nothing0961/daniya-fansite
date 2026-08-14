@@ -1,0 +1,359 @@
+/**
+ * /submit — 投稿页主题（粉金玻璃 · 信件投递）
+ * 全站 --hp-* 令牌复用 + 金色点缀，签名元素为「金色邮戳章」
+ */
+
+.sb-page {
+  --sb-card: rgba(30, 15, 25, 0.72);
+  --sb-card-solid: rgba(24, 12, 20, 0.88);
+  --sb-border: rgba(231, 155, 190, 0.16);
+  --sb-border-strong: rgba(231, 155, 190, 0.34);
+  --sb-pink: #e79bbe;
+  --sb-gold: #d9b26b;
+  --sb-gold-soft: rgba(217, 178, 107, 0.16);
+  --sb-ink: #f0e4e8;
+  --sb-ink-soft: #c8b8c0;
+  --sb-ink-faint: #8a7880;
+  color: var(--sb-ink);
+}
+
+.sb-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 3.5rem;
+}
+
+/* ==== 入场动画（CSS 实现，保持 Server Component） ==== */
+.sb-rise {
+  animation: sb-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sb-rise-1 { animation-delay: 0.04s; }
+.sb-rise-2 { animation-delay: 0.12s; }
+.sb-rise-3 { animation-delay: 0.2s; }
+.sb-rise-4 { animation-delay: 0.28s; }
+
+@keyframes sb-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-rise { animation: none; }
+}
+
+/* ==== Hero：标题 + 邮戳章 ==== */
+.sb-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1.75rem 2rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--sb-border);
+  background:
+    radial-gradient(ellipse 70% 130% at 88% 20%, rgba(217, 178, 107, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 120% at 8% 100%, rgba(231, 155, 190, 0.08) 0%, transparent 55%),
+    linear-gradient(160deg, rgba(30, 15, 25, 0.72) 0%, rgba(22, 10, 18, 0.8) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 40px -18px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* hero 角落星光 */
+.sb-hero::before {
+  content: "";
+  position: absolute;
+  top: -34px;
+  right: -30px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(231, 155, 190, 0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.sb-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--sb-pink);
+  margin-bottom: 0.5rem;
+}
+
+.sb-hero-title {
+  font-family: var(--font-serif, Georgia, "Noto Serif SC", serif);
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: linear-gradient(120deg, #f7e8ee 20%, #e79bbe 60%, #d9b26b 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  line-height: 1.25;
+}
+
+.sb-hero-sub {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--sb-ink-soft);
+}
+
+/* ==== 金色邮戳章（signature） ==== */
+.sb-stamp {
+  position: relative;
+  flex-shrink: 0;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(217, 178, 107, 0.55);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.07) 0%, transparent 55%),
+    linear-gradient(165deg, rgba(217, 178, 107, 0.12) 0%, rgba(231, 155, 190, 0.05) 100%);
+  box-shadow:
+    0 0 26px rgba(217, 178, 107, 0.14),
+    inset 0 0 20px rgba(217, 178, 107, 0.07);
+  transform: rotate(-8deg);
+  transition: transform 0.4s ease;
+}
+
+.sb-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1px dashed rgba(217, 178, 107, 0.45);
+}
+
+.sb-stamp-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-stamp-word {
+  font-family: var(--font-serif, Georgia, "Noto Serif SC", serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  background: linear-gradient(180deg, #f0d9a8 0%, #d9b26b 55%, #b98a4a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 18px rgba(217, 178, 107, 0.25);
+}
+
+.sb-stamp-sub {
+  font-size: 0.56rem;
+  letter-spacing: 0.32em;
+  text-indent: 0.32em;
+  color: rgba(217, 178, 107, 0.75);
+}
+
+.sb-stamp:hover {
+  transform: rotate(-4deg) scale(1.04);
+}
+
+/* ==== 信息卡片（须知 / 额度） ==== */
+.sb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 767px) {
+  .sb-grid { grid-template-columns: 1fr; }
+  .sb-hero { flex-direction: column; align-items: flex-start; }
+  .sb-stamp { position: absolute; top: 1rem; right: 1rem; width: 76px; height: 76px; }
+  .sb-stamp-word { font-size: 1rem; }
+  .sb-stamp-sub { display: none; }
+  .sb-hero-title { font-size: 1.55rem; padding-right: 5.5rem; }
+}
+
+.sb-card {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid var(--sb-border);
+  background: var(--sb-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 14px 32px -18px rgba(0, 0, 0, 0.5);
+  padding: 1.1rem 1.25rem;
+}
+
+.sb-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--sb-ink);
+  margin-bottom: 0.75rem;
+}
+
+.sb-card-head svg {
+  color: var(--sb-pink);
+  flex-shrink: 0;
+}
+
+/* 须知列表 */
+.sb-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sb-rules li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--sb-ink-soft);
+}
+
+.sb-rules li::before {
+  content: "✦";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.62rem;
+  color: var(--sb-gold);
+  opacity: 0.9;
+}
+
+.sb-rules b {
+  color: var(--sb-ink);
+  font-weight: 600;
+}
+
+/* 额度进度条 */
+.sb-quota-row + .sb-quota-row {
+  margin-top: 0.9rem;
+}
+
+.sb-quota-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.78rem;
+  color: var(--sb-ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.sb-quota-num {
+  color: var(--sb-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-quota-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.sb-quota-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--sb-pink-deep) 0%, var(--sb-pink) 55%, #f0c8d8 100%);
+  box-shadow: 0 0 10px rgba(231, 155, 190, 0.45);
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sb-quota-fill--gold {
+  background: linear-gradient(90deg, #b98a4a 0%, var(--sb-gold) 60%, #f0d9a8 100%);
+  box-shadow: 0 0 10px rgba(217, 178, 107, 0.45);
+}
+
+.sb-quota-note {
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+  color: var(--sb-ink-faint);
+}
+
+/* ==== 驳回重提提示条 ==== */
+.sb-resubmit {
+  margin-bottom: 1.25rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(217, 178, 107, 0.35);
+  background: linear-gradient(120deg, rgba(217, 178, 107, 0.14) 0%, rgba(231, 155, 190, 0.08) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.85rem 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: #e8d3a8;
+}
+
+.sb-resubmit strong {
+  color: var(--sb-gold);
+  font-weight: 600;
+}
+
+/* 站长直发提示条（粉色系，区别于驳回重提的金色提示） */
+.sb-admin-publish {
+  margin-bottom: 1.25rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(231, 155, 190, 0.4);
+  background: linear-gradient(120deg, rgba(231, 155, 190, 0.16) 0%, rgba(231, 155, 190, 0.06) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.85rem 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: #f0c6da;
+}
+
+.sb-admin-publish strong {
+  color: var(--primary, #e79bb6);
+  font-weight: 600;
+}
+
+/* ==== 表单玻璃容器 ==== */
+.sb-form-shell {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid var(--sb-border);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(231, 155, 190, 0.06) 0%, transparent 60%),
+    var(--sb-card-solid);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  padding: 1.75rem 2rem 2.25rem;
+}
+
+/* 表单外壳顶部的粉色细线 */
+.sb-form-shell::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(231, 155, 190, 0.45), transparent);
+}
+
+@media (max-width: 767px) {
+  .sb-form-shell { padding: 1.25rem 1rem 1.5rem; }
+}

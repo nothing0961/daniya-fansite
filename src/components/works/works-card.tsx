@@ -92,10 +92,6 @@ export function WorksCard({ post, onPreview }: WorksCardProps) {
             loading="lazy"
             className="wp-card-img"
           />
-        ) : post.videoId ? (
-          <div className="wp-card-placeholder wp-card-video">
-            <span>▶</span>
-          </div>
         ) : (
           <div className="wp-card-placeholder">
             <span>暂无图</span>

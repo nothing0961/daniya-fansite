@@ -2,7 +2,7 @@
  * 需求 T-3：第五层短回复（用户新增要求：回答尽可能短）
  *
  * 断言：
- *   1. src/app/api/chat/route.ts 里传给 LLM / 生成 Mock 的 max_tokens 必须是 150
+ *   1. src/app/api/chat/route.ts 里传给 LLM / 生成 Mock 的 max_tokens 使用 CHAT_MAX_OUTPUT_TOKENS（全局上限，回复长度由系统提示词分级字数规则控制）
  *   2. 接入真模型前，回复列表为「恰好 1 条固定占位语：『该功能还在测试中QAQ』」（用户 2026-07-10 要求：暂用这句固定回复，不再随机抽预设）
  *   3. 占位语 ≤ 50 字符（符合「尽可能短」= 1-2 句闲聊）
  *   4. 输入内容长度限制：用户单条 > 200 字 → 400 拒绝（不许让 AI 处理长文，省 token）
@@ -16,24 +16,19 @@ import path from "node:path";
 const ROOT = process.cwd();
 const ROUTE_PATH = path.join(ROOT, "src/app/api/chat/route.ts");
 
-describe("AI 聊天 T-3：回答尽可能短（max_tokens=150 + Mock 预设 50 字上限 + 输入 200 字截断）", () => {
+describe("AI 聊天 T-3：回答尽可能短（max_tokens 引用 CHAT_MAX_OUTPUT_TOKENS + Mock 预设 50 字上限 + 输入 200 字截断）", () => {
   it("3-1. route.ts 文件存在", () => {
     expect(fs.existsSync(ROUTE_PATH)).toBe(true);
   });
 
-  it("3-2. max_tokens = 150（或 <= 150 的更小值，符合越短越好）", () => {
+  it("3-2. 默认模式 max_tokens 使用 CHAT_MAX_OUTPUT_TOKENS 常量", () => {
     if (!fs.existsSync(ROUTE_PATH)) return expect(true).toBe(false);
     const src = fs.readFileSync(ROUTE_PATH, "utf-8");
-    // route.ts 中 max_tokens 默认值 50（CHAT_MAX_OUTPUT_TOKENS ?? 50），自定义上限 150
-    const hasDefault50 = /CHAT_MAX_OUTPUT_TOKENS[\s\S]{0,80}\?\?\s*50/.test(src)
-      || /\|\|\s*50/.test(src);
-    const hasCap150 = /Math\.min\s*\([^)]*,\s*150\s*\)/.test(src);
-    // CHAT_MAX_OUTPUT_TOKENS 值 50 ≤ 150
-    expect(hasDefault50).toBe(true);
-    // 自定义上限 150 ≤ 150
-    if (!hasDefault50) {
-      expect(hasCap150).toBe(true);
-    }
+    const hdpStart = src.indexOf("async function handleDefaultProvider");
+    expect(hdpStart).toBeGreaterThan(0);
+    const hdpBody = src.slice(hdpStart, hdpStart + 2000);
+    // 回复长度由系统提示词分级字数规则控制，max_tokens 只是硬上限
+    expect(/max_tokens\s*:\s*CHAT_MAX_OUTPUT_TOKENS/.test(hdpBody)).toBe(true);
   });
 
   it("3-3. Mock 预设回复列表存在，且每一条回复内容 ≤ 50 个字符（排除 emoji 后）", () => {

@@ -191,3 +191,9 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.bg-switcher-opacity-hint {
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  color: #8a7880;
+}

@@ -16,10 +16,10 @@ import { prisma } from "@/lib/prisma";
 import { PostMeta } from "@/components/post/post-meta";
 import { PostCredit } from "@/components/post/post-credit";
 import { Separator } from "@/components/ui/separator";
-import { BilibiliEmbed } from "@/components/media/bilibili-embed";
 import { PostGallery } from "@/components/media/post-gallery";
 import type { PostType, SourcePlatform } from "@/types/post";
 import type { PendingPostStatus } from "@prisma/client";
+import "./../../postal.css";
 
 interface PreviewPageProps {
   params: Promise<{ slug: string }>;
@@ -35,34 +35,34 @@ export async function generateMetadata({
   };
 }
 
-// ---------- 状态胶囊样式 ----------
+// ---------- 状态样式（右上邮戳 + 底部徽章） ----------
 const STATUS_LABEL: Record<
   PendingPostStatus,
-  { label: string; icon: string; badge: string; pill: string }
+  { label: string; icon: string; badge: string; pm: string; pmSub: string }
 > = {
   PENDING: {
     label: "审核中",
     icon: "⏳",
     badge:
       "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-    pill:
-      "bg-amber-500 text-white",
+    pm: "postmark--pending",
+    pmSub: "分拣中",
   },
   REJECTED: {
     label: "请重新编辑",
     icon: "⚠️",
     badge:
       "bg-red-500/15 text-red-400 border border-red-500/30",
-    pill:
-      "bg-red-500 text-white",
+    pm: "postmark--rejected",
+    pmSub: "可重提",
   },
   APPROVED: {
     label: "已通过",
     icon: "✅",
     badge:
       "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-    pill:
-      "bg-emerald-500 text-white",
+    pm: "postmark--approved",
+    pmSub: "已寄达",
   },
 };
 
@@ -182,14 +182,14 @@ export default async function SubmissionPreviewPage({
             ← 返回我的投稿
           </Link>
 
-          {/* 右上角状态胶囊 + APPROVED 时额外外链正式页 */}
+          {/* 右上角状态邮戳 + APPROVED 时额外外链正式页 */}
           <div className="flex items-center gap-2 shrink-0">
             <span
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${statusMeta.pill}`}
+              className={`postmark ${statusMeta.pm}`}
               title={statusMeta.label}
             >
-              <span aria-hidden>{statusMeta.icon}</span>
-              <span>{statusMeta.label}</span>
+              <span className="postmark-label">{statusMeta.label}</span>
+              <span className="postmark-sub">{statusMeta.pmSub}</span>
             </span>
             {pendingPost.status === "APPROVED" && (
               <Link
@@ -273,12 +273,8 @@ export default async function SubmissionPreviewPage({
         </div>
       )}
 
-      {/* ---------- 媒体展示区：按 type 分支（与正式页同款）---------- */}
-      {postType === "video" && pendingPost.videoId ? (
-        <div className="mb-8">
-          <BilibiliEmbed bvId={pendingPost.videoId} />
-        </div>
-      ) : (pendingPost.images?.length ?? 0) > 0 ? (
+      {/* ---------- 媒体展示区 ---------- */}
+      {(pendingPost.images?.length ?? 0) > 0 ? (
         <div className="mb-8">
           <PostGallery images={pendingPost.images!} />
         </div>

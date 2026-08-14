@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronLeft, ChevronRight, ExternalLink, Heart, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
 import { toast } from "sonner";
 import type { PostMeta } from "@/lib/posts";
 import { POST_TYPE_LABELS } from "@/lib/works-constants";
@@ -135,19 +135,6 @@ export function WorksLightbox({ post, onClose }: WorksLightboxProps) {
         <div className="wl-media">
           {currentImage ? (
             <img src={currentImage} alt={post.title} className="wl-img" />
-          ) : post.videoId ? (
-            <div className="wl-video-placeholder">
-              <span className="wl-video-icon">▶</span>
-              <p className="wl-video-text">视频内容请在源平台查看</p>
-              <a
-                href={post.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="wl-source-link"
-              >
-                {post.sourcePlatform || "源平台"} <ExternalLink size={14} />
-              </a>
-            </div>
           ) : (
             <div className="wl-no-image">暂无预览图</div>
           )}

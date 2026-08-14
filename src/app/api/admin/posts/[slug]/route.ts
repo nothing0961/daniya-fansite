@@ -41,11 +41,12 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { slug: newSlug, body: mdxBody, ...frontmatter } = body;
+    const { slug: customSlug, body: mdxBody, ...frontmatter } = body;
 
-    if (!newSlug || typeof newSlug !== "string") {
-      return NextResponse.json({ error: "缺少文章标识 (slug)" }, { status: 400 });
-    }
+    // slug 未传时保持原标识（编辑页面不再提供改名入口）
+    const newSlug = typeof customSlug === "string" && customSlug.trim()
+      ? customSlug.trim()
+      : oldSlug;
 
     if (!SLUG_RE.test(newSlug)) {
       return NextResponse.json({ error: "slug 格式不合法" }, { status: 400 });
@@ -100,7 +101,6 @@ export async function PUT(
       images: validated.images,
     };
     if (validated.updatedAt) rawFrontmatter.updatedAt = validated.updatedAt;
-    if (validated.videoId) rawFrontmatter.videoId = validated.videoId;
     if (validated.character) rawFrontmatter.character = validated.character;
 
     const fileContent = matter.stringify((mdxBody || "").trim(), rawFrontmatter);

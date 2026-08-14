@@ -20,11 +20,12 @@
   --foreground: oklch(0.92 0.01 250);
 
   /* ---------- 卡片 — 半透明毛玻璃 ---------- */
-  --card: oklch(0.18 0.025 260 / 0.6);
+  /* 0.72：背景图存在时保证卡片内文字对比度（原 0.6 会透出亮背景图） */
+  --card: oklch(0.18 0.025 260 / 0.72);
   --card-foreground: oklch(0.92 0.01 250);
 
   /* ---------- 弹出层 ---------- */
-  --popover: oklch(0.20 0.025 260 / 0.85);
+  --popover: oklch(0.20 0.025 260 / 0.92);
   --popover-foreground: oklch(0.92 0.01 250);
 
   /* ---------- 主色 — 达妮娅粉白渐变核心 ---------- */
@@ -74,6 +75,7 @@
   --daniya-night: oklch(0.20 0.06 290);    /* 星空黑（深蓝紫黑，呼应泡影视阈）- 暗色模式卡片底 */
   --daniya-accent: oklch(0.75 0.17 345);   /* 亮粉紫 - 强调色/按钮/边框/折叠开条 */
   --daniya-star: oklch(0.93 0.05 350);     /* 粉白星光 - 俏皮点缀/小图标 */
+  --pink-deep: #c9688f;                    /* 深粉 - 插画描边（收藏匣/星星罐轮廓） */
 
   /* ---------- 页面共享令牌（home/chat 等页面复用，避免各页重复定义） ---------- */
   --hp-bg-deep: #120a1c;
@@ -139,14 +141,15 @@ body {
 /* 毛玻璃卡片 — 泡泡感                     */
 /* ======================================== */
 
-/* 给所有卡片类加一层"泡泡光晕"边框 */
+/* 给所有卡片类加一层"泡泡光晕"边框
+   注意：不再加 backdrop-filter——它会让每个卡片成为独立模糊层，
+   路由切换/滚动时每帧重新采样背景，Windows 上卡顿明显；
+   玻璃感只保留给真正的毛玻璃面（.bubble-surface / .surface-pink / header / 聊天窗口等专属类） */
 .card,
 .rounded-xl,
 .rounded-lg {
   border: 1px solid var(--border);
   background: var(--card);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow:
     0 0 40px var(--bubble-glow),
     inset 0 0 60px var(--stardust);
@@ -453,31 +456,87 @@ main {
 /* 由 BgSwitcher 通过 CSS 变量控制           */
 /* ======================================== */
 
+/* 可读性旋钮（bg-switcher 滑块）驱动三轴：
+   --bg-blur-opacity  模糊层不透明度 0 → 1（原滑块语义）
+   --bg-image-opacity 清晰层不透明度 0.8 → 0.35（拉大滑块时原图退暗）
+   --bg-scrim-opacity 遮罩层不透明度 0.35 → 0.6（月光纱加深）
+   公式见 src/components/shared/bg-switcher.tsx 与 layout.tsx 内联脚本（两处必须一致） */
+/* 负 z-index：背景三层永远在所有内容之下（各页内容容器为 static 或 z>=1，无需逐页提升），
+   月光纱只压背景、不压文字——这是"背景图蒙住文字"问题的根治 */
 .hp-bg-image {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-image: var(--bg-image-url, none);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  opacity: 0.8;
+  opacity: var(--bg-image-opacity, 0.8);
+  will-change: opacity;
 }
 
 .hp-bg-image-blur {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   background-image: var(--bg-image-url, none);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   opacity: var(--bg-blur-opacity, 0);
-  filter: blur(20px);
+  /* brightness(0.78)：模糊同时压暗——糊了但不暗的亮图依旧看不清字 */
+  filter: blur(20px) brightness(0.78);
   transform: scale(1.08);
   will-change: opacity;
+}
+
+/* 月光纱 — 背景图与内容之间的固定深色渐变（可读性保底，滑块为 0 时也生效） */
+.hp-bg-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(18, 10, 28, 0.55) 0%,
+    rgba(18, 10, 28, 0.35) 100%);
+  opacity: var(--bg-scrim-opacity, 0.35);
+  will-change: opacity;
+}
+
+/* ======================================== */
+/* 背景可读性 — 直接浮在背景图上的文字阴影 */
+/* ======================================== */
+
+/* 全站标题统一暗影（类选择器优先级低于页面自定义光晕，不破坏 hero 粉光晕） */
+h1,
+h2,
+h3,
+h4 {
+  text-shadow: 0 1px 2px rgba(10, 4, 14, 0.45);
+}
+
+/* MDX 正文段落/列表/引用 */
+.prose p,
+.prose li,
+.prose blockquote,
+.prose td,
+.prose th {
+  text-shadow: 0 1px 2px rgba(10, 4, 14, 0.5);
+}
+
+/* 角色档案页（/character）：背景固定模糊 — character/page.tsx 在 <html> 挂 dan-bg-blur 类触发。
+   换图仍跟随 BgSwitcher（--bg-image-url），模糊度固定、不受滑块影响。
+   调 blur() 需同步调 scale()（约 blur/20*0.08+1），brightness() 控制压暗。 */
+html.dan-bg-blur .hp-bg-image {
+  opacity: 0;
+}
+
+html.dan-bg-blur .hp-bg-image-blur {
+  opacity: 1;
+  filter: blur(26px) brightness(0.72);
+  transform: scale(1.12);
 }
 
 /* 确保主内容区域的背景透明，让全局背景图透出来 */

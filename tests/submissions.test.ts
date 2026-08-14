@@ -118,7 +118,7 @@ describe("P0 · 我的投稿 驳回重提 + 成功弹窗跳转打通", () => {
     postForm = read("src/components/admin/post-form.tsx");
   });
 
-  it("10) submit/page.tsx 支持 searchParams.resubmit=<id>，查 Prisma 回填 prefill 到 PostForm（slug 清空防冲突）", () => {
+  it("10) submit/page.tsx 支持 searchParams.resubmit=<id>，查 Prisma 回填 prefill 到 PostForm（slug 由服务端自动生成防冲突）", () => {
     // 接收 searchParams
     expect(submitPage).toMatch(/searchParams|resubmit/);
     // 查 PendingPost DB

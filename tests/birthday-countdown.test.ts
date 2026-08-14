@@ -67,27 +67,7 @@ describe("birthday-countdown.tsx Client 组件", () => {
   });
 });
 
-describe("birthday-countdown.tsx 俏皮文案暗色主题变白", () => {
-  it("12) 倒计时态俏皮文案 <p>（tagline 输出的那行，带『{/* 俏皮文案 */}』JSX 注释）：亮色保留 muted-foreground，暗色追加 dark:text-white 变白", () => {
-    // 锚点：精确到 JSX 注释 {/* 俏皮文案 */}，避免与 pickTagline 函数上方的 JSDoc 注释"俏皮文案池"混淆
-    const anchor = "{/* 俏皮文案 */}";
-    const idx = COMP_SRC.indexOf(anchor);
-    expect(idx).toBeGreaterThan(0);
-    const nearby = COMP_SRC.slice(idx, idx + 300);
-    // 必须匹配紧随注释的 <p> 标签
-    const pMatch = nearby.match(/<p\s+className="([^"]+)"\s*>/);
-    expect(pMatch).not.toBeNull();
-    const cls = pMatch![1];
-    // A. 保留原字号 + 外边距 mt-1.5
-    expect(cls).toMatch(/text-\[11px\]/);
-    expect(cls).toMatch(/\bsm:text-xs\b/);
-    expect(cls).toMatch(/\bmt-1\.5\b/);
-    // B. 保留原亮色颜色 text-[var(--muted-foreground)]
-    expect(cls).toMatch(/text-\[var\(--muted-foreground\)\]/);
-    // C. 追加 dark:text-white
-    expect(cls).toMatch(/\bdark:text-white\b/);
-  });
-
+describe("birthday-countdown.tsx 庆祝态副文案样式", () => {
   it("13) 庆祝态（今天生日）的副文案 <p> 颜色保持不变（用户未要求修改），防止误改", () => {
     // 找到庆祝态里面的"别忘了多准备一点蛋糕与甜点"这句文案的所属 p
     const idx = COMP_SRC.indexOf("别忘了多准备一点蛋糕与甜点");

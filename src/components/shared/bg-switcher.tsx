@@ -6,7 +6,8 @@
  * 性能优化：
  *   1. 缩略图使用 webp（480px，约 20KB），进站后 requestIdleCallback 预加载
  *   2. 下拉菜单直接显示已预加载的缩略图，零卡顿
- *   3. 用户选中后加载原图作背景
+ *   3. 选中背景两段式加载：先显示 window 版（1600px webp，秒解码），
+ *      后台 decode desktop 版（4K webp）完成后静默升级，杜绝 10K 原图（50MB+）同步解码卡顿
  *
  * 预设图配置：修改下方 BG_PRESETS 数组，并在 scripts/gen-bg-thumbs.mjs 重新生成缩略图
  */
@@ -48,31 +49,92 @@ const BG_PRESETS: Preset[] = [
   { id: "bg18", label: "韩服二周年", src: "/背景图片/韩服二周年线下庆典活动预告图-10k.png", thumb: "/背景图片/thumbs/韩服二周年线下庆典活动预告图-10k.webp" },
 ];
 
+/** 原图 → 窗口版（1600px webp，聊天终端等窗口容器使用，避免解码 50MB 原图卡顿） */
+function toWindowSrc(src: string): string | null {
+  if (!src.startsWith("/背景图片/")) return null;
+  return src.replace("/背景图片/", "/背景图片/window/").replace(/\.(png|jpg|jpeg)$/i, ".webp");
+}
+
+/** 原图 → 桌面版（3840px 4K webp，全屏背景使用，避免解码 10K 原图卡顿） */
+function toDesktopSrc(src: string): string | null {
+  if (!src.startsWith("/背景图片/")) return null;
+  return src.replace("/背景图片/", "/背景图片/desktop/").replace(/\.(png|jpg|jpeg)$/i, ".webp");
+}
+
+/** 递增令牌：快速连续切换时丢弃过期的高清升级，防止旧图晚到覆盖新图 */
+let applyBgToken = 0;
+
+/**
+ * 应用背景图 — 两段式加载（与 layout.tsx 内联脚本的首屏逻辑同源）：
+ *   1. 立即把 window 版（1600px webp）设置到 --bg-image-url，秒解码、切换零卡顿
+ *   2. 后台 decode desktop 版（4K webp），完成后静默升级，视觉无跳变
+ * --bg-image-chat 固定用 window 版（聊天终端窗口内使用）
+ */
 function applyBgImage(src: string | null) {
+  const token = ++applyBgToken;
   const root = document.documentElement;
-  if (src) {
-    root.style.setProperty("--bg-image-url", `url("${src}")`);
-  } else {
+  if (!src) {
     root.style.removeProperty("--bg-image-url");
+    root.style.removeProperty("--bg-image-chat");
+    return;
   }
+  const windowSrc = toWindowSrc(src);
+  if (windowSrc) {
+    root.style.setProperty("--bg-image-chat", `url("${windowSrc}")`);
+    root.style.setProperty("--bg-image-url", `url("${windowSrc}")`);
+  } else {
+    root.style.removeProperty("--bg-image-chat");
+    root.style.setProperty("--bg-image-url", `url("${src}")`);
+    return;
+  }
+  const desktopSrc = toDesktopSrc(src);
+  if (!desktopSrc) return;
+  const img = new Image();
+  img.decoding = "async";
+  img.onload = () => {
+    img
+      .decode()
+      .then(() => {
+        if (token === applyBgToken) {
+          root.style.setProperty("--bg-image-url", `url("${desktopSrc}")`);
+        }
+      })
+      .catch(() => {});
+  };
+  img.src = desktopSrc;
 }
 
 /**
- * 应用模糊度（0-30 → 0-1 opacity）
- * 双层方案：模糊层 filter:blur(20px) 固定不变，只改 opacity
+ * 应用可读性旋钮（0-30）——三轴联动（公式与 layout.tsx 内联脚本一致，必须同步修改）：
+ *   --bg-blur-opacity  模糊层：0 → 1
+ *   --bg-image-opacity 清晰层：0.8 → 0.35（原图退暗）
+ *   --bg-scrim-opacity 月光纱：0.35 → 0.6（遮罩加深）
+ * 滑块拉大 = 更糊 + 更暗 + 纱更厚 = 文字越清晰
  * opacity 变化由 GPU 加速，极其流畅
  */
 function applyBgBlur(blur: number) {
   const opacity = Math.min(Math.max(blur / 30, 0), 1);
-  document.documentElement.style.setProperty("--bg-blur-opacity", String(opacity));
+  const root = document.documentElement;
+  root.style.setProperty("--bg-blur-opacity", String(opacity));
+  root.style.setProperty("--bg-image-opacity", String(0.8 - opacity * 0.45));
+  root.style.setProperty("--bg-scrim-opacity", String(0.35 + opacity * 0.25));
 }
 
 /**
- * 后台预加载所有缩略图到浏览器缓存
+ * 后台预加载缩略图 + window 版到浏览器缓存
  * 使用 requestIdleCallback 在浏览器空闲时执行，不影响首屏性能
+ * 缩略图（~20KB）供下拉菜单显示；window 版（~几百KB）供切换第一帧秒显
  */
 function preloadThumbs() {
-  const thumbs = BG_PRESETS.map((p) => p.thumb).filter(Boolean) as string[];
+  const thumbs = BG_PRESETS.flatMap((p) => {
+    const list: string[] = [];
+    if (p.thumb) list.push(p.thumb);
+    if (p.src) {
+      const windowSrc = toWindowSrc(p.src);
+      if (windowSrc) list.push(windowSrc);
+    }
+    return list;
+  });
   const idleCallback =
     (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback ||
     ((cb: () => void) => setTimeout(cb, 2000));
@@ -187,9 +249,9 @@ export function BgSwitcher() {
             ))}
           </div>
 
-          {/* 模糊度滑块 */}
+          {/* 可读性滑块 — 拉大 = 背景更糊更暗，文字更清晰 */}
           <div className="bg-switcher-opacity">
-            <label>模糊度</label>
+            <label>可读性</label>
             <input
               type="range"
               min="0"
@@ -199,6 +261,7 @@ export function BgSwitcher() {
               onChange={(e) => handleBlur(parseFloat(e.target.value))}
             />
             <span className="bg-switcher-opacity-value">{blur}px</span>
+            <p className="bg-switcher-opacity-hint">拉大让背景变糊变暗，文字更清楚</p>
           </div>
         </div>
       )}

@@ -75,7 +75,7 @@ export const CHAT_TOOLS: ChatToolDef[] = [
         query: { type: "string", description: "检索关键词，如标题、画师、主题" },
         type: {
           type: "string",
-          enum: ["illustration", "screenshot", "video"],
+          enum: ["illustration", "screenshot"],
           description: "作品类型过滤（可选）",
         },
         tag: { type: "string", description: "标签过滤（可选）" },

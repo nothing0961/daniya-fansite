@@ -17,11 +17,23 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 100);
 
   const where = status ? { status } : undefined;
+  // select 精简：列表不渲染正文 content（MDX 可能很大），避免每次切 tab 传输几十 KB 冗余 payload；详情接口才返回全文
   const list = await prisma.pendingPost.findMany({
     take: limit,
     where,
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    include: {
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      type: true,
+      images: true,
+      tags: true,
+      status: true,
+      rejectReason: true,
+      publishedSlug: true,
+      createdAt: true,
       user: { select: { id: true, name: true, email: true, image: true } },
     },
   });

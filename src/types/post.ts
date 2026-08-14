@@ -3,7 +3,6 @@
  * illustration: 插画/单图
  * screenshot: 截屏/游戏/课堂截图
  * comic: 漫画/多图
- * video: 视频
  * article: 文章/同人文
  * cosplay: COS 正片
  * other: 其他类型
@@ -12,7 +11,6 @@ const POST_TYPES = [
   "illustration",
   "screenshot",
   "comic",
-  "video",
   "article",
   "cosplay",
   "other",
@@ -24,7 +22,6 @@ export const POST_TYPE_LABELS: Record<PostType, string> = {
   illustration: "插画",
   screenshot: "截屏",
   comic: "漫画",
-  video: "视频",
   article: "文章",
   cosplay: "COS",
   other: "其他",

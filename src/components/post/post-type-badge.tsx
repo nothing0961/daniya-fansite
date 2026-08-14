@@ -11,7 +11,6 @@ const typeConfig: Record<string, { label: string; variant: "default" | "secondar
   illustration: { label: "插画", variant: "default" },
   screenshot: { label: "截屏", variant: "secondary" },
   comic: { label: "漫画", variant: "secondary" },
-  video: { label: "视频", variant: "default" },
   article: { label: "文章", variant: "outline" },
   cosplay: { label: "COS", variant: "credit" },
   other: { label: "其他", variant: "outline" },

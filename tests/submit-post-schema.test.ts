@@ -5,10 +5,9 @@ import { submitPostSchema } from "../src/lib/validators/submit-post-schema";
  * 用户投稿 zod 校验需求（与站长 postMetaSchema 对齐，避免审核通过失败）：
  *  - title: 非空字符串，长度 1-120
  *  - description: 非空字符串，长度 1-300
- *  - type: "illustration" | "screenshot" | "video"
+ *  - type: "illustration" | "screenshot"
  *  - tags: 字符串数组，每个 tag 长度 1-20，最多 8 个
- *  - images: 字符串数组（URL），非 video 类型至少 1 张，最多 20 张；video 类型可以 0 张
- *  - videoId: 仅 type=video 时存在，必须符合 BV 正则（BV[a-zA-Z0-9]{10}）
+ *  - images: 字符串数组（URL），至少 1 张，最多 20 张
  *  - originalCreator / sourceUrl / sourcePlatform: 可选（审核时站长补全）
  *      · originalCreator / sourcePlatform: 填写则 1-60 字符
  *      · sourceUrl: 填写则必须合法 URL
@@ -44,11 +43,11 @@ describe("投稿 submitPostSchema - 基础字段", () => {
     expect(submitPostSchema.safeParse({ ...baseGood, description: "好".repeat(301) }).success).toBe(false); // 超过 300
   });
 
-  it("type 只能是 illustration/screenshot/video", () => {
+  it("type 只能是 illustration/screenshot", () => {
     expect(submitPostSchema.safeParse({ ...baseGood, type: "music" }).success).toBe(false);
-    expect(submitPostSchema.safeParse({ ...baseGood, type: "video" }).success).toBe(false); // video 缺 videoId
+    expect(submitPostSchema.safeParse({ ...baseGood, type: "video" }).success).toBe(false);
     expect(submitPostSchema.safeParse({ ...baseGood, type: "screenshot" }).success).toBe(true);
-    // 站长后台有 "comic" 等类型，但投稿端仅开放 3 种，故 comic 投稿应失败
+    // 站长后台有 "comic" 等类型，但投稿端仅开放 2 种，故 comic 投稿应失败
     expect(submitPostSchema.safeParse({ ...baseGood, type: "comic" }).success).toBe(false);
   });
 });
@@ -76,22 +75,13 @@ describe("投稿 submitPostSchema - tags", () => {
   });
 });
 
-describe("投稿 submitPostSchema - images 与 video 的互斥关系", () => {
-  it("非 video 类型，images 至少 1 张", () => {
+describe("投稿 submitPostSchema - images 必填", () => {
+  it("所有类型，images 至少 1 张", () => {
     const good = { title: "测试", description: "描述足够长这里够了吧", type: "illustration" as const, tags: [] };
     expect(submitPostSchema.safeParse({ ...good, images: [] }).success).toBe(false);
     expect(submitPostSchema.safeParse({ ...good, images: undefined }).success).toBe(false);
     expect(submitPostSchema.safeParse({ ...good, images: ["https://x/a.jpg"] }).success).toBe(true);
-  });
-
-  it("video 类型必须带合法 videoId，images 可以为空", () => {
-    const base = { title: "测试", description: "描述足够长这里够了吧", type: "video" as const, tags: [] };
-    expect(submitPostSchema.safeParse({ ...base, images: [], videoId: undefined }).success).toBe(false);
-    expect(submitPostSchema.safeParse({ ...base, images: [], videoId: "123" }).success).toBe(false);
-    expect(submitPostSchema.safeParse({ ...base, images: [], videoId: "BV1a2b3c4d5e" }).success).toBe(true); // 10 位字母数字
-    expect(submitPostSchema.safeParse({ ...base, images: [], videoId: "BV1a2b3c4d5ef" }).success).toBe(false); // 11 位
-    // video 类型允许附带海报图
-    expect(submitPostSchema.safeParse({ ...base, images: ["https://x/poster.jpg"], videoId: "BV1a2b3c4d5e" }).success).toBe(true);
+    expect(submitPostSchema.safeParse({ ...good, images: ["https://x/a.jpg"], type: "screenshot" as const }).success).toBe(true);
   });
 
   it("images 最多 20 张，超过失败", () => {
@@ -125,24 +115,5 @@ describe("投稿 submitPostSchema - 可选来源字段", () => {
     // sourcePlatform 投稿端自由字符串（1-60），站长审核时映射到枚举
     expect(submitPostSchema.safeParse({ ...base, sourcePlatform: "微博" }).success).toBe(true);
     expect(submitPostSchema.safeParse({ ...base, sourcePlatform: "" }).success).toBe(false);
-  });
-});
-
-describe("投稿 submitPostSchema - 可选 slug", () => {
-  const base = {
-    title: "测试",
-    description: "描述足够长这里够了吧",
-    type: "illustration",
-    tags: [],
-    images: ["https://x/a.jpg"],
-  };
-
-  it("slug 没填 / 符合 kebab-case 通过；不符合失败", () => {
-    expect(submitPostSchema.safeParse(base).success).toBe(true);
-    expect(submitPostSchema.safeParse({ ...base, slug: "daniya-afternoon-123" }).success).toBe(true);
-    expect(submitPostSchema.safeParse({ ...base, slug: "AB" }).success).toBe(false); // <3 字符 + 大写
-    expect(submitPostSchema.safeParse({ ...base, slug: "含有中文" }).success).toBe(false);
-    expect(submitPostSchema.safeParse({ ...base, slug: "a_b" }).success).toBe(false); // 不允许下划线
-    expect(submitPostSchema.safeParse({ ...base, slug: "a".repeat(61) }).success).toBe(false); // 61 字符 > 60
   });
 });

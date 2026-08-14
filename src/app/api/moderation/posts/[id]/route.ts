@@ -87,6 +87,22 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
       select: { id: true, status: true, rejectReason: true, reviewedAt: true },
     });
+
+    // 反向通知投稿人（失败不影响驳回本身）
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: existing.userId,
+          type: "REJECTED",
+          title: `投稿被驳回：《${existing.title.slice(0, 30)}》`,
+          body: `理由：${body.rejectReason.trim().slice(0, 200)}`,
+          link: `/submit?resubmit=${existing.id}`,
+        },
+      });
+    } catch (err) {
+      console.error("[moderation] notify submitter (reject) failed:", err);
+    }
+
     return NextResponse.json({ success: true, action: "reject", data: updated });
   }
 
@@ -129,7 +145,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     publishedAt,
     draft,
     images: existing.images,
-    videoId: existing.videoId ?? undefined,
     updatedAt: undefined,
   };
   const parsedMeta = postMetaSchema.safeParse(metaPayload);
@@ -158,6 +173,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
       select: { id: true, status: true, publishedSlug: true, reviewedAt: true },
     });
+
+    // 反向通知投稿人（失败不影响发布本身）
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: existing.userId,
+          type: "APPROVED",
+          title: `投稿已通过：《${existing.title.slice(0, 30)}》`,
+          body: "您的投稿已审核通过并发布在小屋首页",
+          link: `/post/${mdxResult.slug}`,
+        },
+      });
+    } catch (err) {
+      console.error("[moderation] notify submitter (approve) failed:", err);
+    }
 
     return NextResponse.json({
       success: true,
