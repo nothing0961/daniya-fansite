@@ -113,7 +113,9 @@
       "Bash(echo \"tsc exit: $?\")",
       "Bash(taskkill //PID 34080 //F)",
       "Bash(export AGENT_BROWSER_SESSION=blankcheck)",
-      "Bash(echo \"tsc: $?\")"
+      "Bash(echo \"tsc: $?\")",
+      "Bash(git config *)",
+      "Bash(git ls-remote *)"
     ]
   }
 }
