@@ -20,7 +20,9 @@ RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debia
 
 # 先装依赖，利用 Docker 层缓存（国内服务器必须走 npmmirror 镜像源）
 COPY package.json package-lock.json ./
-RUN npm ci --registry=https://registry.npmmirror.com
+# npm 12 生成的 lockfile 需要 npm>=12 解析（容器自带 npm 10 会报 Missing 版本错）
+RUN npm install -g npm@12.0.2 --registry=https://registry.npmmirror.com \
+  && npm ci --registry=https://registry.npmmirror.com
 
 # 生成 Prisma Client
 COPY prisma ./prisma
@@ -43,7 +45,9 @@ RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debia
   && apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --registry=https://registry.npmmirror.com
+# npm 12 生成的 lockfile 需要 npm>=12 解析（容器自带 npm 10 会报 Missing 版本错）
+RUN npm install -g npm@12.0.2 --registry=https://registry.npmmirror.com \
+  && npm ci --omit=dev --registry=https://registry.npmmirror.com
 
 # 运行期同样需要 Prisma Client（生成产物在 node_modules 内，不在 .next）
 COPY prisma ./prisma

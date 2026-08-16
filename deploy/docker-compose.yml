@@ -18,6 +18,7 @@ services:
     env_file:
       - ../.env.production
     environment:
+      - HOST=0.0.0.0
       - NODE_ENV=production
     volumes:
       - ../public/背景图片:/app/public/背景图片:ro
