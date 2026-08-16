@@ -2,5 +2,13 @@
 # 将来有域名后：把 :80 改成你的域名（如 daniya.example.com），
 # 并在 docker-compose.yml 的 ports 加 "443:443"，Caddy 会自动签发 HTTPS 证书。
 :80 {
-	reverse_proxy app:3000
+	# 背景图静态直出 — Next 生产模式不服务中文路径段（实测 next start 对
+	# /背景图片/* 返回 404，即使文件存在于 public/），由 Caddy 直接读磁盘
+	handle /背景图片/* {
+		root * /srv/public
+		file_server
+	}
+	handle {
+		reverse_proxy app:3000
+	}
 }

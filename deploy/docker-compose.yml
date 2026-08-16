@@ -44,6 +44,8 @@ services:
       - "80:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # public 只读挂载 — Caddyfile 里 /背景图片/* 由 file_server 直出（Next 不服务中文路径）
+      - ../public:/srv/public:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
