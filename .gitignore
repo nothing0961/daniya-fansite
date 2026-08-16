@@ -9,6 +9,12 @@ node_modules/
 .env*.local
 # Prisma 数据库文件（已改为 Neon PostgreSQL，不再使用本地 SQLite）
 prisma/*.db
+# 背景图原图（10k PNG，954MB）不入库 — 站点只请求 thumbs/window/desktop 三个子目录（14MB）
+# 原图仅本地持有；git 历史中仍有备份，可随时 git show 恢复
+public/背景图片/*
+!public/背景图片/thumbs/
+!public/背景图片/window/
+!public/背景图片/desktop/
 # 操作系统
 .DS_Store
 Thumbs.db
