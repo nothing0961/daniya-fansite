@@ -13,7 +13,10 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Prisma 引擎需要 OpenSSL 运行时库（node:22-slim 默认没有）
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# apt 源换阿里云镜像 — 国内服务器访问 deb.debian.org 极慢（实测 apt-get 卡 15 分钟）
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
+  && sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list 2>/dev/null || true \
+  && apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # 先装依赖，利用 Docker 层缓存（国内服务器必须走 npmmirror 镜像源）
 COPY package.json package-lock.json ./
@@ -34,7 +37,10 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Prisma 引擎需要 OpenSSL 运行时库（node:22-slim 默认没有）
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# apt 源换阿里云镜像 — 国内服务器访问 deb.debian.org 极慢（实测 apt-get 卡 15 分钟）
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
+  && sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list 2>/dev/null || true \
+  && apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --registry=https://registry.npmmirror.com
