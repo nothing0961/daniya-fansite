@@ -22,10 +22,8 @@ const nextConfig = {
     "*": ["./next.config.mjs"],
   },
 
-  // ===== 新增：排除 Prisma 依赖，减小函数体积 =====
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
-  },
+  // 排除 Prisma 依赖，减小函数体积（Next 16：顶层配置，experimental 前缀已废弃）
+  serverExternalPackages: ['@prisma/client', 'prisma'],
 
   /**
    * HTTP 安全响应头（严格区分生产/开发）
@@ -66,14 +64,15 @@ const nextConfig = {
               "default-src 'self'",
               "img-src 'self' https: data: blob:",
               "media-src 'self' https: data: blob:",
-              "style-src 'self' 'unsafe-inline'",
-              "font-src 'self' data:",
+              // NOTE: 不加 upgrade-insecure-requests — 服务器为纯 HTTP（无域名无法上 TLS），
+              //       该指令会把静态资源强升 https 导致全部 ERR_CONNECTION_REFUSED
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
               "script-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://*.imgurl.org",
+              "connect-src 'self' https://*.imgurl.org https://fonts.googleapis.com https://fonts.gstatic.com",
               "frame-ancestors 'self'",
               "object-src 'none'",
               "base-uri 'self'",
-              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

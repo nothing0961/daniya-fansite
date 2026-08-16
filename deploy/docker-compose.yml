@@ -1,0 +1,53 @@
+# daniya-fansite 生产编排 — 用法见 deploy/README.md
+#
+# 结构：
+#   浏览器 → caddy(:80) → app(next start :3000) → Neon PostgreSQL(云端)
+#
+# 卷挂载：
+#   public/背景图片（968MB）— 只读挂载，不随镜像重建
+#   content — 可写挂载，站长审核通过的投稿(MDX)持久化
+name: daniya
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: daniya-app
+    restart: unless-stopped
+    env_file:
+      - ../.env.production
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ../public/背景图片:/app/public/背景图片:ro
+      - ../content:/app/content
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: daniya-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -13,8 +13,6 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { isUnsafeHost } from "../route";
 
-export const runtime = "edge";
-
 export function classifyProtocol(params: {
   baseURL: string;
   status: number;

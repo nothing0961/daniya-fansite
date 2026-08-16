@@ -1,0 +1,6 @@
+# daniya-fansite 反向代理 — 无域名模式（IP 直访，HTTP）
+# 将来有域名后：把 :80 改成你的域名（如 daniya.example.com），
+# 并在 docker-compose.yml 的 ports 加 "443:443"，Caddy 会自动签发 HTTPS 证书。
+:80 {
+	reverse_proxy app:3000
+}
